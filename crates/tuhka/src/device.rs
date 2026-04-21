@@ -1,6 +1,8 @@
 use core::ffi;
-use crate::vk;
 use crate::{
+    vk,
+    nop,
+    LoadWith,
     DeviceFpV10,
     DeviceFpV11,
     DeviceFpV12,
@@ -9,19 +11,25 @@ use crate::{
     InstanceFpV10,
 };
 
+#[cfg(feature = "ext-load-with")]
+use core::ops::Deref;
+
 /// # Vulkan docs
 /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkDevice.html>
 #[derive(Clone)]
-pub struct Device {
+pub struct Device<Ext = nop::Device>
+{
     pub(crate) handle: vk::Device,
     pub(crate) fp_v10: DeviceFpV10,
     pub(crate) fp_v11: DeviceFpV11,
     pub(crate) fp_v12: DeviceFpV12,
     pub(crate) fp_v13: DeviceFpV13,
     pub(crate) fp_v14: DeviceFpV14,
+    pub(crate) _ext: Ext,
 }
 
-impl Device {
+impl<Ext> Device<Ext>
+{
 
     /// Loads the [`Device`] from [`InstanceFpV10`].
     ///
@@ -34,7 +42,9 @@ impl Device {
         version: u32,
         instance_fp: &InstanceFpV10,
         handle: vk::Device
-    ) -> Self {
+    ) -> Self
+        where Ext: LoadWith<Handle = vk::Device>
+    {
         unsafe {
             Self::load_with(
                 version,
@@ -56,7 +66,9 @@ impl Device {
         version: u32,
         f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
         handle: vk::Device,
-    ) -> Self {
+    ) -> Self 
+        where Ext: LoadWith<Handle = vk::Device>
+    {
         Self {
             handle,
             fp_v10: DeviceFpV10::load(version, f),
@@ -64,6 +76,9 @@ impl Device {
             fp_v12: DeviceFpV12::load(version, f),
             fp_v13: DeviceFpV13::load(version, f),
             fp_v14: DeviceFpV14::load(version, f),
+            _ext: unsafe {
+                Ext::load_with(f, handle)
+            },
         }
     }
 
@@ -95,5 +110,14 @@ impl Device {
     #[inline]
     pub fn fp_v14(&self) -> &DeviceFpV14 {
         &self.fp_v14
+    }
+}
+
+#[cfg(feature = "ext-load-with")]
+impl<Ext> Deref for Device<Ext> {
+    type Target = Ext;
+    #[inline]
+    fn deref(&self) -> &Ext {
+        &self._ext
     }
 }

@@ -1,5 +1,9 @@
 use crate::vk::*;
-use crate::{LibraryFpV10, LibraryFpV11, VkResult, PtrOption};
+use crate::{
+    LibraryFpV10, LibraryFpV11,
+    VkResult, PtrOption,
+    LoadWith,
+};
 use core::fmt::{self, Display};
 use core::ffi;
 
@@ -222,11 +226,13 @@ impl Library {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkEnumerateInstanceVersion.html>
     ///
     /// [1]: crate::Instance
-    pub unsafe fn create_instance(
+    pub unsafe fn create_instance<Ext>(
         &self,
         create_info: &InstanceCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
-    ) -> VkResult<crate::Instance> {
+    ) -> VkResult<crate::Instance<Ext>>
+        where Ext: LoadWith<Handle = crate::vk::Instance>
+    {
         unsafe {
             let mut handle = ::core::mem::MaybeUninit::uninit();
             let handle = (self.fp_v10().create_instance)(
@@ -242,6 +248,28 @@ impl Library {
                 version.value, &self.core_fp,
                 handle.value
             )))
+        }
+    }
+
+    /// Destroys an [`Instance'][1].
+    ///
+    /// # Safety
+    /// All raw Vulkan calls are unsafe as there is no validation of input or usage.
+    ///
+    /// # Vulkan docs
+    /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyInstance.html>
+    ///
+    /// [1]: crate::Instance
+    pub unsafe fn destroy_instance<Ext>(
+        &self,
+        instance: &crate::Instance<Ext>,
+        allocator: Option<&AllocationCallbacks>,
+    ) {
+        unsafe {
+            (self.fp_v10.destroy_instance)(
+                instance.handle(),
+                allocator.as_ptr(),
+            )
         }
     }
 }

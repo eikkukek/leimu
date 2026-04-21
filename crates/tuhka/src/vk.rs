@@ -125,3 +125,52 @@ trait PFN_Default {
 
     fn default() -> Self;
 }
+
+#[inline]
+pub(crate) fn c_char_slice_until_nul(
+    str: &[ffi::c_char],
+) -> core::result::Result<&ffi::CStr, ffi::FromBytesUntilNulError>
+{
+    let bytes = unsafe {
+        core::slice::from_raw_parts(str.as_ptr().cast(), str.len())
+    };
+    ffi::CStr::from_bytes_until_nul(bytes)
+}
+
+#[derive(Debug)]
+pub struct WriteCStrToArrayError {
+    pub c_str_len: usize,
+    pub array_len: usize,
+}
+
+impl fmt::Display for WriteCStrToArrayError {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,
+            "`CStr` len with nul-byte {} is greater than array len {}",
+            self.c_str_len, self.array_len,
+        )
+    }
+}
+impl core::error::Error for WriteCStrToArrayError {}
+
+pub(crate) fn write_c_str_to_c_char_slice(
+    src: &ffi::CStr,
+    dst: &mut [ffi::c_char]
+) -> core::result::Result<(), WriteCStrToArrayError>
+{
+    let bytes = src.to_bytes_with_nul();
+    let bytes = unsafe {
+        core::slice::from_raw_parts(
+            bytes.as_ptr().cast(),
+            bytes.len()
+        )
+    };
+    let array_len = dst.len();
+    dst.get_mut(..bytes.len())
+        .ok_or(WriteCStrToArrayError {
+            c_str_len: bytes.len(),
+            array_len, 
+        })?.copy_from_slice(bytes);
+    Ok(())
+}

@@ -1,13 +1,15 @@
-use crate::PtrOption;
 use crate::vk::*;
+use crate::{PtrOption, nop};
 use core::ffi;
+#[cfg(feature = "ext-load-with")]
+use {crate::LoadWith, core::ops::Deref};
 pub mod khr {
     use super::*;
     pub mod surface {
         //! VK_KHR_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 25u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_surface";
+        pub const NAME: &ffi::CStr = c"VK_KHR_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub destroy_surface_khr: PFN_vkDestroySurfaceKHR,
@@ -17,6 +19,8 @@ pub mod khr {
             pub get_physical_device_surface_formats_khr: PFN_vkGetPhysicalDeviceSurfaceFormatsKHR,
             pub get_physical_device_surface_present_modes_khr:
                 PFN_vkGetPhysicalDeviceSurfacePresentModesKHR,
+            pub get_physical_device_present_rectangles_khr:
+                PFN_vkGetPhysicalDevicePresentRectanglesKHR,
         }
         unsafe impl Send for InstanceFp {}
         unsafe impl Sync for InstanceFp {}
@@ -125,24 +129,50 @@ pub mod khr {
                             >(f)
                         }
                     },
+                    get_physical_device_present_rectangles_khr: unsafe {
+                        unsafe extern "system" fn get_physical_device_present_rectangles_khr(
+                            _physical_device: PhysicalDevice,
+                            _surface: SurfaceKHR,
+                            _rect_count: *mut u32,
+                            _rects: *mut Rect2D,
+                        ) -> Result {
+                            panic!(concat!(
+                                "failed to load ",
+                                stringify!(get_physical_device_present_rectangles_khr),
+                            ))
+                        }
+                        let f = f(c"vkGetPhysicalDevicePresentRectanglesKHR");
+                        if f.is_null() {
+                            get_physical_device_present_rectangles_khr
+                        } else {
+                            ::core::mem::transmute::<
+                                *const ffi::c_void,
+                                PFN_vkGetPhysicalDevicePresentRectanglesKHR,
+                            >(f)
+                        }
+                    },
                 }
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -162,6 +192,8 @@ pub mod khr {
             ) {
                 unsafe { (self.fp.destroy_surface_khr)(self.handle, surface, allocator.as_ptr()) }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -171,8 +203,7 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 queue_family_index: u32,
                 surface: SurfaceKHR,
-            ) -> crate::VkResult<Bool32> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
+            ) -> crate::VkResult<bool> {
                 unsafe {
                     let mut supported = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_surface_support_khr)(
@@ -181,9 +212,13 @@ pub mod khr {
                         surface,
                         supported.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, supported)
+                    .result_with(&[crate::vk::Result::SUCCESS], || {
+                        supported.assume_init() != 0
+                    })
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -193,7 +228,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 surface: SurfaceKHR,
             ) -> crate::VkResult<SurfaceCapabilitiesKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface_capabilities = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_surface_capabilities_khr)(
@@ -201,9 +235,12 @@ pub mod khr {
                         surface,
                         surface_capabilities.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface_capabilities)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface_capabilities)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -213,8 +250,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 surface: SurfaceKHR,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut surface_format_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_surface_formats_khr)(
@@ -223,9 +258,15 @@ pub mod khr {
                         surface_format_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface_format_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        surface_format_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -236,8 +277,6 @@ pub mod khr {
                 surface: SurfaceKHR,
                 out: &mut [SurfaceFormatKHR],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_surface_formats_khr)(
@@ -246,9 +285,12 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -258,8 +300,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 surface: SurfaceKHR,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut present_mode_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_surface_present_modes_khr)(
@@ -268,9 +308,15 @@ pub mod khr {
                         present_mode_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, present_mode_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        present_mode_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -281,8 +327,6 @@ pub mod khr {
                 surface: SurfaceKHR,
                 out: &mut [PresentModeKHR],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_surface_present_modes_khr)(
@@ -291,8 +335,86 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+            #[doc = r" # Depends on"]
+            #[doc = "* VK_KHR_swapchain"]
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDevicePresentRectanglesKHR.html>"]
+            pub unsafe fn get_physical_device_present_rectangles_len(
+                &self,
+                physical_device: PhysicalDevice,
+                surface: SurfaceKHR,
+            ) -> crate::VkResult<u32> {
+                unsafe {
+                    let mut rect_count = ::core::mem::MaybeUninit::uninit();
+                    (self.fp.get_physical_device_present_rectangles_khr)(
+                        physical_device,
+                        surface,
+                        rect_count.as_mut_ptr(),
+                        core::ptr::null_mut(),
+                    )
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        rect_count,
+                    )
+                }
+            }
+            #[doc = r" # Depends on"]
+            #[doc = "* VK_KHR_swapchain"]
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDevicePresentRectanglesKHR.html>"]
+            pub unsafe fn get_physical_device_present_rectangles(
+                &self,
+                physical_device: PhysicalDevice,
+                surface: SurfaceKHR,
+                out: &mut [Rect2D],
+            ) -> crate::VkResult<()> {
+                unsafe {
+                    let mut len = out.len() as _;
+                    (self.fp.get_physical_device_present_rectangles_khr)(
+                        physical_device,
+                        surface,
+                        &mut len,
+                        out.as_mut_ptr(),
+                    )
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -300,7 +422,7 @@ pub mod khr {
         //! VK_KHR_swapchain device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 70u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_swapchain";
+        pub const NAME: &ffi::CStr = c"VK_KHR_swapchain";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_swapchain_khr: PFN_vkCreateSwapchainKHR,
@@ -312,8 +434,6 @@ pub mod khr {
                 PFN_vkGetDeviceGroupPresentCapabilitiesKHR,
             pub get_device_group_surface_present_modes_khr:
                 PFN_vkGetDeviceGroupSurfacePresentModesKHR,
-            pub get_physical_device_present_rectangles_khr:
-                PFN_vkGetPhysicalDevicePresentRectanglesKHR,
             pub acquire_next_image2_khr: PFN_vkAcquireNextImage2KHR,
         }
         unsafe impl Send for DeviceFp {}
@@ -458,28 +578,6 @@ pub mod khr {
                             >(f)
                         }
                     },
-                    get_physical_device_present_rectangles_khr: unsafe {
-                        unsafe extern "system" fn get_physical_device_present_rectangles_khr(
-                            _physical_device: PhysicalDevice,
-                            _surface: SurfaceKHR,
-                            _rect_count: *mut u32,
-                            _rects: *mut Rect2D,
-                        ) -> Result {
-                            panic!(concat!(
-                                "failed to load ",
-                                stringify!(get_physical_device_present_rectangles_khr),
-                            ))
-                        }
-                        let f = f(c"vkGetPhysicalDevicePresentRectanglesKHR");
-                        if f.is_null() {
-                            get_physical_device_present_rectangles_khr
-                        } else {
-                            ::core::mem::transmute::<
-                                *const ffi::c_void,
-                                PFN_vkGetPhysicalDevicePresentRectanglesKHR,
-                            >(f)
-                        }
-                    },
                     acquire_next_image2_khr: unsafe {
                         unsafe extern "system" fn acquire_next_image2_khr(
                             _device: crate::vk::Device,
@@ -504,20 +602,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -526,6 +628,8 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -535,7 +639,6 @@ pub mod khr {
                 create_info: &SwapchainCreateInfoKHR<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SwapchainKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut swapchain = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_swapchain_khr)(
@@ -544,7 +647,7 @@ pub mod khr {
                         allocator.as_ptr(),
                         swapchain.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, swapchain)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], swapchain)
                 }
             }
             #[doc = r" # Safety"]
@@ -560,6 +663,9 @@ pub mod khr {
                     (self.fp.destroy_swapchain_khr)(self.handle, swapchain, allocator.as_ptr())
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -568,8 +674,6 @@ pub mod khr {
                 &self,
                 swapchain: SwapchainKHR,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut swapchain_image_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_swapchain_images_khr)(
@@ -578,9 +682,15 @@ pub mod khr {
                         swapchain_image_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, swapchain_image_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        swapchain_image_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -590,8 +700,6 @@ pub mod khr {
                 swapchain: SwapchainKHR,
                 out: &mut [Image],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_swapchain_images_khr)(
@@ -600,9 +708,14 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`TIMEOUT`][1]"]
+            #[doc = "* [`NOT_READY`][2]"]
+            #[doc = "* [`SUBOPTIMAL_KHR`][3]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -614,12 +727,6 @@ pub mod khr {
                 semaphore: Semaphore,
                 fence: Fence,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::TIMEOUT,
-                    crate::vk::Result::NOT_READY,
-                    crate::vk::Result::SUBOPTIMAL_KHR,
-                ];
                 unsafe {
                     let mut image_index = ::core::mem::MaybeUninit::uninit();
                     (self.fp.acquire_next_image_khr)(
@@ -630,9 +737,20 @@ pub mod khr {
                         fence,
                         image_index.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, image_index)
+                    .result_with_assume_init(
+                        &[
+                            crate::vk::Result::SUCCESS,
+                            crate::vk::Result::TIMEOUT,
+                            crate::vk::Result::NOT_READY,
+                            crate::vk::Result::SUBOPTIMAL_KHR,
+                        ],
+                        image_index,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`SUBOPTIMAL_KHR`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -642,14 +760,17 @@ pub mod khr {
                 queue: Queue,
                 present_info: &PresentInfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::SUBOPTIMAL_KHR,
-                ];
-                unsafe { (self.fp.queue_present_khr)(queue, present_info).result(SUCCESS_CODES) }
+                unsafe {
+                    (self.fp.queue_present_khr)(queue, present_info).result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::SUBOPTIMAL_KHR,
+                    ])
+                }
             }
             #[doc = r" # Depends on"]
             #[doc = "* VK_VERSION_1_1"]
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -658,17 +779,18 @@ pub mod khr {
                 &self,
                 device_group_present_capabilities: &mut DeviceGroupPresentCapabilitiesKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_device_group_present_capabilities_khr)(
                         self.handle,
                         device_group_present_capabilities,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Depends on"]
             #[doc = "* VK_VERSION_1_1"]
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -677,7 +799,6 @@ pub mod khr {
                 &self,
                 surface: SurfaceKHR,
             ) -> crate::VkResult<DeviceGroupPresentModeFlagsKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut modes = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_device_group_surface_present_modes_khr)(
@@ -685,60 +806,16 @@ pub mod khr {
                         surface,
                         modes.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, modes)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], modes)
                 }
             }
             #[doc = r" # Depends on"]
             #[doc = "* VK_VERSION_1_1"]
-            #[doc = r" # Safety"]
-            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
-            #[doc = r" # Vulkan docs"]
-            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDevicePresentRectanglesKHR.html>"]
-            pub unsafe fn get_physical_device_present_rectangles_len(
-                &self,
-                physical_device: PhysicalDevice,
-                surface: SurfaceKHR,
-            ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
-                unsafe {
-                    let mut rect_count = ::core::mem::MaybeUninit::uninit();
-                    (self.fp.get_physical_device_present_rectangles_khr)(
-                        physical_device,
-                        surface,
-                        rect_count.as_mut_ptr(),
-                        core::ptr::null_mut(),
-                    )
-                    .result_with_assume_init(SUCCESS_CODES, rect_count)
-                }
-            }
-            #[doc = r" # Depends on"]
-            #[doc = "* VK_VERSION_1_1"]
-            #[doc = r" # Safety"]
-            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
-            #[doc = r" # Vulkan docs"]
-            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDevicePresentRectanglesKHR.html>"]
-            pub unsafe fn get_physical_device_present_rectangles(
-                &self,
-                physical_device: PhysicalDevice,
-                surface: SurfaceKHR,
-                out: &mut [Rect2D],
-            ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
-                unsafe {
-                    let mut len = out.len() as _;
-                    (self.fp.get_physical_device_present_rectangles_khr)(
-                        physical_device,
-                        surface,
-                        &mut len,
-                        out.as_mut_ptr(),
-                    )
-                    .result(SUCCESS_CODES)
-                }
-            }
-            #[doc = r" # Depends on"]
-            #[doc = "* VK_VERSION_1_1"]
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`TIMEOUT`][1]"]
+            #[doc = "* [`NOT_READY`][2]"]
+            #[doc = "* [`SUBOPTIMAL_KHR`][3]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -747,12 +824,6 @@ pub mod khr {
                 &self,
                 acquire_info: &AcquireNextImageInfoKHR<'_>,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::TIMEOUT,
-                    crate::vk::Result::NOT_READY,
-                    crate::vk::Result::SUBOPTIMAL_KHR,
-                ];
                 unsafe {
                     let mut image_index = ::core::mem::MaybeUninit::uninit();
                     (self.fp.acquire_next_image2_khr)(
@@ -760,8 +831,40 @@ pub mod khr {
                         acquire_info,
                         image_index.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, image_index)
+                    .result_with_assume_init(
+                        &[
+                            crate::vk::Result::SUCCESS,
+                            crate::vk::Result::TIMEOUT,
+                            crate::vk::Result::NOT_READY,
+                            crate::vk::Result::SUBOPTIMAL_KHR,
+                        ],
+                        image_index,
+                    )
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -769,7 +872,7 @@ pub mod khr {
         //! VK_KHR_display instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 23u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_display";
+        pub const NAME: &ffi::CStr = c"VK_KHR_display";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub get_physical_device_display_properties_khr:
@@ -943,20 +1046,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -965,6 +1072,9 @@ pub mod khr {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -973,8 +1083,6 @@ pub mod khr {
                 &self,
                 physical_device: PhysicalDevice,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut property_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_display_properties_khr)(
@@ -982,9 +1090,15 @@ pub mod khr {
                         property_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, property_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        property_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -994,8 +1108,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 out: &mut [DisplayPropertiesKHR],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_display_properties_khr)(
@@ -1003,9 +1115,12 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1014,8 +1129,6 @@ pub mod khr {
                 &self,
                 physical_device: PhysicalDevice,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut property_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_display_plane_properties_khr)(
@@ -1023,9 +1136,15 @@ pub mod khr {
                         property_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, property_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        property_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1035,8 +1154,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 out: &mut [DisplayPlanePropertiesKHR],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_display_plane_properties_khr)(
@@ -1044,9 +1161,12 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1056,8 +1176,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 plane_index: u32,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut display_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_display_plane_supported_displays_khr)(
@@ -1066,9 +1184,15 @@ pub mod khr {
                         display_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, display_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        display_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1079,8 +1203,6 @@ pub mod khr {
                 plane_index: u32,
                 out: &mut [DisplayKHR],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_display_plane_supported_displays_khr)(
@@ -1089,9 +1211,12 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1101,8 +1226,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 display: DisplayKHR,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut property_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_display_mode_properties_khr)(
@@ -1111,9 +1234,15 @@ pub mod khr {
                         property_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, property_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        property_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1124,8 +1253,6 @@ pub mod khr {
                 display: DisplayKHR,
                 out: &mut [DisplayModePropertiesKHR],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_display_mode_properties_khr)(
@@ -1134,9 +1261,11 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1148,7 +1277,6 @@ pub mod khr {
                 create_info: &DisplayModeCreateInfoKHR<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<DisplayModeKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut mode = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_display_mode_khr)(
@@ -1158,9 +1286,11 @@ pub mod khr {
                         allocator.as_ptr(),
                         mode.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, mode)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], mode)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1171,7 +1301,6 @@ pub mod khr {
                 mode: DisplayModeKHR,
                 plane_index: u32,
             ) -> crate::VkResult<DisplayPlaneCapabilitiesKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut capabilities = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_display_plane_capabilities_khr)(
@@ -1180,9 +1309,11 @@ pub mod khr {
                         plane_index,
                         capabilities.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, capabilities)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], capabilities)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1192,7 +1323,6 @@ pub mod khr {
                 create_info: &DisplaySurfaceCreateInfoKHR<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_display_plane_surface_khr)(
@@ -1201,8 +1331,32 @@ pub mod khr {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -1210,7 +1364,7 @@ pub mod khr {
         //! VK_KHR_display_swapchain device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 10u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_display_swapchain";
+        pub const NAME: &ffi::CStr = c"VK_KHR_display_swapchain";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_shared_swapchains_khr: PFN_vkCreateSharedSwapchainsKHR,
@@ -1247,20 +1401,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -1269,6 +1427,8 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1277,19 +1437,46 @@ pub mod khr {
                 &self,
                 create_infos: &[SwapchainCreateInfoKHR<'_>],
                 allocator: Option<&AllocationCallbacks>,
-                swapchains: &mut SwapchainKHR,
+                swapchains: &mut [SwapchainKHR],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.create_shared_swapchains_khr)(
                         self.handle,
                         create_infos.len() as _,
-                        create_infos.as_ptr(),
+                        if !create_infos.is_empty() {
+                            create_infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         allocator.as_ptr(),
-                        swapchains,
+                        swapchains.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -1297,7 +1484,7 @@ pub mod khr {
         //! VK_KHR_xlib_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 6u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_xlib_surface";
+        pub const NAME: &ffi::CStr = c"VK_KHR_xlib_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_xlib_surface_khr: PFN_vkCreateXlibSurfaceKHR,
@@ -1356,20 +1543,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -1378,6 +1569,8 @@ pub mod khr {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1387,7 +1580,6 @@ pub mod khr {
                 create_info: &XlibSurfaceCreateInfoKHR<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_xlib_surface_khr)(
@@ -1396,7 +1588,7 @@ pub mod khr {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
             }
             #[doc = r" # Safety"]
@@ -1420,12 +1612,36 @@ pub mod khr {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod xcb_surface {
         //! VK_KHR_xcb_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 6u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_xcb_surface";
+        pub const NAME: &ffi::CStr = c"VK_KHR_xcb_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_xcb_surface_khr: PFN_vkCreateXcbSurfaceKHR,
@@ -1484,20 +1700,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -1506,6 +1726,8 @@ pub mod khr {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1515,7 +1737,6 @@ pub mod khr {
                 create_info: &XcbSurfaceCreateInfoKHR<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_xcb_surface_khr)(
@@ -1524,7 +1745,7 @@ pub mod khr {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
             }
             #[doc = r" # Safety"]
@@ -1548,12 +1769,36 @@ pub mod khr {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod wayland_surface {
         //! VK_KHR_wayland_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 6u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_wayland_surface";
+        pub const NAME: &ffi::CStr = c"VK_KHR_wayland_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_wayland_surface_khr: PFN_vkCreateWaylandSurfaceKHR,
@@ -1612,20 +1857,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -1634,6 +1883,8 @@ pub mod khr {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1643,7 +1894,6 @@ pub mod khr {
                 create_info: &WaylandSurfaceCreateInfoKHR<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_wayland_surface_khr)(
@@ -1652,7 +1902,7 @@ pub mod khr {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
             }
             #[doc = r" # Safety"]
@@ -1674,12 +1924,36 @@ pub mod khr {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod android_surface {
         //! VK_KHR_android_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 6u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_android_surface";
+        pub const NAME: &ffi::CStr = c"VK_KHR_android_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_android_surface_khr: PFN_vkCreateAndroidSurfaceKHR,
@@ -1715,20 +1989,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -1737,6 +2015,8 @@ pub mod khr {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1746,7 +2026,6 @@ pub mod khr {
                 create_info: &AndroidSurfaceCreateInfoKHR<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_android_surface_khr)(
@@ -1755,8 +2034,32 @@ pub mod khr {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -1764,7 +2067,7 @@ pub mod khr {
         //! VK_KHR_win32_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 6u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_win32_surface";
+        pub const NAME: &ffi::CStr = c"VK_KHR_win32_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_win32_surface_khr: PFN_vkCreateWin32SurfaceKHR,
@@ -1821,20 +2124,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -1843,6 +2150,8 @@ pub mod khr {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -1852,7 +2161,6 @@ pub mod khr {
                 create_info: &Win32SurfaceCreateInfoKHR<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_win32_surface_khr)(
@@ -1861,7 +2169,7 @@ pub mod khr {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
             }
             #[doc = r" # Safety"]
@@ -1881,6 +2189,30 @@ pub mod khr {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod sampler_mirror_clamp_to_edge {
         //! VK_KHR_sampler_mirror_clamp_to_edge device extension.
@@ -1888,13 +2220,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_sampler_mirror_clamp_to_edge";
+        pub const NAME: &ffi::CStr = c"VK_KHR_sampler_mirror_clamp_to_edge";
     }
     pub mod video_queue {
         //! VK_KHR_video_queue device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 8u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_video_queue";
+        pub const NAME: &ffi::CStr = c"VK_KHR_video_queue";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_physical_device_video_capabilities_khr:
@@ -2172,20 +2504,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -2194,6 +2530,8 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -2204,16 +2542,18 @@ pub mod khr {
                 video_profile: &VideoProfileInfoKHR<'_>,
                 capabilities: &mut VideoCapabilitiesKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_physical_device_video_capabilities_khr)(
                         physical_device,
                         video_profile,
                         capabilities,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -2223,8 +2563,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 video_format_info: &PhysicalDeviceVideoFormatInfoKHR<'_>,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut video_format_property_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_video_format_properties_khr)(
@@ -2233,9 +2571,15 @@ pub mod khr {
                         video_format_property_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, video_format_property_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        video_format_property_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -2246,8 +2590,6 @@ pub mod khr {
                 video_format_info: &PhysicalDeviceVideoFormatInfoKHR<'_>,
                 out: &mut [VideoFormatPropertiesKHR<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_video_format_properties_khr)(
@@ -2256,9 +2598,11 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -2268,7 +2612,6 @@ pub mod khr {
                 create_info: &VideoSessionCreateInfoKHR<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<VideoSessionKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut video_session = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_video_session_khr)(
@@ -2277,7 +2620,7 @@ pub mod khr {
                         allocator.as_ptr(),
                         video_session.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, video_session)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], video_session)
                 }
             }
             #[doc = r" # Safety"]
@@ -2297,6 +2640,9 @@ pub mod khr {
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -2305,8 +2651,6 @@ pub mod khr {
                 &self,
                 video_session: VideoSessionKHR,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut memory_requirements_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_video_session_memory_requirements_khr)(
@@ -2315,9 +2659,15 @@ pub mod khr {
                         memory_requirements_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, memory_requirements_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        memory_requirements_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -2327,8 +2677,6 @@ pub mod khr {
                 video_session: VideoSessionKHR,
                 out: &mut [VideoSessionMemoryRequirementsKHR<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_video_session_memory_requirements_khr)(
@@ -2337,9 +2685,11 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -2349,17 +2699,22 @@ pub mod khr {
                 video_session: VideoSessionKHR,
                 bind_session_memory_infos: &[BindVideoSessionMemoryInfoKHR<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.bind_video_session_memory_khr)(
                         self.handle,
                         video_session,
                         bind_session_memory_infos.len() as _,
-                        bind_session_memory_infos.as_ptr(),
+                        if !bind_session_memory_infos.is_empty() {
+                            bind_session_memory_infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -2369,7 +2724,6 @@ pub mod khr {
                 create_info: &VideoSessionParametersCreateInfoKHR<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<VideoSessionParametersKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut video_session_parameters = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_video_session_parameters_khr)(
@@ -2378,9 +2732,14 @@ pub mod khr {
                         allocator.as_ptr(),
                         video_session_parameters.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, video_session_parameters)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS],
+                        video_session_parameters,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -2390,14 +2749,13 @@ pub mod khr {
                 video_session_parameters: VideoSessionParametersKHR,
                 update_info: &VideoSessionParametersUpdateInfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.update_video_session_parameters_khr)(
                         self.handle,
                         video_session_parameters,
                         update_info,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -2453,12 +2811,36 @@ pub mod khr {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod video_decode_queue {
         //! VK_KHR_video_decode_queue device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 8u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_video_decode_queue";
+        pub const NAME: &ffi::CStr = c"VK_KHR_video_decode_queue";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_decode_video_khr: PFN_vkCmdDecodeVideoKHR,
@@ -2486,20 +2868,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -2520,24 +2906,48 @@ pub mod khr {
                 unsafe { (self.fp.cmd_decode_video_khr)(command_buffer, decode_info) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod video_encode_h264 {
         //! VK_KHR_video_encode_h264 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 14u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_video_encode_h264";
+        pub const NAME: &ffi::CStr = c"VK_KHR_video_encode_h264";
     }
     pub mod video_encode_h265 {
         //! VK_KHR_video_encode_h265 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 14u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_video_encode_h265";
+        pub const NAME: &ffi::CStr = c"VK_KHR_video_encode_h265";
     }
     pub mod video_decode_h264 {
         //! VK_KHR_video_decode_h264 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 9u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_video_decode_h264";
+        pub const NAME: &ffi::CStr = c"VK_KHR_video_decode_h264";
     }
     pub mod dynamic_rendering {
         //! VK_KHR_dynamic_rendering device extension.
@@ -2549,7 +2959,7 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_dynamic_rendering";
+        pub const NAME: &ffi::CStr = c"VK_KHR_dynamic_rendering";
     }
     pub mod multiview {
         //! VK_KHR_multiview device extension.
@@ -2557,7 +2967,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_1
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_multiview";
+        pub const NAME: &ffi::CStr = c"VK_KHR_multiview";
     }
     pub mod get_physical_device_properties2 {
         //! VK_KHR_get_physical_device_properties2 instance extension.
@@ -2569,7 +2979,7 @@ pub mod khr {
         //! [1]: crate::Instance
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_get_physical_device_properties2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_get_physical_device_properties2";
     }
     pub mod device_group {
         //! VK_KHR_device_group device extension.
@@ -2581,7 +2991,7 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 4u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_device_group";
+        pub const NAME: &ffi::CStr = c"VK_KHR_device_group";
     }
     pub mod shader_draw_parameters {
         //! VK_KHR_shader_draw_parameters device extension.
@@ -2589,7 +2999,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_1
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_draw_parameters";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_draw_parameters";
     }
     pub mod maintenance1 {
         //! VK_KHR_maintenance1 device extension.
@@ -2601,7 +3011,7 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_maintenance1";
+        pub const NAME: &ffi::CStr = c"VK_KHR_maintenance1";
     }
     pub mod device_group_creation {
         //! VK_KHR_device_group_creation instance extension.
@@ -2613,7 +3023,7 @@ pub mod khr {
         //! [1]: crate::Instance
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_device_group_creation";
+        pub const NAME: &ffi::CStr = c"VK_KHR_device_group_creation";
     }
     pub mod external_memory_capabilities {
         //! VK_KHR_external_memory_capabilities instance extension.
@@ -2625,7 +3035,7 @@ pub mod khr {
         //! [1]: crate::Instance
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_external_memory_capabilities";
+        pub const NAME: &ffi::CStr = c"VK_KHR_external_memory_capabilities";
     }
     pub mod external_memory {
         //! VK_KHR_external_memory device extension.
@@ -2633,13 +3043,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_1
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_external_memory";
+        pub const NAME: &ffi::CStr = c"VK_KHR_external_memory";
     }
     pub mod external_memory_win32 {
         //! VK_KHR_external_memory_win32 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_external_memory_win32";
+        pub const NAME: &ffi::CStr = c"VK_KHR_external_memory_win32";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_memory_win32_handle_khr: PFN_vkGetMemoryWin32HandleKHR,
@@ -2697,20 +3107,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -2719,6 +3133,8 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -2728,16 +3144,17 @@ pub mod khr {
                 get_win32_handle_info: &MemoryGetWin32HandleInfoKHR<'_>,
                 handle: *mut HANDLE,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_memory_win32_handle_khr)(
                         self.handle,
                         get_win32_handle_info,
                         handle,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -2748,7 +3165,6 @@ pub mod khr {
                 handle: HANDLE,
                 memory_win32_handle_properties: &mut MemoryWin32HandlePropertiesKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_memory_win32_handle_properties_khr)(
                         self.handle,
@@ -2756,8 +3172,32 @@ pub mod khr {
                         handle,
                         memory_win32_handle_properties,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -2765,7 +3205,7 @@ pub mod khr {
         //! VK_KHR_external_memory_fd device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_external_memory_fd";
+        pub const NAME: &ffi::CStr = c"VK_KHR_external_memory_fd";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_memory_fd_khr: PFN_vkGetMemoryFdKHR,
@@ -2817,20 +3257,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -2839,6 +3283,8 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -2847,13 +3293,14 @@ pub mod khr {
                 &self,
                 get_fd_info: &MemoryGetFdInfoKHR<'_>,
             ) -> crate::VkResult<ffi::c_int> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut fd = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_memory_fd_khr)(self.handle, get_fd_info, fd.as_mut_ptr())
-                        .result_with_assume_init(SUCCESS_CODES, fd)
+                        .result_with_assume_init(&[crate::vk::Result::SUCCESS], fd)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -2864,7 +3311,6 @@ pub mod khr {
                 fd: ffi::c_int,
                 memory_fd_properties: &mut MemoryFdPropertiesKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_memory_fd_properties_khr)(
                         self.handle,
@@ -2872,8 +3318,32 @@ pub mod khr {
                         fd,
                         memory_fd_properties,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -2881,7 +3351,7 @@ pub mod khr {
         //! VK_KHR_win32_keyed_mutex device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_win32_keyed_mutex";
+        pub const NAME: &ffi::CStr = c"VK_KHR_win32_keyed_mutex";
     }
     pub mod external_semaphore_capabilities {
         //! VK_KHR_external_semaphore_capabilities instance extension.
@@ -2893,7 +3363,7 @@ pub mod khr {
         //! [1]: crate::Instance
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_external_semaphore_capabilities";
+        pub const NAME: &ffi::CStr = c"VK_KHR_external_semaphore_capabilities";
     }
     pub mod external_semaphore {
         //! VK_KHR_external_semaphore device extension.
@@ -2901,13 +3371,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_1
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_external_semaphore";
+        pub const NAME: &ffi::CStr = c"VK_KHR_external_semaphore";
     }
     pub mod external_semaphore_win32 {
         //! VK_KHR_external_semaphore_win32 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_external_semaphore_win32";
+        pub const NAME: &ffi::CStr = c"VK_KHR_external_semaphore_win32";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub import_semaphore_win32_handle_khr: PFN_vkImportSemaphoreWin32HandleKHR,
@@ -2963,20 +3433,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -2985,6 +3459,8 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -2993,15 +3469,16 @@ pub mod khr {
                 &self,
                 import_semaphore_win32_handle_info: &ImportSemaphoreWin32HandleInfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.import_semaphore_win32_handle_khr)(
                         self.handle,
                         import_semaphore_win32_handle_info,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -3011,15 +3488,38 @@ pub mod khr {
                 get_win32_handle_info: &SemaphoreGetWin32HandleInfoKHR<'_>,
                 handle: *mut HANDLE,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_semaphore_win32_handle_khr)(
                         self.handle,
                         get_win32_handle_info,
                         handle,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -3027,7 +3527,7 @@ pub mod khr {
         //! VK_KHR_external_semaphore_fd device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_external_semaphore_fd";
+        pub const NAME: &ffi::CStr = c"VK_KHR_external_semaphore_fd";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub import_semaphore_fd_khr: PFN_vkImportSemaphoreFdKHR,
@@ -3076,20 +3576,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -3098,6 +3602,8 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -3106,12 +3612,13 @@ pub mod khr {
                 &self,
                 import_semaphore_fd_info: &ImportSemaphoreFdInfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.import_semaphore_fd_khr)(self.handle, import_semaphore_fd_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -3120,12 +3627,35 @@ pub mod khr {
                 &self,
                 get_fd_info: &SemaphoreGetFdInfoKHR<'_>,
             ) -> crate::VkResult<ffi::c_int> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut fd = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_semaphore_fd_khr)(self.handle, get_fd_info, fd.as_mut_ptr())
-                        .result_with_assume_init(SUCCESS_CODES, fd)
+                        .result_with_assume_init(&[crate::vk::Result::SUCCESS], fd)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -3139,7 +3669,7 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_push_descriptor";
+        pub const NAME: &ffi::CStr = c"VK_KHR_push_descriptor";
     }
     pub mod shader_float16_int8 {
         //! VK_KHR_shader_float16_int8 device extension.
@@ -3147,7 +3677,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_float16_int8";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_float16_int8";
     }
     pub mod _16bit_storage {
         //! VK_KHR_16bit_storage device extension.
@@ -3155,13 +3685,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_1
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_16bit_storage";
+        pub const NAME: &ffi::CStr = c"VK_KHR_16bit_storage";
     }
     pub mod incremental_present {
         //! VK_KHR_incremental_present device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_incremental_present";
+        pub const NAME: &ffi::CStr = c"VK_KHR_incremental_present";
     }
     pub mod descriptor_update_template {
         //! VK_KHR_descriptor_update_template device extension.
@@ -3173,7 +3703,7 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_descriptor_update_template";
+        pub const NAME: &ffi::CStr = c"VK_KHR_descriptor_update_template";
     }
     pub mod imageless_framebuffer {
         //! VK_KHR_imageless_framebuffer device extension.
@@ -3181,7 +3711,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_imageless_framebuffer";
+        pub const NAME: &ffi::CStr = c"VK_KHR_imageless_framebuffer";
     }
     pub mod create_renderpass2 {
         //! VK_KHR_create_renderpass2 device extension.
@@ -3193,13 +3723,13 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_create_renderpass2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_create_renderpass2";
     }
     pub mod shared_presentable_image {
         //! VK_KHR_shared_presentable_image device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shared_presentable_image";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shared_presentable_image";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_swapchain_status_khr: PFN_vkGetSwapchainStatusKHR,
@@ -3232,20 +3762,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -3254,6 +3788,9 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`SUBOPTIMAL_KHR`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -3262,13 +3799,36 @@ pub mod khr {
                 &self,
                 swapchain: SwapchainKHR,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::SUBOPTIMAL_KHR,
-                ];
                 unsafe {
-                    (self.fp.get_swapchain_status_khr)(self.handle, swapchain).result(SUCCESS_CODES)
+                    (self.fp.get_swapchain_status_khr)(self.handle, swapchain).result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::SUBOPTIMAL_KHR,
+                    ])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -3282,7 +3842,7 @@ pub mod khr {
         //! [1]: crate::Instance
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_external_fence_capabilities";
+        pub const NAME: &ffi::CStr = c"VK_KHR_external_fence_capabilities";
     }
     pub mod external_fence {
         //! VK_KHR_external_fence device extension.
@@ -3290,13 +3850,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_1
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_external_fence";
+        pub const NAME: &ffi::CStr = c"VK_KHR_external_fence";
     }
     pub mod external_fence_win32 {
         //! VK_KHR_external_fence_win32 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_external_fence_win32";
+        pub const NAME: &ffi::CStr = c"VK_KHR_external_fence_win32";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub import_fence_win32_handle_khr: PFN_vkImportFenceWin32HandleKHR,
@@ -3351,20 +3911,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -3373,6 +3937,8 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -3381,15 +3947,16 @@ pub mod khr {
                 &self,
                 import_fence_win32_handle_info: &ImportFenceWin32HandleInfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.import_fence_win32_handle_khr)(
                         self.handle,
                         import_fence_win32_handle_info,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -3399,11 +3966,34 @@ pub mod khr {
                 get_win32_handle_info: &FenceGetWin32HandleInfoKHR<'_>,
                 handle: *mut HANDLE,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_fence_win32_handle_khr)(self.handle, get_win32_handle_info, handle)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -3411,7 +4001,7 @@ pub mod khr {
         //! VK_KHR_external_fence_fd device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_external_fence_fd";
+        pub const NAME: &ffi::CStr = c"VK_KHR_external_fence_fd";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub import_fence_fd_khr: PFN_vkImportFenceFdKHR,
@@ -3455,20 +4045,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -3477,6 +4071,8 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -3485,12 +4081,13 @@ pub mod khr {
                 &self,
                 import_fence_fd_info: &ImportFenceFdInfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.import_fence_fd_khr)(self.handle, import_fence_fd_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -3499,12 +4096,35 @@ pub mod khr {
                 &self,
                 get_fd_info: &FenceGetFdInfoKHR<'_>,
             ) -> crate::VkResult<ffi::c_int> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut fd = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_fence_fd_khr)(self.handle, get_fd_info, fd.as_mut_ptr())
-                        .result_with_assume_init(SUCCESS_CODES, fd)
+                        .result_with_assume_init(&[crate::vk::Result::SUCCESS], fd)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -3512,7 +4132,7 @@ pub mod khr {
         //! VK_KHR_performance_query device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_performance_query";
+        pub const NAME: &ffi::CStr = c"VK_KHR_performance_query";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub enumerate_physical_device_queue_family_performance_query_counters_khr:
@@ -3614,20 +4234,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -3636,6 +4260,9 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -3645,8 +4272,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 queue_family_index: u32,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut counter_count = ::core::mem::MaybeUninit::uninit();
                     (self
@@ -3658,9 +4283,15 @@ pub mod khr {
                         core::ptr::null_mut(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, counter_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        counter_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -3672,8 +4303,6 @@ pub mod khr {
                 out_counters: &mut [PerformanceCounterKHR<'_>],
                 out_counter_descriptions: &mut [PerformanceCounterDescriptionKHR<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out_counters.len() as _;
                     (self
@@ -3685,7 +4314,7 @@ pub mod khr {
                         out_counters.as_mut_ptr(),
                         out_counter_descriptions.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
             #[doc = r" # Safety"]
@@ -3696,18 +4325,21 @@ pub mod khr {
                 &self,
                 physical_device: PhysicalDevice,
                 performance_query_create_info: &QueryPoolPerformanceCreateInfoKHR<'_>,
-                num_passes: &mut u32,
-            ) {
+            ) -> u32 {
                 unsafe {
+                    let mut num_passes = ::core::mem::MaybeUninit::uninit();
                     (self
                         .fp
                         .get_physical_device_queue_family_performance_query_passes_khr)(
                         physical_device,
                         performance_query_create_info,
-                        num_passes,
-                    )
+                        num_passes.as_mut_ptr(),
+                    );
+                    num_passes.assume_init()
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -3716,9 +4348,9 @@ pub mod khr {
                 &self,
                 info: &AcquireProfilingLockInfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
-                    (self.fp.acquire_profiling_lock_khr)(self.handle, info).result(SUCCESS_CODES)
+                    (self.fp.acquire_profiling_lock_khr)(self.handle, info)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -3729,6 +4361,30 @@ pub mod khr {
                 unsafe { (self.fp.release_profiling_lock_khr)(self.handle) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod maintenance2 {
         //! VK_KHR_maintenance2 device extension.
@@ -3736,13 +4392,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_1
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_maintenance2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_maintenance2";
     }
     pub mod get_surface_capabilities2 {
         //! VK_KHR_get_surface_capabilities2 instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_get_surface_capabilities2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_get_surface_capabilities2";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub get_physical_device_surface_capabilities2_khr:
@@ -3801,20 +4457,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -3823,6 +4483,8 @@ pub mod khr {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -3833,16 +4495,18 @@ pub mod khr {
                 surface_info: &PhysicalDeviceSurfaceInfo2KHR<'_>,
                 surface_capabilities: &mut SurfaceCapabilities2KHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_physical_device_surface_capabilities2_khr)(
                         physical_device,
                         surface_info,
                         surface_capabilities,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -3852,8 +4516,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 surface_info: &PhysicalDeviceSurfaceInfo2KHR<'_>,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut surface_format_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_surface_formats2_khr)(
@@ -3862,9 +4524,15 @@ pub mod khr {
                         surface_format_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface_format_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        surface_format_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -3875,8 +4543,6 @@ pub mod khr {
                 surface_info: &PhysicalDeviceSurfaceInfo2KHR<'_>,
                 out: &mut [SurfaceFormat2KHR<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_surface_formats2_khr)(
@@ -3885,8 +4551,32 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -3896,13 +4586,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_1
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_variable_pointers";
+        pub const NAME: &ffi::CStr = c"VK_KHR_variable_pointers";
     }
     pub mod get_display_properties2 {
         //! VK_KHR_get_display_properties2 instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_get_display_properties2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_get_display_properties2";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub get_physical_device_display_properties2_khr:
@@ -4006,20 +4696,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -4028,6 +4722,9 @@ pub mod khr {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -4036,8 +4733,6 @@ pub mod khr {
                 &self,
                 physical_device: PhysicalDevice,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut property_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_display_properties2_khr)(
@@ -4045,9 +4740,15 @@ pub mod khr {
                         property_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, property_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        property_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -4057,8 +4758,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 out: &mut [DisplayProperties2KHR<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_display_properties2_khr)(
@@ -4066,9 +4765,12 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -4077,8 +4779,6 @@ pub mod khr {
                 &self,
                 physical_device: PhysicalDevice,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut property_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_display_plane_properties2_khr)(
@@ -4086,9 +4786,15 @@ pub mod khr {
                         property_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, property_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        property_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -4098,8 +4804,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 out: &mut [DisplayPlaneProperties2KHR<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_display_plane_properties2_khr)(
@@ -4107,9 +4811,12 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -4119,8 +4826,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 display: DisplayKHR,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut property_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_display_mode_properties2_khr)(
@@ -4129,9 +4834,15 @@ pub mod khr {
                         property_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, property_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        property_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -4142,8 +4853,6 @@ pub mod khr {
                 display: DisplayKHR,
                 out: &mut [DisplayModeProperties2KHR<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_display_mode_properties2_khr)(
@@ -4152,9 +4861,11 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -4165,15 +4876,38 @@ pub mod khr {
                 display_plane_info: &DisplayPlaneInfo2KHR<'_>,
                 capabilities: &mut DisplayPlaneCapabilities2KHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_display_plane_capabilities2_khr)(
                         physical_device,
                         display_plane_info,
                         capabilities,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -4183,7 +4917,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_1
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_dedicated_allocation";
+        pub const NAME: &ffi::CStr = c"VK_KHR_dedicated_allocation";
     }
     pub mod storage_buffer_storage_class {
         //! VK_KHR_storage_buffer_storage_class device extension.
@@ -4191,13 +4925,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_1
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_storage_buffer_storage_class";
+        pub const NAME: &ffi::CStr = c"VK_KHR_storage_buffer_storage_class";
     }
     pub mod shader_bfloat16 {
         //! VK_KHR_shader_bfloat16 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_bfloat16";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_bfloat16";
     }
     pub mod relaxed_block_layout {
         //! VK_KHR_relaxed_block_layout device extension.
@@ -4205,7 +4939,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_1
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_relaxed_block_layout";
+        pub const NAME: &ffi::CStr = c"VK_KHR_relaxed_block_layout";
     }
     pub mod get_memory_requirements2 {
         //! VK_KHR_get_memory_requirements2 device extension.
@@ -4217,7 +4951,7 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_get_memory_requirements2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_get_memory_requirements2";
     }
     pub mod image_format_list {
         //! VK_KHR_image_format_list device extension.
@@ -4225,13 +4959,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_image_format_list";
+        pub const NAME: &ffi::CStr = c"VK_KHR_image_format_list";
     }
     pub mod acceleration_structure {
         //! VK_KHR_acceleration_structure device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 13u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_acceleration_structure";
+        pub const NAME: &ffi::CStr = c"VK_KHR_acceleration_structure";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_acceleration_structure_khr: PFN_vkCreateAccelerationStructureKHR,
@@ -4618,20 +5352,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -4640,6 +5378,8 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -4649,7 +5389,6 @@ pub mod khr {
                 create_info: &AccelerationStructureCreateInfoKHR<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<AccelerationStructureKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut acceleration_structure = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_acceleration_structure_khr)(
@@ -4658,7 +5397,7 @@ pub mod khr {
                         allocator.as_ptr(),
                         acceleration_structure.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, acceleration_structure)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], acceleration_structure)
                 }
             }
             #[doc = r" # Safety"]
@@ -4692,7 +5431,11 @@ pub mod khr {
                     (self.fp.cmd_build_acceleration_structures_khr)(
                         command_buffer,
                         infos.len() as _,
-                        infos.as_ptr(),
+                        if !infos.is_empty() {
+                            infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         build_range_infos.as_ptr().cast(),
                     )
                 }
@@ -4713,13 +5456,29 @@ pub mod khr {
                     (self.fp.cmd_build_acceleration_structures_indirect_khr)(
                         command_buffer,
                         infos.len() as _,
-                        infos.as_ptr(),
-                        indirect_device_addresses.as_ptr(),
-                        indirect_strides.as_ptr(),
+                        if !infos.is_empty() {
+                            infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        if !indirect_device_addresses.is_empty() {
+                            indirect_device_addresses.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        if !indirect_strides.is_empty() {
+                            indirect_strides.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         max_primitive_counts.as_ptr().cast(),
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
+            #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -4730,22 +5489,29 @@ pub mod khr {
                 infos: &[AccelerationStructureBuildGeometryInfoKHR<'_>],
                 build_range_infos: &[&AccelerationStructureBuildRangeInfoKHR],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::OPERATION_DEFERRED_KHR,
-                    crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
-                ];
                 unsafe {
                     (self.fp.build_acceleration_structures_khr)(
                         self.handle,
                         deferred_operation,
                         infos.len() as _,
-                        infos.as_ptr(),
+                        if !infos.is_empty() {
+                            infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         build_range_infos.as_ptr().cast(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::OPERATION_DEFERRED_KHR,
+                        crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
+                    ])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
+            #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -4755,16 +5521,19 @@ pub mod khr {
                 deferred_operation: DeferredOperationKHR,
                 info: &CopyAccelerationStructureInfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::OPERATION_DEFERRED_KHR,
-                    crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
-                ];
                 unsafe {
                     (self.fp.copy_acceleration_structure_khr)(self.handle, deferred_operation, info)
-                        .result(SUCCESS_CODES)
+                        .result(&[
+                            crate::vk::Result::SUCCESS,
+                            crate::vk::Result::OPERATION_DEFERRED_KHR,
+                            crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
+                        ])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
+            #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -4774,20 +5543,23 @@ pub mod khr {
                 deferred_operation: DeferredOperationKHR,
                 info: &CopyAccelerationStructureToMemoryInfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::OPERATION_DEFERRED_KHR,
-                    crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
-                ];
                 unsafe {
                     (self.fp.copy_acceleration_structure_to_memory_khr)(
                         self.handle,
                         deferred_operation,
                         info,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::OPERATION_DEFERRED_KHR,
+                        crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
+                    ])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
+            #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -4797,20 +5569,21 @@ pub mod khr {
                 deferred_operation: DeferredOperationKHR,
                 info: &CopyMemoryToAccelerationStructureInfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::OPERATION_DEFERRED_KHR,
-                    crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
-                ];
                 unsafe {
                     (self.fp.copy_memory_to_acceleration_structure_khr)(
                         self.handle,
                         deferred_operation,
                         info,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::OPERATION_DEFERRED_KHR,
+                        crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
+                    ])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -4820,21 +5593,24 @@ pub mod khr {
                 acceleration_structures: &[AccelerationStructureKHR],
                 query_type: QueryType,
                 data_size: usize,
-                data: &mut ffi::c_void,
+                data: &mut [ffi::c_void],
                 stride: usize,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.write_acceleration_structures_properties_khr)(
                         self.handle,
                         acceleration_structures.len() as _,
-                        acceleration_structures.as_ptr(),
+                        if !acceleration_structures.is_empty() {
+                            acceleration_structures.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         query_type,
                         data_size,
-                        data,
+                        data.as_mut_ptr(),
                         stride,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -4902,7 +5678,11 @@ pub mod khr {
                     (self.fp.cmd_write_acceleration_structures_properties_khr)(
                         command_buffer,
                         acceleration_structures.len() as _,
-                        acceleration_structures.as_ptr(),
+                        if !acceleration_structures.is_empty() {
+                            acceleration_structures.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         query_type,
                         query_pool,
                         first_query,
@@ -4916,14 +5696,15 @@ pub mod khr {
             pub unsafe fn get_device_acceleration_structure_compatibility(
                 &self,
                 version_info: &AccelerationStructureVersionInfoKHR<'_>,
-                compatibility: &mut AccelerationStructureCompatibilityKHR,
-            ) {
+            ) -> AccelerationStructureCompatibilityKHR {
                 unsafe {
+                    let mut compatibility = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_device_acceleration_structure_compatibility_khr)(
                         self.handle,
                         version_info,
-                        compatibility,
-                    )
+                        compatibility.as_mut_ptr(),
+                    );
+                    compatibility.assume_init()
                 }
             }
             #[doc = r" # Safety"]
@@ -4934,7 +5715,7 @@ pub mod khr {
                 &self,
                 build_type: AccelerationStructureBuildTypeKHR,
                 build_info: &AccelerationStructureBuildGeometryInfoKHR<'_>,
-                max_primitive_counts: Option<&u32>,
+                max_primitive_counts: Option<&[u32]>,
                 size_info: &mut AccelerationStructureBuildSizesInfoKHR<'_>,
             ) {
                 unsafe {
@@ -4942,10 +5723,36 @@ pub mod khr {
                         self.handle,
                         build_type,
                         build_info,
-                        max_primitive_counts.as_ptr(),
+                        max_primitive_counts
+                            .and_then(|s| (!s.is_empty()).then_some(s.as_ptr()))
+                            .unwrap_or_default(),
                         size_info,
                     )
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -4953,7 +5760,7 @@ pub mod khr {
         //! VK_KHR_ray_tracing_pipeline device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_ray_tracing_pipeline";
+        pub const NAME: &ffi::CStr = c"VK_KHR_ray_tracing_pipeline";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_trace_rays_khr: PFN_vkCmdTraceRaysKHR,
@@ -5135,20 +5942,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -5186,6 +5997,11 @@ pub mod khr {
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
+            #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
+            #[doc = "* [`PIPELINE_COMPILE_REQUIRED_EXT`][3]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -5196,27 +6012,32 @@ pub mod khr {
                 pipeline_cache: PipelineCache,
                 create_infos: &[RayTracingPipelineCreateInfoKHR<'_>],
                 allocator: Option<&AllocationCallbacks>,
-                pipelines: &mut Pipeline,
+                pipelines: &mut [Pipeline],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::OPERATION_DEFERRED_KHR,
-                    crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
-                    crate::vk::Result::PIPELINE_COMPILE_REQUIRED_EXT,
-                ];
                 unsafe {
                     (self.fp.create_ray_tracing_pipelines_khr)(
                         self.handle,
                         deferred_operation,
                         pipeline_cache,
                         create_infos.len() as _,
-                        create_infos.as_ptr(),
+                        if !create_infos.is_empty() {
+                            create_infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         allocator.as_ptr(),
-                        pipelines,
+                        pipelines.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::OPERATION_DEFERRED_KHR,
+                        crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
+                        crate::vk::Result::PIPELINE_COMPILE_REQUIRED_EXT,
+                    ])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -5227,9 +6048,8 @@ pub mod khr {
                 first_group: u32,
                 group_count: u32,
                 data_size: usize,
-                data: &mut ffi::c_void,
+                data: &mut [ffi::c_void],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_ray_tracing_shader_group_handles_khr)(
                         self.handle,
@@ -5237,11 +6057,13 @@ pub mod khr {
                         first_group,
                         group_count,
                         data_size,
-                        data,
+                        data.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -5252,9 +6074,8 @@ pub mod khr {
                 first_group: u32,
                 group_count: u32,
                 data_size: usize,
-                data: &mut ffi::c_void,
+                data: &mut [ffi::c_void],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self
                         .fp
@@ -5264,9 +6085,9 @@ pub mod khr {
                         first_group,
                         group_count,
                         data_size,
-                        data,
+                        data.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -5330,12 +6151,36 @@ pub mod khr {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod ray_query {
         //! VK_KHR_ray_query device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_ray_query";
+        pub const NAME: &ffi::CStr = c"VK_KHR_ray_query";
     }
     pub mod sampler_ycbcr_conversion {
         //! VK_KHR_sampler_ycbcr_conversion device extension.
@@ -5347,7 +6192,7 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 14u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_sampler_ycbcr_conversion";
+        pub const NAME: &ffi::CStr = c"VK_KHR_sampler_ycbcr_conversion";
     }
     pub mod bind_memory2 {
         //! VK_KHR_bind_memory2 device extension.
@@ -5359,13 +6204,13 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_bind_memory2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_bind_memory2";
     }
     pub mod portability_subset {
         //! VK_KHR_portability_subset device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_portability_subset";
+        pub const NAME: &ffi::CStr = c"VK_KHR_portability_subset";
     }
     pub mod maintenance3 {
         //! VK_KHR_maintenance3 device extension.
@@ -5377,7 +6222,7 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_maintenance3";
+        pub const NAME: &ffi::CStr = c"VK_KHR_maintenance3";
     }
     pub mod draw_indirect_count {
         //! VK_KHR_draw_indirect_count device extension.
@@ -5389,7 +6234,7 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_draw_indirect_count";
+        pub const NAME: &ffi::CStr = c"VK_KHR_draw_indirect_count";
     }
     pub mod shader_subgroup_extended_types {
         //! VK_KHR_shader_subgroup_extended_types device extension.
@@ -5397,7 +6242,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_subgroup_extended_types";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_subgroup_extended_types";
     }
     pub mod _8bit_storage {
         //! VK_KHR_8bit_storage device extension.
@@ -5405,7 +6250,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_8bit_storage";
+        pub const NAME: &ffi::CStr = c"VK_KHR_8bit_storage";
     }
     pub mod shader_atomic_int64 {
         //! VK_KHR_shader_atomic_int64 device extension.
@@ -5413,19 +6258,19 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_atomic_int64";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_atomic_int64";
     }
     pub mod shader_clock {
         //! VK_KHR_shader_clock device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_clock";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_clock";
     }
     pub mod video_decode_h265 {
         //! VK_KHR_video_decode_h265 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 8u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_video_decode_h265";
+        pub const NAME: &ffi::CStr = c"VK_KHR_video_decode_h265";
     }
     pub mod global_priority {
         //! VK_KHR_global_priority device extension.
@@ -5433,7 +6278,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_4
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_global_priority";
+        pub const NAME: &ffi::CStr = c"VK_KHR_global_priority";
     }
     pub mod driver_properties {
         //! VK_KHR_driver_properties device extension.
@@ -5441,7 +6286,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_driver_properties";
+        pub const NAME: &ffi::CStr = c"VK_KHR_driver_properties";
     }
     pub mod shader_float_controls {
         //! VK_KHR_shader_float_controls device extension.
@@ -5449,7 +6294,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 4u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_float_controls";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_float_controls";
     }
     pub mod depth_stencil_resolve {
         //! VK_KHR_depth_stencil_resolve device extension.
@@ -5457,13 +6302,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_depth_stencil_resolve";
+        pub const NAME: &ffi::CStr = c"VK_KHR_depth_stencil_resolve";
     }
     pub mod swapchain_mutable_format {
         //! VK_KHR_swapchain_mutable_format device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_swapchain_mutable_format";
+        pub const NAME: &ffi::CStr = c"VK_KHR_swapchain_mutable_format";
     }
     pub mod timeline_semaphore {
         //! VK_KHR_timeline_semaphore device extension.
@@ -5475,7 +6320,7 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_timeline_semaphore";
+        pub const NAME: &ffi::CStr = c"VK_KHR_timeline_semaphore";
     }
     pub mod vulkan_memory_model {
         //! VK_KHR_vulkan_memory_model device extension.
@@ -5483,7 +6328,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_vulkan_memory_model";
+        pub const NAME: &ffi::CStr = c"VK_KHR_vulkan_memory_model";
     }
     pub mod shader_terminate_invocation {
         //! VK_KHR_shader_terminate_invocation device extension.
@@ -5491,13 +6336,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_terminate_invocation";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_terminate_invocation";
     }
     pub mod fragment_shading_rate {
         //! VK_KHR_fragment_shading_rate device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_fragment_shading_rate";
+        pub const NAME: &ffi::CStr = c"VK_KHR_fragment_shading_rate";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_physical_device_fragment_shading_rates_khr:
@@ -5555,20 +6400,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -5577,6 +6426,9 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -5585,8 +6437,6 @@ pub mod khr {
                 &self,
                 physical_device: PhysicalDevice,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut fragment_shading_rate_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_fragment_shading_rates_khr)(
@@ -5594,9 +6444,15 @@ pub mod khr {
                         fragment_shading_rate_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, fragment_shading_rate_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        fragment_shading_rate_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -5606,8 +6462,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 out: &mut [PhysicalDeviceFragmentShadingRateKHR<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_fragment_shading_rates_khr)(
@@ -5615,7 +6469,7 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
             #[doc = r" # Safety"]
@@ -5637,12 +6491,36 @@ pub mod khr {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod shader_constant_data {
         //! VK_KHR_shader_constant_data device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_constant_data";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_constant_data";
     }
     pub mod dynamic_rendering_local_read {
         //! VK_KHR_dynamic_rendering_local_read device extension.
@@ -5654,19 +6532,19 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_dynamic_rendering_local_read";
+        pub const NAME: &ffi::CStr = c"VK_KHR_dynamic_rendering_local_read";
     }
     pub mod shader_abort {
         //! VK_KHR_shader_abort device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_abort";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_abort";
     }
     pub mod shader_quad_control {
         //! VK_KHR_shader_quad_control device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_quad_control";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_quad_control";
     }
     pub mod spirv_1_4 {
         //! VK_KHR_spirv_1_4 device extension.
@@ -5674,13 +6552,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_spirv_1_4";
+        pub const NAME: &ffi::CStr = c"VK_KHR_spirv_1_4";
     }
     pub mod surface_protected_capabilities {
         //! VK_KHR_surface_protected_capabilities instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_surface_protected_capabilities";
+        pub const NAME: &ffi::CStr = c"VK_KHR_surface_protected_capabilities";
     }
     pub mod separate_depth_stencil_layouts {
         //! VK_KHR_separate_depth_stencil_layouts device extension.
@@ -5688,13 +6566,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_separate_depth_stencil_layouts";
+        pub const NAME: &ffi::CStr = c"VK_KHR_separate_depth_stencil_layouts";
     }
     pub mod present_wait {
         //! VK_KHR_present_wait device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_present_wait";
+        pub const NAME: &ffi::CStr = c"VK_KHR_present_wait";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub wait_for_present_khr: PFN_vkWaitForPresentKHR,
@@ -5724,20 +6602,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -5746,6 +6628,10 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`TIMEOUT`][1]"]
+            #[doc = "* [`SUBOPTIMAL_KHR`][2]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -5756,15 +6642,38 @@ pub mod khr {
                 present_id: u64,
                 timeout: u64,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::TIMEOUT,
-                    crate::vk::Result::SUBOPTIMAL_KHR,
-                ];
                 unsafe {
                     (self.fp.wait_for_present_khr)(self.handle, swapchain, present_id, timeout)
-                        .result(SUCCESS_CODES)
+                        .result(&[
+                            crate::vk::Result::SUCCESS,
+                            crate::vk::Result::TIMEOUT,
+                            crate::vk::Result::SUBOPTIMAL_KHR,
+                        ])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -5774,7 +6683,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_uniform_buffer_standard_layout";
+        pub const NAME: &ffi::CStr = c"VK_KHR_uniform_buffer_standard_layout";
     }
     pub mod buffer_device_address {
         //! VK_KHR_buffer_device_address device extension.
@@ -5786,13 +6695,13 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_buffer_device_address";
+        pub const NAME: &ffi::CStr = c"VK_KHR_buffer_device_address";
     }
     pub mod deferred_host_operations {
         //! VK_KHR_deferred_host_operations device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 4u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_deferred_host_operations";
+        pub const NAME: &ffi::CStr = c"VK_KHR_deferred_host_operations";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_deferred_operation_khr: PFN_vkCreateDeferredOperationKHR,
@@ -5913,20 +6822,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -5935,6 +6848,8 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -5943,7 +6858,6 @@ pub mod khr {
                 &self,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<DeferredOperationKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut deferred_operation = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_deferred_operation_khr)(
@@ -5951,7 +6865,7 @@ pub mod khr {
                         allocator.as_ptr(),
                         deferred_operation.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, deferred_operation)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], deferred_operation)
                 }
             }
             #[doc = r" # Safety"]
@@ -5983,6 +6897,9 @@ pub mod khr {
                     (self.fp.get_deferred_operation_max_concurrency_khr)(self.handle, operation)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`NOT_READY`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -5991,13 +6908,15 @@ pub mod khr {
                 &self,
                 operation: DeferredOperationKHR,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::NOT_READY];
                 unsafe {
                     (self.fp.get_deferred_operation_result_khr)(self.handle, operation)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::NOT_READY])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`THREAD_DONE_KHR`][1]"]
+            #[doc = "* [`THREAD_IDLE_KHR`][2]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -6006,15 +6925,37 @@ pub mod khr {
                 &self,
                 operation: DeferredOperationKHR,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::THREAD_DONE_KHR,
-                    crate::vk::Result::THREAD_IDLE_KHR,
-                ];
                 unsafe {
-                    (self.fp.deferred_operation_join_khr)(self.handle, operation)
-                        .result(SUCCESS_CODES)
+                    (self.fp.deferred_operation_join_khr)(self.handle, operation).result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::THREAD_DONE_KHR,
+                        crate::vk::Result::THREAD_IDLE_KHR,
+                    ])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -6022,7 +6963,7 @@ pub mod khr {
         //! VK_KHR_pipeline_executable_properties device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_pipeline_executable_properties";
+        pub const NAME: &ffi::CStr = c"VK_KHR_pipeline_executable_properties";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_pipeline_executable_properties_khr: PFN_vkGetPipelineExecutablePropertiesKHR,
@@ -6105,20 +7046,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -6127,6 +7072,9 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -6135,8 +7083,6 @@ pub mod khr {
                 &self,
                 pipeline_info: &PipelineInfoKHR<'_>,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut executable_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_pipeline_executable_properties_khr)(
@@ -6145,9 +7091,15 @@ pub mod khr {
                         executable_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, executable_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        executable_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -6157,8 +7109,6 @@ pub mod khr {
                 pipeline_info: &PipelineInfoKHR<'_>,
                 out: &mut [PipelineExecutablePropertiesKHR<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_pipeline_executable_properties_khr)(
@@ -6167,9 +7117,12 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -6178,8 +7131,6 @@ pub mod khr {
                 &self,
                 executable_info: &PipelineExecutableInfoKHR<'_>,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut statistic_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_pipeline_executable_statistics_khr)(
@@ -6188,9 +7139,15 @@ pub mod khr {
                         statistic_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, statistic_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        statistic_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -6200,8 +7157,6 @@ pub mod khr {
                 executable_info: &PipelineExecutableInfoKHR<'_>,
                 out: &mut [PipelineExecutableStatisticKHR<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_pipeline_executable_statistics_khr)(
@@ -6210,9 +7165,12 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -6221,8 +7179,6 @@ pub mod khr {
                 &self,
                 executable_info: &PipelineExecutableInfoKHR<'_>,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut internal_representation_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_pipeline_executable_internal_representations_khr)(
@@ -6231,9 +7187,15 @@ pub mod khr {
                         internal_representation_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, internal_representation_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        internal_representation_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -6243,8 +7205,6 @@ pub mod khr {
                 executable_info: &PipelineExecutableInfoKHR<'_>,
                 out: &mut [PipelineExecutableInternalRepresentationKHR<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_pipeline_executable_internal_representations_khr)(
@@ -6253,8 +7213,32 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -6268,7 +7252,7 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_map_memory2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_map_memory2";
     }
     pub mod shader_integer_dot_product {
         //! VK_KHR_shader_integer_dot_product device extension.
@@ -6276,13 +7260,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_integer_dot_product";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_integer_dot_product";
     }
     pub mod pipeline_library {
         //! VK_KHR_pipeline_library device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_pipeline_library";
+        pub const NAME: &ffi::CStr = c"VK_KHR_pipeline_library";
     }
     pub mod shader_non_semantic_info {
         //! VK_KHR_shader_non_semantic_info device extension.
@@ -6290,19 +7274,19 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_non_semantic_info";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_non_semantic_info";
     }
     pub mod present_id {
         //! VK_KHR_present_id device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_present_id";
+        pub const NAME: &ffi::CStr = c"VK_KHR_present_id";
     }
     pub mod video_encode_queue {
         //! VK_KHR_video_encode_queue device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 12u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_video_encode_queue";
+        pub const NAME: &ffi::CStr = c"VK_KHR_video_encode_queue";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_physical_device_video_encode_quality_level_properties_khr:
@@ -6379,20 +7363,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -6401,6 +7389,8 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -6411,7 +7401,6 @@ pub mod khr {
                 quality_level_info: &PhysicalDeviceVideoEncodeQualityLevelInfoKHR<'_>,
                 quality_level_properties: &mut VideoEncodeQualityLevelPropertiesKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self
                         .fp
@@ -6420,9 +7409,12 @@ pub mod khr {
                         quality_level_info,
                         quality_level_properties,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -6432,8 +7424,6 @@ pub mod khr {
                 video_session_parameters_info: &VideoEncodeSessionParametersGetInfoKHR<'_>,
                 feedback_info: Option<&mut VideoEncodeSessionParametersFeedbackInfoKHR<'_>>,
             ) -> crate::VkResult<usize> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut data_size = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_encoded_video_session_parameters_khr)(
@@ -6443,9 +7433,15 @@ pub mod khr {
                         data_size.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, data_size)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        data_size,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -6454,10 +7450,8 @@ pub mod khr {
                 &self,
                 video_session_parameters_info: &VideoEncodeSessionParametersGetInfoKHR<'_>,
                 feedback_info: Option<&mut VideoEncodeSessionParametersFeedbackInfoKHR<'_>>,
-                out: &mut [ffi::c_void],
+                out: &mut [u8],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_encoded_video_session_parameters_khr)(
@@ -6465,9 +7459,9 @@ pub mod khr {
                         video_session_parameters_info,
                         feedback_info.as_ptr(),
                         &mut len,
-                        out.as_mut_ptr(),
+                        out.as_mut_ptr().cast(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
             #[doc = r" # Safety"]
@@ -6482,12 +7476,36 @@ pub mod khr {
                 unsafe { (self.fp.cmd_encode_video_khr)(command_buffer, encode_info) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod object_refresh {
         //! VK_KHR_object_refresh device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_object_refresh";
+        pub const NAME: &ffi::CStr = c"VK_KHR_object_refresh";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_refresh_objects_khr: PFN_vkCmdRefreshObjectsKHR,
@@ -6543,20 +7561,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -6576,6 +7598,9 @@ pub mod khr {
             ) {
                 unsafe { (self.fp.cmd_refresh_objects_khr)(command_buffer, refresh_objects) }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -6584,8 +7609,6 @@ pub mod khr {
                 &self,
                 physical_device: PhysicalDevice,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut refreshable_object_type_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_refreshable_object_types_khr)(
@@ -6593,9 +7616,15 @@ pub mod khr {
                         refreshable_object_type_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, refreshable_object_type_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        refreshable_object_type_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -6605,8 +7634,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 out: &mut [ObjectType],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_refreshable_object_types_khr)(
@@ -6614,8 +7641,32 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -6629,13 +7680,13 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_synchronization2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_synchronization2";
     }
     pub mod device_address_commands {
         //! VK_KHR_device_address_commands device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_device_address_commands";
+        pub const NAME: &ffi::CStr = c"VK_KHR_device_address_commands";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_bind_index_buffer3_khr: PFN_vkCmdBindIndexBuffer3KHR,
@@ -7119,20 +8170,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -7167,7 +8222,11 @@ pub mod khr {
                         command_buffer,
                         first_binding,
                         binding_infos.len() as _,
-                        binding_infos.as_ptr(),
+                        if !binding_infos.is_empty() {
+                            binding_infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -7256,7 +8315,7 @@ pub mod khr {
                 command_buffer: CommandBuffer,
                 dst_range: &DeviceAddressRangeKHR,
                 dst_flags: AddressCommandFlagsKHR,
-                data: &[ffi::c_void],
+                data: &[u8],
             ) {
                 unsafe {
                     (self.fp.cmd_update_memory_khr)(
@@ -7264,7 +8323,11 @@ pub mod khr {
                         dst_range,
                         dst_flags,
                         data.len() as _,
-                        data.as_ptr(),
+                        if !data.is_empty() {
+                            data.as_ptr().cast()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -7372,7 +8435,9 @@ pub mod khr {
                         command_buffer,
                         first_binding,
                         binding_count,
-                        binding_infos.map(|s| s.as_ptr()).unwrap_or_default(),
+                        binding_infos
+                            .and_then(|s| (!s.is_empty()).then_some(s.as_ptr()))
+                            .unwrap_or_default(),
                     )
                 }
             }
@@ -7394,7 +8459,9 @@ pub mod khr {
                         command_buffer,
                         first_counter_range,
                         counter_range_count,
-                        counter_infos.map(|s| s.as_ptr()).unwrap_or_default(),
+                        counter_infos
+                            .and_then(|s| (!s.is_empty()).then_some(s.as_ptr()))
+                            .unwrap_or_default(),
                     )
                 }
             }
@@ -7416,7 +8483,9 @@ pub mod khr {
                         command_buffer,
                         first_counter_range,
                         counter_range_count,
-                        counter_infos.map(|s| s.as_ptr()).unwrap_or_default(),
+                        counter_infos
+                            .and_then(|s| (!s.is_empty()).then_some(s.as_ptr()))
+                            .unwrap_or_default(),
                     )
                 }
             }
@@ -7489,6 +8558,8 @@ pub mod khr {
             }
             #[doc = r" # Depends on"]
             #[doc = "* VK_KHR_acceleration_structure"]
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -7498,7 +8569,6 @@ pub mod khr {
                 create_info: &AccelerationStructureCreateInfo2KHR<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<AccelerationStructureKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut acceleration_structure = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_acceleration_structure2_khr)(
@@ -7507,8 +8577,32 @@ pub mod khr {
                         allocator.as_ptr(),
                         acceleration_structure.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, acceleration_structure)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], acceleration_structure)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -7516,13 +8610,13 @@ pub mod khr {
         //! VK_KHR_fragment_shader_barycentric device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_fragment_shader_barycentric";
+        pub const NAME: &ffi::CStr = c"VK_KHR_fragment_shader_barycentric";
     }
     pub mod shader_subgroup_uniform_control_flow {
         //! VK_KHR_shader_subgroup_uniform_control_flow device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_subgroup_uniform_control_flow";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_subgroup_uniform_control_flow";
     }
     pub mod zero_initialize_workgroup_memory {
         //! VK_KHR_zero_initialize_workgroup_memory device extension.
@@ -7530,13 +8624,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_zero_initialize_workgroup_memory";
+        pub const NAME: &ffi::CStr = c"VK_KHR_zero_initialize_workgroup_memory";
     }
     pub mod workgroup_memory_explicit_layout {
         //! VK_KHR_workgroup_memory_explicit_layout device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_workgroup_memory_explicit_layout";
+        pub const NAME: &ffi::CStr = c"VK_KHR_workgroup_memory_explicit_layout";
     }
     pub mod copy_commands2 {
         //! VK_KHR_copy_commands2 device extension.
@@ -7548,7 +8642,7 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_copy_commands2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_copy_commands2";
     }
     pub mod format_feature_flags2 {
         //! VK_KHR_format_feature_flags2 device extension.
@@ -7556,13 +8650,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_format_feature_flags2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_format_feature_flags2";
     }
     pub mod ray_tracing_maintenance1 {
         //! VK_KHR_ray_tracing_maintenance1 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_ray_tracing_maintenance1";
+        pub const NAME: &ffi::CStr = c"VK_KHR_ray_tracing_maintenance1";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_trace_rays_indirect2_khr: PFN_vkCmdTraceRaysIndirect2KHR,
@@ -7596,20 +8690,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -7634,18 +8732,42 @@ pub mod khr {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod shader_untyped_pointers {
         //! VK_KHR_shader_untyped_pointers device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_untyped_pointers";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_untyped_pointers";
     }
     pub mod portability_enumeration {
         //! VK_KHR_portability_enumeration instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_portability_enumeration";
+        pub const NAME: &ffi::CStr = c"VK_KHR_portability_enumeration";
     }
     pub mod maintenance4 {
         //! VK_KHR_maintenance4 device extension.
@@ -7657,7 +8779,7 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_maintenance4";
+        pub const NAME: &ffi::CStr = c"VK_KHR_maintenance4";
     }
     pub mod shader_subgroup_rotate {
         //! VK_KHR_shader_subgroup_rotate device extension.
@@ -7665,13 +8787,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_4
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_subgroup_rotate";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_subgroup_rotate";
     }
     pub mod shader_maximal_reconvergence {
         //! VK_KHR_shader_maximal_reconvergence device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_maximal_reconvergence";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_maximal_reconvergence";
     }
     pub mod maintenance5 {
         //! VK_KHR_maintenance5 device extension.
@@ -7683,19 +8805,19 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_maintenance5";
+        pub const NAME: &ffi::CStr = c"VK_KHR_maintenance5";
     }
     pub mod present_id2 {
         //! VK_KHR_present_id2 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_present_id2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_present_id2";
     }
     pub mod present_wait2 {
         //! VK_KHR_present_wait2 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_present_wait2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_present_wait2";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub wait_for_present2_khr: PFN_vkWaitForPresent2KHR,
@@ -7729,20 +8851,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -7751,6 +8877,10 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`TIMEOUT`][1]"]
+            #[doc = "* [`SUBOPTIMAL_KHR`][2]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -7760,15 +8890,38 @@ pub mod khr {
                 swapchain: SwapchainKHR,
                 present_wait2_info: &PresentWait2InfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::TIMEOUT,
-                    crate::vk::Result::SUBOPTIMAL_KHR,
-                ];
                 unsafe {
                     (self.fp.wait_for_present2_khr)(self.handle, swapchain, present_wait2_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[
+                            crate::vk::Result::SUCCESS,
+                            crate::vk::Result::TIMEOUT,
+                            crate::vk::Result::SUBOPTIMAL_KHR,
+                        ])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -7776,13 +8929,13 @@ pub mod khr {
         //! VK_KHR_ray_tracing_position_fetch device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_ray_tracing_position_fetch";
+        pub const NAME: &ffi::CStr = c"VK_KHR_ray_tracing_position_fetch";
     }
     pub mod pipeline_binary {
         //! VK_KHR_pipeline_binary device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_pipeline_binary";
+        pub const NAME: &ffi::CStr = c"VK_KHR_pipeline_binary";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_pipeline_binaries_khr: PFN_vkCreatePipelineBinariesKHR,
@@ -7902,20 +9055,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -7924,6 +9081,10 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = "* [`PIPELINE_BINARY_MISSING_KHR`][2]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -7934,11 +9095,6 @@ pub mod khr {
                 allocator: Option<&AllocationCallbacks>,
                 binaries: &mut PipelineBinaryHandlesInfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::INCOMPLETE,
-                    crate::vk::Result::PIPELINE_BINARY_MISSING_KHR,
-                ];
                 unsafe {
                     (self.fp.create_pipeline_binaries_khr)(
                         self.handle,
@@ -7946,7 +9102,11 @@ pub mod khr {
                         allocator.as_ptr(),
                         binaries,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::INCOMPLETE,
+                        crate::vk::Result::PIPELINE_BINARY_MISSING_KHR,
+                    ])
                 }
             }
             #[doc = r" # Safety"]
@@ -7966,6 +9126,8 @@ pub mod khr {
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -7975,16 +9137,17 @@ pub mod khr {
                 pipeline_create_info: Option<&PipelineCreateInfoKHR<'_>>,
                 pipeline_key: &mut PipelineBinaryKeyKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_pipeline_key_khr)(
                         self.handle,
                         pipeline_create_info.as_ptr(),
                         pipeline_key,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -7994,7 +9157,6 @@ pub mod khr {
                 info: &PipelineBinaryDataInfoKHR<'_>,
                 pipeline_binary_key: &mut PipelineBinaryKeyKHR<'_>,
             ) -> crate::VkResult<usize> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut pipeline_binary_data_size = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_pipeline_binary_data_khr)(
@@ -8004,9 +9166,14 @@ pub mod khr {
                         pipeline_binary_data_size.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, pipeline_binary_data_size)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS],
+                        pipeline_binary_data_size,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -8015,9 +9182,8 @@ pub mod khr {
                 &self,
                 info: &PipelineBinaryDataInfoKHR<'_>,
                 pipeline_binary_key: &mut PipelineBinaryKeyKHR<'_>,
-                out: &mut [ffi::c_void],
+                out: &mut [u8],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_pipeline_binary_data_khr)(
@@ -8025,11 +9191,13 @@ pub mod khr {
                         info,
                         pipeline_binary_key,
                         &mut len,
-                        out.as_mut_ptr(),
+                        out.as_mut_ptr().cast(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -8039,15 +9207,38 @@ pub mod khr {
                 info: &ReleaseCapturedPipelineDataInfoKHR<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.release_captured_pipeline_data_khr)(
                         self.handle,
                         info,
                         allocator.as_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -8055,13 +9246,13 @@ pub mod khr {
         //! VK_KHR_surface_maintenance1 instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_surface_maintenance1";
+        pub const NAME: &ffi::CStr = c"VK_KHR_surface_maintenance1";
     }
     pub mod swapchain_maintenance1 {
         //! VK_KHR_swapchain_maintenance1 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_swapchain_maintenance1";
+        pub const NAME: &ffi::CStr = c"VK_KHR_swapchain_maintenance1";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub release_swapchain_images_khr: PFN_vkReleaseSwapchainImagesKHR,
@@ -8095,20 +9286,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -8117,6 +9312,8 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -8125,11 +9322,34 @@ pub mod khr {
                 &self,
                 release_info: &ReleaseSwapchainImagesInfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.release_swapchain_images_khr)(self.handle, release_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -8137,13 +9357,13 @@ pub mod khr {
         //! VK_KHR_internally_synchronized_queues device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_internally_synchronized_queues";
+        pub const NAME: &ffi::CStr = c"VK_KHR_internally_synchronized_queues";
     }
     pub mod cooperative_matrix {
         //! VK_KHR_cooperative_matrix device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_cooperative_matrix";
+        pub const NAME: &ffi::CStr = c"VK_KHR_cooperative_matrix";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_physical_device_cooperative_matrix_properties_khr:
@@ -8179,20 +9399,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -8201,6 +9425,9 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -8209,8 +9436,6 @@ pub mod khr {
                 &self,
                 physical_device: PhysicalDevice,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut property_count = ::core::mem::MaybeUninit::uninit();
                     (self
@@ -8220,9 +9445,15 @@ pub mod khr {
                         property_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, property_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        property_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -8232,8 +9463,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 out: &mut [CooperativeMatrixPropertiesKHR<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self
@@ -8243,8 +9472,32 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -8252,31 +9505,31 @@ pub mod khr {
         //! VK_KHR_compute_shader_derivatives device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_compute_shader_derivatives";
+        pub const NAME: &ffi::CStr = c"VK_KHR_compute_shader_derivatives";
     }
     pub mod video_decode_av1 {
         //! VK_KHR_video_decode_av1 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_video_decode_av1";
+        pub const NAME: &ffi::CStr = c"VK_KHR_video_decode_av1";
     }
     pub mod video_encode_av1 {
         //! VK_KHR_video_encode_av1 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_video_encode_av1";
+        pub const NAME: &ffi::CStr = c"VK_KHR_video_encode_av1";
     }
     pub mod video_decode_vp9 {
         //! VK_KHR_video_decode_vp9 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_video_decode_vp9";
+        pub const NAME: &ffi::CStr = c"VK_KHR_video_decode_vp9";
     }
     pub mod video_maintenance1 {
         //! VK_KHR_video_maintenance1 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_video_maintenance1";
+        pub const NAME: &ffi::CStr = c"VK_KHR_video_maintenance1";
     }
     pub mod vertex_attribute_divisor {
         //! VK_KHR_vertex_attribute_divisor device extension.
@@ -8284,7 +9537,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_4
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_vertex_attribute_divisor";
+        pub const NAME: &ffi::CStr = c"VK_KHR_vertex_attribute_divisor";
     }
     pub mod load_store_op_none {
         //! VK_KHR_load_store_op_none device extension.
@@ -8292,13 +9545,13 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_4
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_load_store_op_none";
+        pub const NAME: &ffi::CStr = c"VK_KHR_load_store_op_none";
     }
     pub mod unified_image_layouts {
         //! VK_KHR_unified_image_layouts device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_unified_image_layouts";
+        pub const NAME: &ffi::CStr = c"VK_KHR_unified_image_layouts";
     }
     pub mod shader_float_controls2 {
         //! VK_KHR_shader_float_controls2 device extension.
@@ -8306,7 +9559,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_4
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_float_controls2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_float_controls2";
     }
     pub mod index_type_uint8 {
         //! VK_KHR_index_type_uint8 device extension.
@@ -8314,7 +9567,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_4
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_index_type_uint8";
+        pub const NAME: &ffi::CStr = c"VK_KHR_index_type_uint8";
     }
     pub mod line_rasterization {
         //! VK_KHR_line_rasterization device extension.
@@ -8326,13 +9579,13 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_line_rasterization";
+        pub const NAME: &ffi::CStr = c"VK_KHR_line_rasterization";
     }
     pub mod calibrated_timestamps {
         //! VK_KHR_calibrated_timestamps device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_calibrated_timestamps";
+        pub const NAME: &ffi::CStr = c"VK_KHR_calibrated_timestamps";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_physical_device_calibrateable_time_domains_khr:
@@ -8392,20 +9645,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -8414,6 +9671,9 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -8422,8 +9682,6 @@ pub mod khr {
                 &self,
                 physical_device: PhysicalDevice,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut time_domain_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_calibrateable_time_domains_khr)(
@@ -8431,9 +9689,15 @@ pub mod khr {
                         time_domain_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, time_domain_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        time_domain_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -8443,8 +9707,6 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 out: &mut [TimeDomainKHR],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_calibrateable_time_domains_khr)(
@@ -8452,9 +9714,11 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -8462,20 +9726,47 @@ pub mod khr {
             pub unsafe fn get_calibrated_timestamps(
                 &self,
                 timestamp_infos: &[CalibratedTimestampInfoKHR<'_>],
-                timestamps: &mut u64,
+                timestamps: &mut [u64],
             ) -> crate::VkResult<u64> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut max_deviation = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_calibrated_timestamps_khr)(
                         self.handle,
                         timestamp_infos.len() as _,
-                        timestamp_infos.as_ptr(),
-                        timestamps,
+                        if !timestamp_infos.is_empty() {
+                            timestamp_infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        timestamps.as_mut_ptr(),
                         max_deviation.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, max_deviation)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], max_deviation)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -8485,7 +9776,7 @@ pub mod khr {
         //! Promoted to core VK_VERSION_1_4
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_expect_assume";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_expect_assume";
     }
     pub mod maintenance6 {
         //! VK_KHR_maintenance6 device extension.
@@ -8497,13 +9788,13 @@ pub mod khr {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_maintenance6";
+        pub const NAME: &ffi::CStr = c"VK_KHR_maintenance6";
     }
     pub mod copy_memory_indirect {
         //! VK_KHR_copy_memory_indirect device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_copy_memory_indirect";
+        pub const NAME: &ffi::CStr = c"VK_KHR_copy_memory_indirect";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_copy_memory_indirect_khr: PFN_vkCmdCopyMemoryIndirectKHR,
@@ -8558,20 +9849,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -8613,36 +9908,60 @@ pub mod khr {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod video_encode_intra_refresh {
         //! VK_KHR_video_encode_intra_refresh device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_video_encode_intra_refresh";
+        pub const NAME: &ffi::CStr = c"VK_KHR_video_encode_intra_refresh";
     }
     pub mod video_encode_quantization_map {
         //! VK_KHR_video_encode_quantization_map device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_video_encode_quantization_map";
+        pub const NAME: &ffi::CStr = c"VK_KHR_video_encode_quantization_map";
     }
     pub mod shader_relaxed_extended_instruction {
         //! VK_KHR_shader_relaxed_extended_instruction device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_relaxed_extended_instruction";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_relaxed_extended_instruction";
     }
     pub mod maintenance7 {
         //! VK_KHR_maintenance7 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_maintenance7";
+        pub const NAME: &ffi::CStr = c"VK_KHR_maintenance7";
     }
     pub mod device_fault {
         //! VK_KHR_device_fault device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_device_fault";
+        pub const NAME: &ffi::CStr = c"VK_KHR_device_fault";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_device_fault_reports_khr: PFN_vkGetDeviceFaultReportsKHR,
@@ -8699,20 +10018,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -8721,6 +10044,10 @@ pub mod khr {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = "* [`TIMEOUT`][2]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -8729,11 +10056,6 @@ pub mod khr {
                 &self,
                 timeout: u64,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::INCOMPLETE,
-                    crate::vk::Result::TIMEOUT,
-                ];
                 unsafe {
                     let mut fault_counts = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_device_fault_reports_khr)(
@@ -8742,9 +10064,20 @@ pub mod khr {
                         fault_counts.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, fault_counts)
+                    .result_with_assume_init(
+                        &[
+                            crate::vk::Result::SUCCESS,
+                            crate::vk::Result::INCOMPLETE,
+                            crate::vk::Result::TIMEOUT,
+                        ],
+                        fault_counts,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = "* [`TIMEOUT`][2]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -8754,11 +10087,6 @@ pub mod khr {
                 timeout: u64,
                 out: &mut [DeviceFaultInfoKHR<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::INCOMPLETE,
-                    crate::vk::Result::TIMEOUT,
-                ];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_device_fault_reports_khr)(
@@ -8767,9 +10095,16 @@ pub mod khr {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::INCOMPLETE,
+                        crate::vk::Result::TIMEOUT,
+                    ])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -8778,12 +10113,34 @@ pub mod khr {
                 &self,
                 debug_info: &mut DeviceFaultDebugInfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     (self.fp.get_device_fault_debug_info_khr)(self.handle, debug_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -8791,49 +10148,49 @@ pub mod khr {
         //! VK_KHR_maintenance8 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_maintenance8";
+        pub const NAME: &ffi::CStr = c"VK_KHR_maintenance8";
     }
     pub mod shader_fma {
         //! VK_KHR_shader_fma device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_shader_fma";
+        pub const NAME: &ffi::CStr = c"VK_KHR_shader_fma";
     }
     pub mod maintenance9 {
         //! VK_KHR_maintenance9 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_maintenance9";
+        pub const NAME: &ffi::CStr = c"VK_KHR_maintenance9";
     }
     pub mod video_maintenance2 {
         //! VK_KHR_video_maintenance2 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_video_maintenance2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_video_maintenance2";
     }
     pub mod depth_clamp_zero_one {
         //! VK_KHR_depth_clamp_zero_one device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_depth_clamp_zero_one";
+        pub const NAME: &ffi::CStr = c"VK_KHR_depth_clamp_zero_one";
     }
     pub mod robustness2 {
         //! VK_KHR_robustness2 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_robustness2";
+        pub const NAME: &ffi::CStr = c"VK_KHR_robustness2";
     }
     pub mod present_mode_fifo_latest_ready {
         //! VK_KHR_present_mode_fifo_latest_ready device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_present_mode_fifo_latest_ready";
+        pub const NAME: &ffi::CStr = c"VK_KHR_present_mode_fifo_latest_ready";
     }
     pub mod maintenance10 {
         //! VK_KHR_maintenance10 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_KHR_maintenance10";
+        pub const NAME: &ffi::CStr = c"VK_KHR_maintenance10";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_end_rendering2_khr: PFN_vkCmdEndRendering2KHR,
@@ -8866,20 +10223,24 @@ pub mod khr {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -8902,6 +10263,30 @@ pub mod khr {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
 }
 pub mod ext {
@@ -8910,7 +10295,7 @@ pub mod ext {
         //! VK_EXT_debug_report instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 10u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_debug_report";
+        pub const NAME: &ffi::CStr = c"VK_EXT_debug_report";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_debug_report_callback_ext: PFN_vkCreateDebugReportCallbackEXT,
@@ -8994,20 +10379,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -9016,6 +10405,8 @@ pub mod ext {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -9025,7 +10416,6 @@ pub mod ext {
                 create_info: &DebugReportCallbackCreateInfoEXT<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<DebugReportCallbackEXT> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut callback = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_debug_report_callback_ext)(
@@ -9034,7 +10424,7 @@ pub mod ext {
                         allocator.as_ptr(),
                         callback.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, callback)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], callback)
                 }
             }
             #[doc = r" # Safety"]
@@ -9083,18 +10473,42 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod depth_range_unrestricted {
         //! VK_EXT_depth_range_unrestricted device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_depth_range_unrestricted";
+        pub const NAME: &ffi::CStr = c"VK_EXT_depth_range_unrestricted";
     }
     pub mod debug_marker {
         //! VK_EXT_debug_marker device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 4u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_debug_marker";
+        pub const NAME: &ffi::CStr = c"VK_EXT_debug_marker";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub debug_marker_set_object_tag_ext: PFN_vkDebugMarkerSetObjectTagEXT,
@@ -9209,20 +10623,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -9231,6 +10649,8 @@ pub mod ext {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -9239,12 +10659,13 @@ pub mod ext {
                 &self,
                 tag_info: &DebugMarkerObjectTagInfoEXT<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.debug_marker_set_object_tag_ext)(self.handle, tag_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -9253,10 +10674,9 @@ pub mod ext {
                 &self,
                 name_info: &DebugMarkerObjectNameInfoEXT<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.debug_marker_set_object_name_ext)(self.handle, name_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -9289,12 +10709,36 @@ pub mod ext {
                 unsafe { (self.fp.cmd_debug_marker_insert_ext)(command_buffer, marker_info) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod transform_feedback {
         //! VK_EXT_transform_feedback device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_transform_feedback";
+        pub const NAME: &ffi::CStr = c"VK_EXT_transform_feedback";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_bind_transform_feedback_buffers_ext: PFN_vkCmdBindTransformFeedbackBuffersEXT,
@@ -9452,20 +10896,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -9491,9 +10939,19 @@ pub mod ext {
                         command_buffer,
                         first_binding,
                         buffers.len() as _,
-                        buffers.as_ptr(),
-                        offsets.as_ptr(),
-                        sizes.map(|s| s.as_ptr()).unwrap_or_default(),
+                        if !buffers.is_empty() {
+                            buffers.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        if !offsets.is_empty() {
+                            offsets.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        sizes
+                            .and_then(|s| (!s.is_empty()).then_some(s.as_ptr()))
+                            .unwrap_or_default(),
                     )
                 }
             }
@@ -9513,9 +10971,13 @@ pub mod ext {
                         command_buffer,
                         first_counter_buffer,
                         counter_buffers.len() as _,
-                        counter_buffers.as_ptr(),
+                        if !counter_buffers.is_empty() {
+                            counter_buffers.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         counter_buffer_offsets
-                            .map(|s| s.as_ptr())
+                            .and_then(|s| (!s.is_empty()).then_some(s.as_ptr()))
                             .unwrap_or_default(),
                     )
                 }
@@ -9536,9 +10998,13 @@ pub mod ext {
                         command_buffer,
                         first_counter_buffer,
                         counter_buffers.len() as _,
-                        counter_buffers.as_ptr(),
+                        if !counter_buffers.is_empty() {
+                            counter_buffers.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         counter_buffer_offsets
-                            .map(|s| s.as_ptr())
+                            .and_then(|s| (!s.is_empty()).then_some(s.as_ptr()))
                             .unwrap_or_default(),
                     )
                 }
@@ -9608,24 +11074,48 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod validation_flags {
         //! VK_EXT_validation_flags instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_validation_flags";
+        pub const NAME: &ffi::CStr = c"VK_EXT_validation_flags";
     }
     pub mod shader_subgroup_ballot {
         //! VK_EXT_shader_subgroup_ballot device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_subgroup_ballot";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_subgroup_ballot";
     }
     pub mod shader_subgroup_vote {
         //! VK_EXT_shader_subgroup_vote device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_subgroup_vote";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_subgroup_vote";
     }
     pub mod texture_compression_astc_hdr {
         //! VK_EXT_texture_compression_astc_hdr device extension.
@@ -9633,13 +11123,13 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_texture_compression_astc_hdr";
+        pub const NAME: &ffi::CStr = c"VK_EXT_texture_compression_astc_hdr";
     }
     pub mod astc_decode_mode {
         //! VK_EXT_astc_decode_mode device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_astc_decode_mode";
+        pub const NAME: &ffi::CStr = c"VK_EXT_astc_decode_mode";
     }
     pub mod pipeline_robustness {
         //! VK_EXT_pipeline_robustness device extension.
@@ -9647,13 +11137,13 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_4
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_pipeline_robustness";
+        pub const NAME: &ffi::CStr = c"VK_EXT_pipeline_robustness";
     }
     pub mod conditional_rendering {
         //! VK_EXT_conditional_rendering device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_conditional_rendering";
+        pub const NAME: &ffi::CStr = c"VK_EXT_conditional_rendering";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_begin_conditional_rendering_ext: PFN_vkCmdBeginConditionalRenderingEXT,
@@ -9707,20 +11197,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -9753,12 +11247,36 @@ pub mod ext {
                 unsafe { (self.fp.cmd_end_conditional_rendering_ext)(command_buffer) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod direct_mode_display {
         //! VK_EXT_direct_mode_display instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_direct_mode_display";
+        pub const NAME: &ffi::CStr = c"VK_EXT_direct_mode_display";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub release_display_ext: PFN_vkReleaseDisplayEXT,
@@ -9786,20 +11304,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -9808,6 +11330,8 @@ pub mod ext {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -9817,10 +11341,34 @@ pub mod ext {
                 physical_device: PhysicalDevice,
                 display: DisplayKHR,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
-                    (self.fp.release_display_ext)(physical_device, display).result(SUCCESS_CODES)
+                    (self.fp.release_display_ext)(physical_device, display)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -9828,7 +11376,7 @@ pub mod ext {
         //! VK_EXT_acquire_xlib_display instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_acquire_xlib_display";
+        pub const NAME: &ffi::CStr = c"VK_EXT_acquire_xlib_display";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub acquire_xlib_display_ext: PFN_vkAcquireXlibDisplayEXT,
@@ -9885,20 +11433,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -9907,6 +11459,8 @@ pub mod ext {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -9917,12 +11471,13 @@ pub mod ext {
                 dpy: *mut Display,
                 display: DisplayKHR,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.acquire_xlib_display_ext)(physical_device, dpy, display)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -9933,7 +11488,6 @@ pub mod ext {
                 dpy: *mut Display,
                 rr_output: RROutput,
             ) -> crate::VkResult<DisplayKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut display = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_rand_routput_display_ext)(
@@ -9942,8 +11496,32 @@ pub mod ext {
                         rr_output,
                         display.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, display)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], display)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -9951,7 +11529,7 @@ pub mod ext {
         //! VK_EXT_display_surface_counter instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_display_surface_counter";
+        pub const NAME: &ffi::CStr = c"VK_EXT_display_surface_counter";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub get_physical_device_surface_capabilities2_ext:
@@ -9987,20 +11565,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -10009,6 +11591,8 @@ pub mod ext {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -10019,15 +11603,38 @@ pub mod ext {
                 surface: SurfaceKHR,
                 surface_capabilities: &mut SurfaceCapabilities2EXT<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_physical_device_surface_capabilities2_ext)(
                         physical_device,
                         surface,
                         surface_capabilities,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -10035,7 +11642,7 @@ pub mod ext {
         //! VK_EXT_display_control device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_display_control";
+        pub const NAME: &ffi::CStr = c"VK_EXT_display_control";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub display_power_control_ext: PFN_vkDisplayPowerControlEXT,
@@ -10137,20 +11744,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -10159,6 +11770,8 @@ pub mod ext {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -10168,12 +11781,13 @@ pub mod ext {
                 display: DisplayKHR,
                 display_power_info: &DisplayPowerInfoEXT<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.display_power_control_ext)(self.handle, display, display_power_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -10183,7 +11797,6 @@ pub mod ext {
                 device_event_info: &DeviceEventInfoEXT<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<Fence> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut fence = ::core::mem::MaybeUninit::uninit();
                     (self.fp.register_device_event_ext)(
@@ -10192,9 +11805,11 @@ pub mod ext {
                         allocator.as_ptr(),
                         fence.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, fence)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], fence)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -10205,7 +11820,6 @@ pub mod ext {
                 display_event_info: &DisplayEventInfoEXT<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<Fence> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut fence = ::core::mem::MaybeUninit::uninit();
                     (self.fp.register_display_event_ext)(
@@ -10215,9 +11829,11 @@ pub mod ext {
                         allocator.as_ptr(),
                         fence.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, fence)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], fence)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -10227,7 +11843,6 @@ pub mod ext {
                 swapchain: SwapchainKHR,
                 counter: SurfaceCounterFlagsEXT,
             ) -> crate::VkResult<u64> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut counter_value = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_swapchain_counter_ext)(
@@ -10236,8 +11851,32 @@ pub mod ext {
                         counter,
                         counter_value.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, counter_value)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], counter_value)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -10245,7 +11884,7 @@ pub mod ext {
         //! VK_EXT_discard_rectangles device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_discard_rectangles";
+        pub const NAME: &ffi::CStr = c"VK_EXT_discard_rectangles";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_discard_rectangle_ext: PFN_vkCmdSetDiscardRectangleEXT,
@@ -10323,20 +11962,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -10360,7 +12003,11 @@ pub mod ext {
                         command_buffer,
                         first_discard_rectangle,
                         discard_rectangles.len() as _,
-                        discard_rectangles.as_ptr(),
+                        if !discard_rectangles.is_empty() {
+                            discard_rectangles.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -10371,12 +12018,12 @@ pub mod ext {
             pub unsafe fn cmd_set_discard_rectangle_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                discard_rectangle_enable: Bool32,
+                discard_rectangle_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_discard_rectangle_enable_ext)(
                         command_buffer,
-                        discard_rectangle_enable,
+                        discard_rectangle_enable as Bool32,
                     )
                 }
             }
@@ -10397,30 +12044,54 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod conservative_rasterization {
         //! VK_EXT_conservative_rasterization device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_conservative_rasterization";
+        pub const NAME: &ffi::CStr = c"VK_EXT_conservative_rasterization";
     }
     pub mod depth_clip_enable {
         //! VK_EXT_depth_clip_enable device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_depth_clip_enable";
+        pub const NAME: &ffi::CStr = c"VK_EXT_depth_clip_enable";
     }
     pub mod swapchain_colorspace {
         //! VK_EXT_swapchain_colorspace instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 5u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_swapchain_colorspace";
+        pub const NAME: &ffi::CStr = c"VK_EXT_swapchain_colorspace";
     }
     pub mod hdr_metadata {
         //! VK_EXT_hdr_metadata device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_hdr_metadata";
+        pub const NAME: &ffi::CStr = c"VK_EXT_hdr_metadata";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub set_hdr_metadata_ext: PFN_vkSetHdrMetadataEXT,
@@ -10450,20 +12121,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -10485,10 +12160,42 @@ pub mod ext {
                     (self.fp.set_hdr_metadata_ext)(
                         self.handle,
                         swapchains.len() as _,
-                        swapchains.as_ptr(),
-                        metadata.as_ptr(),
+                        if !swapchains.is_empty() {
+                            swapchains.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        if !metadata.is_empty() {
+                            metadata.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -10496,19 +12203,19 @@ pub mod ext {
         //! VK_EXT_external_memory_dma_buf device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_external_memory_dma_buf";
+        pub const NAME: &ffi::CStr = c"VK_EXT_external_memory_dma_buf";
     }
     pub mod queue_family_foreign {
         //! VK_EXT_queue_family_foreign device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_queue_family_foreign";
+        pub const NAME: &ffi::CStr = c"VK_EXT_queue_family_foreign";
     }
     pub mod debug_utils {
         //! VK_EXT_debug_utils instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_debug_utils";
+        pub const NAME: &ffi::CStr = c"VK_EXT_debug_utils";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub set_debug_utils_object_name_ext: PFN_vkSetDebugUtilsObjectNameEXT,
@@ -10753,20 +12460,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -10775,6 +12486,8 @@ pub mod ext {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -10784,12 +12497,13 @@ pub mod ext {
                 device: crate::vk::Device,
                 name_info: &DebugUtilsObjectNameInfoEXT<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.set_debug_utils_object_name_ext)(device, name_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -10799,9 +12513,9 @@ pub mod ext {
                 device: crate::vk::Device,
                 tag_info: &DebugUtilsObjectTagInfoEXT<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
-                    (self.fp.set_debug_utils_object_tag_ext)(device, tag_info).result(SUCCESS_CODES)
+                    (self.fp.set_debug_utils_object_tag_ext)(device, tag_info)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -10862,6 +12576,8 @@ pub mod ext {
             ) {
                 unsafe { (self.fp.cmd_insert_debug_utils_label_ext)(command_buffer, label_info) }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -10871,7 +12587,6 @@ pub mod ext {
                 create_info: &DebugUtilsMessengerCreateInfoEXT<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<DebugUtilsMessengerEXT> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut messenger = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_debug_utils_messenger_ext)(
@@ -10880,7 +12595,7 @@ pub mod ext {
                         allocator.as_ptr(),
                         messenger.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, messenger)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], messenger)
                 }
             }
             #[doc = r" # Safety"]
@@ -10920,6 +12635,30 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod sampler_filter_minmax {
         //! VK_EXT_sampler_filter_minmax device extension.
@@ -10927,13 +12666,13 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_sampler_filter_minmax";
+        pub const NAME: &ffi::CStr = c"VK_EXT_sampler_filter_minmax";
     }
     pub mod descriptor_heap {
         //! VK_EXT_descriptor_heap device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_descriptor_heap";
+        pub const NAME: &ffi::CStr = c"VK_EXT_descriptor_heap";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub write_sampler_descriptors_ext: PFN_vkWriteSamplerDescriptorsEXT,
@@ -11158,20 +12897,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -11180,6 +12923,8 @@ pub mod ext {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -11189,17 +12934,26 @@ pub mod ext {
                 samplers: &[SamplerCreateInfo<'_>],
                 descriptors: &[HostAddressRangeEXT],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.write_sampler_descriptors_ext)(
                         self.handle,
                         samplers.len() as _,
-                        samplers.as_ptr(),
-                        descriptors.as_ptr(),
+                        if !samplers.is_empty() {
+                            samplers.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        if !descriptors.is_empty() {
+                            descriptors.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -11209,15 +12963,22 @@ pub mod ext {
                 resources: &[ResourceDescriptorInfoEXT<'_>],
                 descriptors: &[HostAddressRangeEXT],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.write_resource_descriptors_ext)(
                         self.handle,
                         resources.len() as _,
-                        resources.as_ptr(),
-                        descriptors.as_ptr(),
+                        if !resources.is_empty() {
+                            resources.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        if !descriptors.is_empty() {
+                            descriptors.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -11253,6 +13014,8 @@ pub mod ext {
             ) {
                 unsafe { (self.fp.cmd_push_data_ext)(command_buffer, push_data_info) }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -11260,17 +13023,20 @@ pub mod ext {
             pub unsafe fn get_image_opaque_capture_data(
                 &self,
                 images: &[Image],
-                datas: &mut HostAddressRangeEXT,
+                datas: &mut [HostAddressRangeEXT],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_image_opaque_capture_data_ext)(
                         self.handle,
                         images.len() as _,
-                        images.as_ptr(),
-                        datas,
+                        if !images.is_empty() {
+                            images.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        datas.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -11291,6 +13057,8 @@ pub mod ext {
             }
             #[doc = r" # Depends on"]
             #[doc = "* VK_EXT_custom_border_color"]
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -11298,18 +13066,17 @@ pub mod ext {
             pub unsafe fn register_custom_border_color(
                 &self,
                 border_color: &SamplerCustomBorderColorCreateInfoEXT<'_>,
-                request_index: Bool32,
+                request_index: bool,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut index = ::core::mem::MaybeUninit::uninit();
                     (self.fp.register_custom_border_color_ext)(
                         self.handle,
                         border_color,
-                        request_index,
+                        request_index as Bool32,
                         index.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, index)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], index)
                 }
             }
             #[doc = r" # Depends on"]
@@ -11323,6 +13090,8 @@ pub mod ext {
             }
             #[doc = r" # Depends on"]
             #[doc = "* VK_ARM_tensors"]
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -11330,18 +13099,45 @@ pub mod ext {
             pub unsafe fn get_tensor_opaque_capture_data_arm(
                 &self,
                 tensors: &[TensorARM],
-                datas: &mut HostAddressRangeEXT,
+                datas: &mut [HostAddressRangeEXT],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_tensor_opaque_capture_data_arm)(
                         self.handle,
                         tensors.len() as _,
-                        tensors.as_ptr(),
-                        datas,
+                        if !tensors.is_empty() {
+                            tensors.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        datas.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -11351,19 +13147,19 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_inline_uniform_block";
+        pub const NAME: &ffi::CStr = c"VK_EXT_inline_uniform_block";
     }
     pub mod shader_stencil_export {
         //! VK_EXT_shader_stencil_export device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_stencil_export";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_stencil_export";
     }
     pub mod sample_locations {
         //! VK_EXT_sample_locations device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_sample_locations";
+        pub const NAME: &ffi::CStr = c"VK_EXT_sample_locations";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_sample_locations_ext: PFN_vkCmdSetSampleLocationsEXT,
@@ -11420,20 +13216,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -11474,24 +13274,48 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod blend_operation_advanced {
         //! VK_EXT_blend_operation_advanced device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_blend_operation_advanced";
+        pub const NAME: &ffi::CStr = c"VK_EXT_blend_operation_advanced";
     }
     pub mod post_depth_coverage {
         //! VK_EXT_post_depth_coverage device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_post_depth_coverage";
+        pub const NAME: &ffi::CStr = c"VK_EXT_post_depth_coverage";
     }
     pub mod image_drm_format_modifier {
         //! VK_EXT_image_drm_format_modifier device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_image_drm_format_modifier";
+        pub const NAME: &ffi::CStr = c"VK_EXT_image_drm_format_modifier";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_image_drm_format_modifier_properties_ext:
@@ -11527,20 +13351,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -11549,6 +13377,8 @@ pub mod ext {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -11558,15 +13388,38 @@ pub mod ext {
                 image: Image,
                 properties: &mut ImageDrmFormatModifierPropertiesEXT<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_image_drm_format_modifier_properties_ext)(
                         self.handle,
                         image,
                         properties,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -11574,7 +13427,7 @@ pub mod ext {
         //! VK_EXT_validation_cache device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_validation_cache";
+        pub const NAME: &ffi::CStr = c"VK_EXT_validation_cache";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_validation_cache_ext: PFN_vkCreateValidationCacheEXT,
@@ -11678,20 +13531,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -11700,6 +13557,8 @@ pub mod ext {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -11709,7 +13568,6 @@ pub mod ext {
                 create_info: &ValidationCacheCreateInfoEXT<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<ValidationCacheEXT> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut validation_cache = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_validation_cache_ext)(
@@ -11718,7 +13576,7 @@ pub mod ext {
                         allocator.as_ptr(),
                         validation_cache.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, validation_cache)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], validation_cache)
                 }
             }
             #[doc = r" # Safety"]
@@ -11738,6 +13596,8 @@ pub mod ext {
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -11747,17 +13607,23 @@ pub mod ext {
                 dst_cache: ValidationCacheEXT,
                 src_caches: &[ValidationCacheEXT],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.merge_validation_caches_ext)(
                         self.handle,
                         dst_cache,
                         src_caches.len() as _,
-                        src_caches.as_ptr(),
+                        if !src_caches.is_empty() {
+                            src_caches.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -11766,8 +13632,6 @@ pub mod ext {
                 &self,
                 validation_cache: ValidationCacheEXT,
             ) -> crate::VkResult<usize> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut data_size = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_validation_cache_data_ext)(
@@ -11776,9 +13640,15 @@ pub mod ext {
                         data_size.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, data_size)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        data_size,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -11786,20 +13656,42 @@ pub mod ext {
             pub unsafe fn get_validation_cache_data(
                 &self,
                 validation_cache: ValidationCacheEXT,
-                out: &mut [ffi::c_void],
+                out: &mut [u8],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_validation_cache_data_ext)(
                         self.handle,
                         validation_cache,
                         &mut len,
-                        out.as_mut_ptr(),
+                        out.as_mut_ptr().cast(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -11809,7 +13701,7 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_descriptor_indexing";
+        pub const NAME: &ffi::CStr = c"VK_EXT_descriptor_indexing";
     }
     pub mod shader_viewport_index_layer {
         //! VK_EXT_shader_viewport_index_layer device extension.
@@ -11817,25 +13709,25 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_viewport_index_layer";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_viewport_index_layer";
     }
     pub mod filter_cubic {
         //! VK_EXT_filter_cubic device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_filter_cubic";
+        pub const NAME: &ffi::CStr = c"VK_EXT_filter_cubic";
     }
     pub mod global_priority {
         //! VK_EXT_global_priority device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_global_priority";
+        pub const NAME: &ffi::CStr = c"VK_EXT_global_priority";
     }
     pub mod external_memory_host {
         //! VK_EXT_external_memory_host device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_external_memory_host";
+        pub const NAME: &ffi::CStr = c"VK_EXT_external_memory_host";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_memory_host_pointer_properties_ext: PFN_vkGetMemoryHostPointerPropertiesEXT,
@@ -11871,20 +13763,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -11893,6 +13789,8 @@ pub mod ext {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -11903,7 +13801,6 @@ pub mod ext {
                 host_pointer: &ffi::c_void,
                 memory_host_pointer_properties: &mut MemoryHostPointerPropertiesEXT<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_memory_host_pointer_properties_ext)(
                         self.handle,
@@ -11911,8 +13808,32 @@ pub mod ext {
                         host_pointer,
                         memory_host_pointer_properties,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -11920,7 +13841,7 @@ pub mod ext {
         //! VK_EXT_calibrated_timestamps device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_calibrated_timestamps";
+        pub const NAME: &ffi::CStr = c"VK_EXT_calibrated_timestamps";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_physical_device_calibrateable_time_domains_khr:
@@ -11980,20 +13901,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -12010,8 +13935,6 @@ pub mod ext {
                 &self,
                 physical_device: PhysicalDevice,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut time_domain_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_calibrateable_time_domains_khr)(
@@ -12019,7 +13942,10 @@ pub mod ext {
                         time_domain_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, time_domain_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        time_domain_count,
+                    )
                 }
             }
             #[doc = r" # Safety"]
@@ -12031,8 +13957,6 @@ pub mod ext {
                 physical_device: PhysicalDevice,
                 out: &mut [TimeDomainKHR],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_calibrateable_time_domains_khr)(
@@ -12040,7 +13964,7 @@ pub mod ext {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
             #[doc = r" # Safety"]
@@ -12050,20 +13974,47 @@ pub mod ext {
             pub unsafe fn get_calibrated_timestamps(
                 &self,
                 timestamp_infos: &[CalibratedTimestampInfoKHR<'_>],
-                timestamps: &mut u64,
+                timestamps: &mut [u64],
             ) -> crate::VkResult<u64> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut max_deviation = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_calibrated_timestamps_khr)(
                         self.handle,
                         timestamp_infos.len() as _,
-                        timestamp_infos.as_ptr(),
-                        timestamps,
+                        if !timestamp_infos.is_empty() {
+                            timestamp_infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        timestamps.as_mut_ptr(),
                         max_deviation.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, max_deviation)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], max_deviation)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -12071,7 +14022,7 @@ pub mod ext {
         //! VK_EXT_vertex_attribute_divisor device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_vertex_attribute_divisor";
+        pub const NAME: &ffi::CStr = c"VK_EXT_vertex_attribute_divisor";
     }
     pub mod pipeline_creation_feedback {
         //! VK_EXT_pipeline_creation_feedback device extension.
@@ -12079,13 +14030,13 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_pipeline_creation_feedback";
+        pub const NAME: &ffi::CStr = c"VK_EXT_pipeline_creation_feedback";
     }
     pub mod present_timing {
         //! VK_EXT_present_timing device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_present_timing";
+        pub const NAME: &ffi::CStr = c"VK_EXT_present_timing";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub set_swapchain_present_timing_queue_size_ext:
@@ -12189,20 +14140,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -12211,6 +14166,9 @@ pub mod ext {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`NOT_READY`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -12220,17 +14178,18 @@ pub mod ext {
                 swapchain: SwapchainKHR,
                 size: u32,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::NOT_READY];
                 unsafe {
                     (self.fp.set_swapchain_present_timing_queue_size_ext)(
                         self.handle,
                         swapchain,
                         size,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::NOT_READY])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`NOT_READY`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -12241,8 +14200,6 @@ pub mod ext {
                 swapchain_timing_properties: &mut SwapchainTimingPropertiesEXT<'_>,
                 swapchain_timing_properties_counter: Option<&mut u64>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::NOT_READY];
                 unsafe {
                     (self.fp.get_swapchain_timing_properties_ext)(
                         self.handle,
@@ -12250,9 +14207,12 @@ pub mod ext {
                         swapchain_timing_properties,
                         swapchain_timing_properties_counter.as_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::NOT_READY])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -12263,8 +14223,6 @@ pub mod ext {
                 swapchain_time_domain_properties: &mut SwapchainTimeDomainPropertiesEXT<'_>,
                 time_domains_counter: Option<&mut u64>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     (self.fp.get_swapchain_time_domain_properties_ext)(
                         self.handle,
@@ -12272,9 +14230,12 @@ pub mod ext {
                         swapchain_time_domain_properties,
                         time_domains_counter.as_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -12284,16 +14245,38 @@ pub mod ext {
                 past_presentation_timing_info: &PastPresentationTimingInfoEXT<'_>,
                 past_presentation_timing_properties: &mut PastPresentationTimingPropertiesEXT<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     (self.fp.get_past_presentation_timing_ext)(
                         self.handle,
                         past_presentation_timing_info,
                         past_presentation_timing_properties,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -12301,13 +14284,13 @@ pub mod ext {
         //! VK_EXT_pci_bus_info device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_pci_bus_info";
+        pub const NAME: &ffi::CStr = c"VK_EXT_pci_bus_info";
     }
     pub mod metal_surface {
         //! VK_EXT_metal_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_metal_surface";
+        pub const NAME: &ffi::CStr = c"VK_EXT_metal_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_metal_surface_ext: PFN_vkCreateMetalSurfaceEXT,
@@ -12342,20 +14325,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -12364,6 +14351,8 @@ pub mod ext {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -12373,7 +14362,6 @@ pub mod ext {
                 create_info: &MetalSurfaceCreateInfoEXT<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_metal_surface_ext)(
@@ -12382,8 +14370,32 @@ pub mod ext {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -12391,7 +14403,7 @@ pub mod ext {
         //! VK_EXT_fragment_density_map device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_fragment_density_map";
+        pub const NAME: &ffi::CStr = c"VK_EXT_fragment_density_map";
     }
     pub mod scalar_block_layout {
         //! VK_EXT_scalar_block_layout device extension.
@@ -12399,7 +14411,7 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_scalar_block_layout";
+        pub const NAME: &ffi::CStr = c"VK_EXT_scalar_block_layout";
     }
     pub mod subgroup_size_control {
         //! VK_EXT_subgroup_size_control device extension.
@@ -12407,31 +14419,31 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_subgroup_size_control";
+        pub const NAME: &ffi::CStr = c"VK_EXT_subgroup_size_control";
     }
     pub mod shader_image_atomic_int64 {
         //! VK_EXT_shader_image_atomic_int64 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_image_atomic_int64";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_image_atomic_int64";
     }
     pub mod memory_budget {
         //! VK_EXT_memory_budget device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_memory_budget";
+        pub const NAME: &ffi::CStr = c"VK_EXT_memory_budget";
     }
     pub mod memory_priority {
         //! VK_EXT_memory_priority device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_memory_priority";
+        pub const NAME: &ffi::CStr = c"VK_EXT_memory_priority";
     }
     pub mod buffer_device_address {
         //! VK_EXT_buffer_device_address device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_buffer_device_address";
+        pub const NAME: &ffi::CStr = c"VK_EXT_buffer_device_address";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_buffer_device_address: PFN_vkGetBufferDeviceAddress,
@@ -12464,20 +14476,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -12497,6 +14513,30 @@ pub mod ext {
                 unsafe { (self.fp.get_buffer_device_address)(self.handle, info) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod tooling_info {
         //! VK_EXT_tooling_info device extension.
@@ -12508,7 +14548,7 @@ pub mod ext {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_tooling_info";
+        pub const NAME: &ffi::CStr = c"VK_EXT_tooling_info";
     }
     pub mod separate_stencil_usage {
         //! VK_EXT_separate_stencil_usage device extension.
@@ -12516,37 +14556,37 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_2
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_separate_stencil_usage";
+        pub const NAME: &ffi::CStr = c"VK_EXT_separate_stencil_usage";
     }
     pub mod validation_features {
         //! VK_EXT_validation_features instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 6u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_validation_features";
+        pub const NAME: &ffi::CStr = c"VK_EXT_validation_features";
     }
     pub mod fragment_shader_interlock {
         //! VK_EXT_fragment_shader_interlock device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_fragment_shader_interlock";
+        pub const NAME: &ffi::CStr = c"VK_EXT_fragment_shader_interlock";
     }
     pub mod ycbcr_image_arrays {
         //! VK_EXT_ycbcr_image_arrays device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_ycbcr_image_arrays";
+        pub const NAME: &ffi::CStr = c"VK_EXT_ycbcr_image_arrays";
     }
     pub mod provoking_vertex {
         //! VK_EXT_provoking_vertex device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_provoking_vertex";
+        pub const NAME: &ffi::CStr = c"VK_EXT_provoking_vertex";
     }
     pub mod full_screen_exclusive {
         //! VK_EXT_full_screen_exclusive device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 4u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_full_screen_exclusive";
+        pub const NAME: &ffi::CStr = c"VK_EXT_full_screen_exclusive";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_physical_device_surface_present_modes2_ext:
@@ -12648,20 +14688,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -12670,6 +14714,9 @@ pub mod ext {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -12679,8 +14726,6 @@ pub mod ext {
                 physical_device: PhysicalDevice,
                 surface_info: &PhysicalDeviceSurfaceInfo2KHR<'_>,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut present_mode_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_surface_present_modes2_ext)(
@@ -12689,9 +14734,15 @@ pub mod ext {
                         present_mode_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, present_mode_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        present_mode_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -12702,8 +14753,6 @@ pub mod ext {
                 surface_info: &PhysicalDeviceSurfaceInfo2KHR<'_>,
                 out: &mut [PresentModeKHR],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_surface_present_modes2_ext)(
@@ -12712,9 +14761,11 @@ pub mod ext {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -12723,12 +14774,13 @@ pub mod ext {
                 &self,
                 swapchain: SwapchainKHR,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.acquire_full_screen_exclusive_mode_ext)(self.handle, swapchain)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -12737,15 +14789,16 @@ pub mod ext {
                 &self,
                 swapchain: SwapchainKHR,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.release_full_screen_exclusive_mode_ext)(self.handle, swapchain)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Depends on"]
             #[doc = "* VK_KHR_device_group or"]
             #[doc = "* VK_VERSION_1_1"]
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -12754,7 +14807,6 @@ pub mod ext {
                 &self,
                 surface_info: &PhysicalDeviceSurfaceInfo2KHR<'_>,
             ) -> crate::VkResult<DeviceGroupPresentModeFlagsKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut modes = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_device_group_surface_present_modes2_ext)(
@@ -12762,8 +14814,32 @@ pub mod ext {
                         surface_info,
                         modes.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, modes)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], modes)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -12771,7 +14847,7 @@ pub mod ext {
         //! VK_EXT_headless_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_headless_surface";
+        pub const NAME: &ffi::CStr = c"VK_EXT_headless_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_headless_surface_ext: PFN_vkCreateHeadlessSurfaceEXT,
@@ -12807,20 +14883,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -12829,6 +14909,8 @@ pub mod ext {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -12838,7 +14920,6 @@ pub mod ext {
                 create_info: &HeadlessSurfaceCreateInfoEXT<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_headless_surface_ext)(
@@ -12847,8 +14928,32 @@ pub mod ext {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -12856,7 +14961,7 @@ pub mod ext {
         //! VK_EXT_line_rasterization device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_line_rasterization";
+        pub const NAME: &ffi::CStr = c"VK_EXT_line_rasterization";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_line_stipple: PFN_vkCmdSetLineStipple,
@@ -12885,20 +14990,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -12926,12 +15035,36 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod shader_atomic_float {
         //! VK_EXT_shader_atomic_float device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_atomic_float";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_atomic_float";
     }
     pub mod host_query_reset {
         //! VK_EXT_host_query_reset device extension.
@@ -12943,13 +15076,13 @@ pub mod ext {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_host_query_reset";
+        pub const NAME: &ffi::CStr = c"VK_EXT_host_query_reset";
     }
     pub mod index_type_uint8 {
         //! VK_EXT_index_type_uint8 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_index_type_uint8";
+        pub const NAME: &ffi::CStr = c"VK_EXT_index_type_uint8";
     }
     pub mod extended_dynamic_state {
         //! VK_EXT_extended_dynamic_state device extension.
@@ -12961,7 +15094,7 @@ pub mod ext {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_extended_dynamic_state";
+        pub const NAME: &ffi::CStr = c"VK_EXT_extended_dynamic_state";
     }
     pub mod host_image_copy {
         //! VK_EXT_host_image_copy device extension.
@@ -12973,31 +15106,31 @@ pub mod ext {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_host_image_copy";
+        pub const NAME: &ffi::CStr = c"VK_EXT_host_image_copy";
     }
     pub mod map_memory_placed {
         //! VK_EXT_map_memory_placed device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_map_memory_placed";
+        pub const NAME: &ffi::CStr = c"VK_EXT_map_memory_placed";
     }
     pub mod shader_atomic_float2 {
         //! VK_EXT_shader_atomic_float2 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_atomic_float2";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_atomic_float2";
     }
     pub mod surface_maintenance1 {
         //! VK_EXT_surface_maintenance1 instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_surface_maintenance1";
+        pub const NAME: &ffi::CStr = c"VK_EXT_surface_maintenance1";
     }
     pub mod swapchain_maintenance1 {
         //! VK_EXT_swapchain_maintenance1 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_swapchain_maintenance1";
+        pub const NAME: &ffi::CStr = c"VK_EXT_swapchain_maintenance1";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub release_swapchain_images_khr: PFN_vkReleaseSwapchainImagesKHR,
@@ -13031,20 +15164,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -13061,11 +15198,34 @@ pub mod ext {
                 &self,
                 release_info: &ReleaseSwapchainImagesInfoKHR<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.release_swapchain_images_khr)(self.handle, release_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -13075,7 +15235,7 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_demote_to_helper_invocation";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_demote_to_helper_invocation";
     }
     pub mod texel_buffer_alignment {
         //! VK_EXT_texel_buffer_alignment device extension.
@@ -13083,13 +15243,13 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_texel_buffer_alignment";
+        pub const NAME: &ffi::CStr = c"VK_EXT_texel_buffer_alignment";
     }
     pub mod depth_bias_control {
         //! VK_EXT_depth_bias_control device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_depth_bias_control";
+        pub const NAME: &ffi::CStr = c"VK_EXT_depth_bias_control";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_depth_bias2_ext: PFN_vkCmdSetDepthBias2EXT,
@@ -13122,20 +15282,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -13156,18 +15320,42 @@ pub mod ext {
                 unsafe { (self.fp.cmd_set_depth_bias2_ext)(command_buffer, depth_bias_info) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod device_memory_report {
         //! VK_EXT_device_memory_report device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_device_memory_report";
+        pub const NAME: &ffi::CStr = c"VK_EXT_device_memory_report";
     }
     pub mod acquire_drm_display {
         //! VK_EXT_acquire_drm_display instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_acquire_drm_display";
+        pub const NAME: &ffi::CStr = c"VK_EXT_acquire_drm_display";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub acquire_drm_display_ext: PFN_vkAcquireDrmDisplayEXT,
@@ -13218,20 +15406,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -13240,6 +15432,8 @@ pub mod ext {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -13250,12 +15444,13 @@ pub mod ext {
                 drm_fd: i32,
                 display: DisplayKHR,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.acquire_drm_display_ext)(physical_device, drm_fd, display)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -13266,7 +15461,6 @@ pub mod ext {
                 drm_fd: i32,
                 connector_id: u32,
             ) -> crate::VkResult<DisplayKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut display = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_drm_display_ext)(
@@ -13275,8 +15469,32 @@ pub mod ext {
                         connector_id,
                         display.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, display)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], display)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -13284,19 +15502,19 @@ pub mod ext {
         //! VK_EXT_robustness2 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_robustness2";
+        pub const NAME: &ffi::CStr = c"VK_EXT_robustness2";
     }
     pub mod custom_border_color {
         //! VK_EXT_custom_border_color device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 12u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_custom_border_color";
+        pub const NAME: &ffi::CStr = c"VK_EXT_custom_border_color";
     }
     pub mod texture_compression_astc_3d {
         //! VK_EXT_texture_compression_astc_3d device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_texture_compression_astc_3d";
+        pub const NAME: &ffi::CStr = c"VK_EXT_texture_compression_astc_3d";
     }
     pub mod private_data {
         //! VK_EXT_private_data device extension.
@@ -13308,7 +15526,7 @@ pub mod ext {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_private_data";
+        pub const NAME: &ffi::CStr = c"VK_EXT_private_data";
     }
     pub mod pipeline_creation_cache_control {
         //! VK_EXT_pipeline_creation_cache_control device extension.
@@ -13316,13 +15534,13 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_pipeline_creation_cache_control";
+        pub const NAME: &ffi::CStr = c"VK_EXT_pipeline_creation_cache_control";
     }
     pub mod metal_objects {
         //! VK_EXT_metal_objects device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_metal_objects";
+        pub const NAME: &ffi::CStr = c"VK_EXT_metal_objects";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub export_metal_objects_ext: PFN_vkExportMetalObjectsEXT,
@@ -13355,20 +15573,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -13388,12 +15610,36 @@ pub mod ext {
                 unsafe { (self.fp.export_metal_objects_ext)(self.handle, metal_objects_info) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod descriptor_buffer {
         //! VK_EXT_descriptor_buffer device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_descriptor_buffer";
+        pub const NAME: &ffi::CStr = c"VK_EXT_descriptor_buffer";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_descriptor_set_layout_size_ext: PFN_vkGetDescriptorSetLayoutSizeEXT,
@@ -13658,20 +15904,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -13687,14 +15937,15 @@ pub mod ext {
             pub unsafe fn get_descriptor_set_layout_size(
                 &self,
                 layout: DescriptorSetLayout,
-                layout_size_in_bytes: &mut DeviceSize,
-            ) {
+            ) -> DeviceSize {
                 unsafe {
+                    let mut layout_size_in_bytes = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_descriptor_set_layout_size_ext)(
                         self.handle,
                         layout,
-                        layout_size_in_bytes,
-                    )
+                        layout_size_in_bytes.as_mut_ptr(),
+                    );
+                    layout_size_in_bytes.assume_init()
                 }
             }
             #[doc = r" # Safety"]
@@ -13705,15 +15956,16 @@ pub mod ext {
                 &self,
                 layout: DescriptorSetLayout,
                 binding: u32,
-                offset: &mut DeviceSize,
-            ) {
+            ) -> DeviceSize {
                 unsafe {
+                    let mut offset = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_descriptor_set_layout_binding_offset_ext)(
                         self.handle,
                         layout,
                         binding,
-                        offset,
-                    )
+                        offset.as_mut_ptr(),
+                    );
+                    offset.assume_init()
                 }
             }
             #[doc = r" # Safety"]
@@ -13724,14 +15976,14 @@ pub mod ext {
                 &self,
                 descriptor_info: &DescriptorGetInfoEXT<'_>,
                 data_size: usize,
-                descriptor: &mut ffi::c_void,
+                descriptor: &mut [ffi::c_void],
             ) {
                 unsafe {
                     (self.fp.get_descriptor_ext)(
                         self.handle,
                         descriptor_info,
                         data_size,
-                        descriptor,
+                        descriptor.as_mut_ptr(),
                     )
                 }
             }
@@ -13748,7 +16000,11 @@ pub mod ext {
                     (self.fp.cmd_bind_descriptor_buffers_ext)(
                         command_buffer,
                         binding_infos.len() as _,
-                        binding_infos.as_ptr(),
+                        if !binding_infos.is_empty() {
+                            binding_infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -13773,8 +16029,16 @@ pub mod ext {
                         layout,
                         first_set,
                         buffer_indices.len() as _,
-                        buffer_indices.as_ptr(),
-                        offsets.as_ptr(),
+                        if !buffer_indices.is_empty() {
+                            buffer_indices.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        if !offsets.is_empty() {
+                            offsets.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -13798,6 +16062,8 @@ pub mod ext {
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -13806,7 +16072,6 @@ pub mod ext {
                 &self,
                 info: &BufferCaptureDescriptorDataInfoEXT<'_>,
             ) -> crate::VkResult<ffi::c_void> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut data = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_buffer_opaque_capture_descriptor_data_ext)(
@@ -13814,9 +16079,11 @@ pub mod ext {
                         info,
                         data.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, data)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], data)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -13825,7 +16092,6 @@ pub mod ext {
                 &self,
                 info: &ImageCaptureDescriptorDataInfoEXT<'_>,
             ) -> crate::VkResult<ffi::c_void> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut data = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_image_opaque_capture_descriptor_data_ext)(
@@ -13833,9 +16099,11 @@ pub mod ext {
                         info,
                         data.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, data)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], data)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -13844,7 +16112,6 @@ pub mod ext {
                 &self,
                 info: &ImageViewCaptureDescriptorDataInfoEXT<'_>,
             ) -> crate::VkResult<ffi::c_void> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut data = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_image_view_opaque_capture_descriptor_data_ext)(
@@ -13852,9 +16119,11 @@ pub mod ext {
                         info,
                         data.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, data)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], data)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -13863,7 +16132,6 @@ pub mod ext {
                 &self,
                 info: &SamplerCaptureDescriptorDataInfoEXT<'_>,
             ) -> crate::VkResult<ffi::c_void> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut data = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_sampler_opaque_capture_descriptor_data_ext)(
@@ -13871,12 +16139,14 @@ pub mod ext {
                         info,
                         data.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, data)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], data)
                 }
             }
             #[doc = r" # Depends on"]
             #[doc = "* VK_KHR_acceleration_structure or"]
             #[doc = "* VK_NV_ray_tracing"]
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -13885,7 +16155,6 @@ pub mod ext {
                 &self,
                 info: &AccelerationStructureCaptureDescriptorDataInfoEXT<'_>,
             ) -> crate::VkResult<ffi::c_void> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut data = ::core::mem::MaybeUninit::uninit();
                     (self
@@ -13895,8 +16164,32 @@ pub mod ext {
                         info,
                         data.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, data)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], data)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -13904,13 +16197,13 @@ pub mod ext {
         //! VK_EXT_graphics_pipeline_library device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_graphics_pipeline_library";
+        pub const NAME: &ffi::CStr = c"VK_EXT_graphics_pipeline_library";
     }
     pub mod mesh_shader {
         //! VK_EXT_mesh_shader device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_mesh_shader";
+        pub const NAME: &ffi::CStr = c"VK_EXT_mesh_shader";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_draw_mesh_tasks_ext: PFN_vkCmdDrawMeshTasksEXT,
@@ -13995,20 +16288,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -14091,6 +16388,30 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod ycbcr_2plane_444_formats {
         //! VK_EXT_ycbcr_2plane_444_formats device extension.
@@ -14098,13 +16419,13 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_ycbcr_2plane_444_formats";
+        pub const NAME: &ffi::CStr = c"VK_EXT_ycbcr_2plane_444_formats";
     }
     pub mod fragment_density_map2 {
         //! VK_EXT_fragment_density_map2 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_fragment_density_map2";
+        pub const NAME: &ffi::CStr = c"VK_EXT_fragment_density_map2";
     }
     pub mod image_robustness {
         //! VK_EXT_image_robustness device extension.
@@ -14112,13 +16433,13 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_image_robustness";
+        pub const NAME: &ffi::CStr = c"VK_EXT_image_robustness";
     }
     pub mod image_compression_control {
         //! VK_EXT_image_compression_control device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_image_compression_control";
+        pub const NAME: &ffi::CStr = c"VK_EXT_image_compression_control";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_image_subresource_layout2: PFN_vkGetImageSubresourceLayout2,
@@ -14154,20 +16475,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -14191,12 +16516,36 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod attachment_feedback_loop_layout {
         //! VK_EXT_attachment_feedback_loop_layout device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_attachment_feedback_loop_layout";
+        pub const NAME: &ffi::CStr = c"VK_EXT_attachment_feedback_loop_layout";
     }
     pub mod _4444_formats {
         //! VK_EXT_4444_formats device extension.
@@ -14204,13 +16553,13 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_3
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_4444_formats";
+        pub const NAME: &ffi::CStr = c"VK_EXT_4444_formats";
     }
     pub mod device_fault {
         //! VK_EXT_device_fault device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_device_fault";
+        pub const NAME: &ffi::CStr = c"VK_EXT_device_fault";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_device_fault_info_ext: PFN_vkGetDeviceFaultInfoEXT,
@@ -14244,20 +16593,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -14266,6 +16619,9 @@ pub mod ext {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -14275,16 +16631,38 @@ pub mod ext {
                 fault_counts: &mut DeviceFaultCountsEXT<'_>,
                 fault_info: Option<&mut DeviceFaultInfoEXT<'_>>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     (self.fp.get_device_fault_info_ext)(
                         self.handle,
                         fault_counts,
                         fault_info.as_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -14292,13 +16670,13 @@ pub mod ext {
         //! VK_EXT_rgba10x6_formats device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_rgba10x6_formats";
+        pub const NAME: &ffi::CStr = c"VK_EXT_rgba10x6_formats";
     }
     pub mod directfb_surface {
         //! VK_EXT_directfb_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_directfb_surface";
+        pub const NAME: &ffi::CStr = c"VK_EXT_directfb_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_direct_fbsurface_ext: PFN_vkCreateDirectFBSurfaceEXT,
@@ -14357,20 +16735,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -14379,6 +16761,8 @@ pub mod ext {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -14388,7 +16772,6 @@ pub mod ext {
                 create_info: &DirectFBSurfaceCreateInfoEXT<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_direct_fbsurface_ext)(
@@ -14397,7 +16780,7 @@ pub mod ext {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
             }
             #[doc = r" # Safety"]
@@ -14421,12 +16804,36 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod vertex_input_dynamic_state {
         //! VK_EXT_vertex_input_dynamic_state device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_vertex_input_dynamic_state";
+        pub const NAME: &ffi::CStr = c"VK_EXT_vertex_input_dynamic_state";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_vertex_input_ext: PFN_vkCmdSetVertexInputEXT,
@@ -14462,20 +16869,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -14492,18 +16903,49 @@ pub mod ext {
                 &self,
                 command_buffer: CommandBuffer,
                 vertex_binding_descriptions: &[VertexInputBindingDescription2EXT<'_>],
-                vertex_attribute_description_count: u32,
                 vertex_attribute_descriptions: &[VertexInputAttributeDescription2EXT<'_>],
             ) {
                 unsafe {
                     (self.fp.cmd_set_vertex_input_ext)(
                         command_buffer,
                         vertex_binding_descriptions.len() as _,
-                        vertex_binding_descriptions.as_ptr(),
-                        vertex_attribute_description_count,
-                        vertex_attribute_descriptions.as_ptr(),
+                        if !vertex_binding_descriptions.is_empty() {
+                            vertex_binding_descriptions.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        vertex_attribute_descriptions.len() as _,
+                        if !vertex_attribute_descriptions.is_empty() {
+                            vertex_attribute_descriptions.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -14511,37 +16953,37 @@ pub mod ext {
         //! VK_EXT_physical_device_drm device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_physical_device_drm";
+        pub const NAME: &ffi::CStr = c"VK_EXT_physical_device_drm";
     }
     pub mod device_address_binding_report {
         //! VK_EXT_device_address_binding_report device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_device_address_binding_report";
+        pub const NAME: &ffi::CStr = c"VK_EXT_device_address_binding_report";
     }
     pub mod depth_clip_control {
         //! VK_EXT_depth_clip_control device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_depth_clip_control";
+        pub const NAME: &ffi::CStr = c"VK_EXT_depth_clip_control";
     }
     pub mod primitive_topology_list_restart {
         //! VK_EXT_primitive_topology_list_restart device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_primitive_topology_list_restart";
+        pub const NAME: &ffi::CStr = c"VK_EXT_primitive_topology_list_restart";
     }
     pub mod present_mode_fifo_latest_ready {
         //! VK_EXT_present_mode_fifo_latest_ready device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_present_mode_fifo_latest_ready";
+        pub const NAME: &ffi::CStr = c"VK_EXT_present_mode_fifo_latest_ready";
     }
     pub mod pipeline_properties {
         //! VK_EXT_pipeline_properties device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_pipeline_properties";
+        pub const NAME: &ffi::CStr = c"VK_EXT_pipeline_properties";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_pipeline_properties_ext: PFN_vkGetPipelinePropertiesEXT,
@@ -14576,20 +17018,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -14598,6 +17044,8 @@ pub mod ext {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -14607,15 +17055,38 @@ pub mod ext {
                 pipeline_info: &PipelineInfoKHR<'_>,
                 pipeline_properties: &mut BaseOutStructure<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_pipeline_properties_ext)(
                         self.handle,
                         pipeline_info,
                         pipeline_properties,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -14623,13 +17094,13 @@ pub mod ext {
         //! VK_EXT_frame_boundary device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_frame_boundary";
+        pub const NAME: &ffi::CStr = c"VK_EXT_frame_boundary";
     }
     pub mod multisampled_render_to_single_sampled {
         //! VK_EXT_multisampled_render_to_single_sampled device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_multisampled_render_to_single_sampled";
+        pub const NAME: &ffi::CStr = c"VK_EXT_multisampled_render_to_single_sampled";
     }
     pub mod extended_dynamic_state2 {
         //! VK_EXT_extended_dynamic_state2 device extension.
@@ -14641,13 +17112,13 @@ pub mod ext {
         //![1]: crate::Device
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_extended_dynamic_state2";
+        pub const NAME: &ffi::CStr = c"VK_EXT_extended_dynamic_state2";
     }
     pub mod color_write_enable {
         //! VK_EXT_color_write_enable device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_color_write_enable";
+        pub const NAME: &ffi::CStr = c"VK_EXT_color_write_enable";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_color_write_enable_ext: PFN_vkCmdSetColorWriteEnableEXT,
@@ -14682,20 +17153,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -14717,9 +17192,37 @@ pub mod ext {
                     (self.fp.cmd_set_color_write_enable_ext)(
                         command_buffer,
                         color_write_enables.len() as _,
-                        color_write_enables.as_ptr(),
+                        if !color_write_enables.is_empty() {
+                            color_write_enables.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -14727,25 +17230,25 @@ pub mod ext {
         //! VK_EXT_primitives_generated_query device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_primitives_generated_query";
+        pub const NAME: &ffi::CStr = c"VK_EXT_primitives_generated_query";
     }
     pub mod global_priority_query {
         //! VK_EXT_global_priority_query device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_global_priority_query";
+        pub const NAME: &ffi::CStr = c"VK_EXT_global_priority_query";
     }
     pub mod image_view_min_lod {
         //! VK_EXT_image_view_min_lod device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_image_view_min_lod";
+        pub const NAME: &ffi::CStr = c"VK_EXT_image_view_min_lod";
     }
     pub mod multi_draw {
         //! VK_EXT_multi_draw device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_multi_draw";
+        pub const NAME: &ffi::CStr = c"VK_EXT_multi_draw";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_draw_multi_ext: PFN_vkCmdDrawMultiEXT,
@@ -14802,20 +17305,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -14840,7 +17347,11 @@ pub mod ext {
                     (self.fp.cmd_draw_multi_ext)(
                         command_buffer,
                         vertex_info.len() as _,
-                        vertex_info.as_ptr(),
+                        if !vertex_info.is_empty() {
+                            vertex_info.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         instance_count,
                         first_instance,
                         stride,
@@ -14865,7 +17376,11 @@ pub mod ext {
                     (self.fp.cmd_draw_multi_indexed_ext)(
                         command_buffer,
                         index_info.len() as _,
-                        index_info.as_ptr(),
+                        if !index_info.is_empty() {
+                            index_info.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         instance_count,
                         first_instance,
                         stride,
@@ -14874,24 +17389,48 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod image_2d_view_of_3d {
         //! VK_EXT_image_2d_view_of_3d device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_image_2d_view_of_3d";
+        pub const NAME: &ffi::CStr = c"VK_EXT_image_2d_view_of_3d";
     }
     pub mod shader_tile_image {
         //! VK_EXT_shader_tile_image device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_tile_image";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_tile_image";
     }
     pub mod opacity_micromap {
         //! VK_EXT_opacity_micromap device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_opacity_micromap";
+        pub const NAME: &ffi::CStr = c"VK_EXT_opacity_micromap";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_micromap_ext: PFN_vkCreateMicromapEXT,
@@ -15195,20 +17734,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -15217,6 +17760,8 @@ pub mod ext {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -15226,7 +17771,6 @@ pub mod ext {
                 create_info: &MicromapCreateInfoEXT<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<MicromapEXT> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut micromap = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_micromap_ext)(
@@ -15235,7 +17779,7 @@ pub mod ext {
                         allocator.as_ptr(),
                         micromap.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, micromap)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], micromap)
                 }
             }
             #[doc = r" # Safety"]
@@ -15262,10 +17806,18 @@ pub mod ext {
                     (self.fp.cmd_build_micromaps_ext)(
                         command_buffer,
                         infos.len() as _,
-                        infos.as_ptr(),
+                        if !infos.is_empty() {
+                            infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
+            #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -15275,21 +17827,28 @@ pub mod ext {
                 deferred_operation: DeferredOperationKHR,
                 infos: &[MicromapBuildInfoEXT<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::OPERATION_DEFERRED_KHR,
-                    crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
-                ];
                 unsafe {
                     (self.fp.build_micromaps_ext)(
                         self.handle,
                         deferred_operation,
                         infos.len() as _,
-                        infos.as_ptr(),
+                        if !infos.is_empty() {
+                            infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::OPERATION_DEFERRED_KHR,
+                        crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
+                    ])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
+            #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -15299,16 +17858,18 @@ pub mod ext {
                 deferred_operation: DeferredOperationKHR,
                 info: &CopyMicromapInfoEXT<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::OPERATION_DEFERRED_KHR,
-                    crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
-                ];
                 unsafe {
-                    (self.fp.copy_micromap_ext)(self.handle, deferred_operation, info)
-                        .result(SUCCESS_CODES)
+                    (self.fp.copy_micromap_ext)(self.handle, deferred_operation, info).result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::OPERATION_DEFERRED_KHR,
+                        crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
+                    ])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
+            #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -15318,16 +17879,19 @@ pub mod ext {
                 deferred_operation: DeferredOperationKHR,
                 info: &CopyMicromapToMemoryInfoEXT<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::OPERATION_DEFERRED_KHR,
-                    crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
-                ];
                 unsafe {
                     (self.fp.copy_micromap_to_memory_ext)(self.handle, deferred_operation, info)
-                        .result(SUCCESS_CODES)
+                        .result(&[
+                            crate::vk::Result::SUCCESS,
+                            crate::vk::Result::OPERATION_DEFERRED_KHR,
+                            crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
+                        ])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
+            #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -15337,16 +17901,17 @@ pub mod ext {
                 deferred_operation: DeferredOperationKHR,
                 info: &CopyMemoryToMicromapInfoEXT<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::OPERATION_DEFERRED_KHR,
-                    crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
-                ];
                 unsafe {
                     (self.fp.copy_memory_to_micromap_ext)(self.handle, deferred_operation, info)
-                        .result(SUCCESS_CODES)
+                        .result(&[
+                            crate::vk::Result::SUCCESS,
+                            crate::vk::Result::OPERATION_DEFERRED_KHR,
+                            crate::vk::Result::OPERATION_NOT_DEFERRED_KHR,
+                        ])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -15356,21 +17921,24 @@ pub mod ext {
                 micromaps: &[MicromapEXT],
                 query_type: QueryType,
                 data_size: usize,
-                data: &mut ffi::c_void,
+                data: &mut [ffi::c_void],
                 stride: usize,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.write_micromaps_properties_ext)(
                         self.handle,
                         micromaps.len() as _,
-                        micromaps.as_ptr(),
+                        if !micromaps.is_empty() {
+                            micromaps.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         query_type,
                         data_size,
-                        data,
+                        data.as_mut_ptr(),
                         stride,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -15422,7 +17990,11 @@ pub mod ext {
                     (self.fp.cmd_write_micromaps_properties_ext)(
                         command_buffer,
                         micromaps.len() as _,
-                        micromaps.as_ptr(),
+                        if !micromaps.is_empty() {
+                            micromaps.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         query_type,
                         query_pool,
                         first_query,
@@ -15436,14 +18008,15 @@ pub mod ext {
             pub unsafe fn get_device_micromap_compatibility(
                 &self,
                 version_info: &MicromapVersionInfoEXT<'_>,
-                compatibility: &mut AccelerationStructureCompatibilityKHR,
-            ) {
+            ) -> AccelerationStructureCompatibilityKHR {
                 unsafe {
+                    let mut compatibility = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_device_micromap_compatibility_ext)(
                         self.handle,
                         version_info,
-                        compatibility,
-                    )
+                        compatibility.as_mut_ptr(),
+                    );
+                    compatibility.assume_init()
                 }
             }
             #[doc = r" # Safety"]
@@ -15466,24 +18039,48 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod load_store_op_none {
         //! VK_EXT_load_store_op_none device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_load_store_op_none";
+        pub const NAME: &ffi::CStr = c"VK_EXT_load_store_op_none";
     }
     pub mod border_color_swizzle {
         //! VK_EXT_border_color_swizzle device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_border_color_swizzle";
+        pub const NAME: &ffi::CStr = c"VK_EXT_border_color_swizzle";
     }
     pub mod pageable_device_local_memory {
         //! VK_EXT_pageable_device_local_memory device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_pageable_device_local_memory";
+        pub const NAME: &ffi::CStr = c"VK_EXT_pageable_device_local_memory";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub set_device_memory_priority_ext: PFN_vkSetDeviceMemoryPriorityEXT,
@@ -15518,20 +18115,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -15548,54 +18149,78 @@ pub mod ext {
                 unsafe { (self.fp.set_device_memory_priority_ext)(self.handle, memory, priority) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod image_sliced_view_of_3d {
         //! VK_EXT_image_sliced_view_of_3d device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_image_sliced_view_of_3d";
+        pub const NAME: &ffi::CStr = c"VK_EXT_image_sliced_view_of_3d";
     }
     pub mod depth_clamp_zero_one {
         //! VK_EXT_depth_clamp_zero_one device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_depth_clamp_zero_one";
+        pub const NAME: &ffi::CStr = c"VK_EXT_depth_clamp_zero_one";
     }
     pub mod non_seamless_cube_map {
         //! VK_EXT_non_seamless_cube_map device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_non_seamless_cube_map";
+        pub const NAME: &ffi::CStr = c"VK_EXT_non_seamless_cube_map";
     }
     pub mod application_parameters {
         //! VK_EXT_application_parameters instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_application_parameters";
+        pub const NAME: &ffi::CStr = c"VK_EXT_application_parameters";
     }
     pub mod image_compression_control_swapchain {
         //! VK_EXT_image_compression_control_swapchain device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_image_compression_control_swapchain";
+        pub const NAME: &ffi::CStr = c"VK_EXT_image_compression_control_swapchain";
     }
     pub mod nested_command_buffer {
         //! VK_EXT_nested_command_buffer device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_nested_command_buffer";
+        pub const NAME: &ffi::CStr = c"VK_EXT_nested_command_buffer";
     }
     pub mod external_memory_acquire_unmodified {
         //! VK_EXT_external_memory_acquire_unmodified device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_external_memory_acquire_unmodified";
+        pub const NAME: &ffi::CStr = c"VK_EXT_external_memory_acquire_unmodified";
     }
     pub mod extended_dynamic_state3 {
         //! VK_EXT_extended_dynamic_state3 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_extended_dynamic_state3";
+        pub const NAME: &ffi::CStr = c"VK_EXT_extended_dynamic_state3";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_depth_clamp_enable_ext: PFN_vkCmdSetDepthClampEnableEXT,
@@ -16273,20 +18898,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -16302,10 +18931,13 @@ pub mod ext {
             pub unsafe fn cmd_set_depth_clamp_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                depth_clamp_enable: Bool32,
+                depth_clamp_enable: bool,
             ) {
                 unsafe {
-                    (self.fp.cmd_set_depth_clamp_enable_ext)(command_buffer, depth_clamp_enable)
+                    (self.fp.cmd_set_depth_clamp_enable_ext)(
+                        command_buffer,
+                        depth_clamp_enable as Bool32,
+                    )
                 }
             }
             #[doc = r" # Safety"]
@@ -16343,10 +18975,16 @@ pub mod ext {
                 &self,
                 command_buffer: CommandBuffer,
                 samples: SampleCountFlags,
-                sample_mask: Option<&SampleMask>,
+                sample_mask: Option<&[SampleMask]>,
             ) {
                 unsafe {
-                    (self.fp.cmd_set_sample_mask_ext)(command_buffer, samples, sample_mask.as_ptr())
+                    (self.fp.cmd_set_sample_mask_ext)(
+                        command_buffer,
+                        samples,
+                        sample_mask
+                            .and_then(|s| (!s.is_empty()).then_some(s.as_ptr()))
+                            .unwrap_or_default(),
+                    )
                 }
             }
             #[doc = r" # Safety"]
@@ -16356,12 +18994,12 @@ pub mod ext {
             pub unsafe fn cmd_set_alpha_to_coverage_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                alpha_to_coverage_enable: Bool32,
+                alpha_to_coverage_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_alpha_to_coverage_enable_ext)(
                         command_buffer,
-                        alpha_to_coverage_enable,
+                        alpha_to_coverage_enable as Bool32,
                     )
                 }
             }
@@ -16372,10 +19010,13 @@ pub mod ext {
             pub unsafe fn cmd_set_alpha_to_one_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                alpha_to_one_enable: Bool32,
+                alpha_to_one_enable: bool,
             ) {
                 unsafe {
-                    (self.fp.cmd_set_alpha_to_one_enable_ext)(command_buffer, alpha_to_one_enable)
+                    (self.fp.cmd_set_alpha_to_one_enable_ext)(
+                        command_buffer,
+                        alpha_to_one_enable as Bool32,
+                    )
                 }
             }
             #[doc = r" # Safety"]
@@ -16385,9 +19026,11 @@ pub mod ext {
             pub unsafe fn cmd_set_logic_op_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                logic_op_enable: Bool32,
+                logic_op_enable: bool,
             ) {
-                unsafe { (self.fp.cmd_set_logic_op_enable_ext)(command_buffer, logic_op_enable) }
+                unsafe {
+                    (self.fp.cmd_set_logic_op_enable_ext)(command_buffer, logic_op_enable as Bool32)
+                }
             }
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
@@ -16404,7 +19047,11 @@ pub mod ext {
                         command_buffer,
                         first_attachment,
                         color_blend_enables.len() as _,
-                        color_blend_enables.as_ptr(),
+                        if !color_blend_enables.is_empty() {
+                            color_blend_enables.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -16423,7 +19070,11 @@ pub mod ext {
                         command_buffer,
                         first_attachment,
                         color_blend_equations.len() as _,
-                        color_blend_equations.as_ptr(),
+                        if !color_blend_equations.is_empty() {
+                            color_blend_equations.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -16442,7 +19093,11 @@ pub mod ext {
                         command_buffer,
                         first_attachment,
                         color_write_masks.len() as _,
-                        color_write_masks.as_ptr(),
+                        if !color_write_masks.is_empty() {
+                            color_write_masks.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -16522,10 +19177,13 @@ pub mod ext {
             pub unsafe fn cmd_set_depth_clip_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                depth_clip_enable: Bool32,
+                depth_clip_enable: bool,
             ) {
                 unsafe {
-                    (self.fp.cmd_set_depth_clip_enable_ext)(command_buffer, depth_clip_enable)
+                    (self.fp.cmd_set_depth_clip_enable_ext)(
+                        command_buffer,
+                        depth_clip_enable as Bool32,
+                    )
                 }
             }
             #[doc = r" # Depends on"]
@@ -16537,12 +19195,12 @@ pub mod ext {
             pub unsafe fn cmd_set_sample_locations_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                sample_locations_enable: Bool32,
+                sample_locations_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_sample_locations_enable_ext)(
                         command_buffer,
-                        sample_locations_enable,
+                        sample_locations_enable as Bool32,
                     )
                 }
             }
@@ -16563,7 +19221,11 @@ pub mod ext {
                         command_buffer,
                         first_attachment,
                         color_blend_advanced.len() as _,
-                        color_blend_advanced.as_ptr(),
+                        if !color_blend_advanced.is_empty() {
+                            color_blend_advanced.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -16612,10 +19274,13 @@ pub mod ext {
             pub unsafe fn cmd_set_line_stipple_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                stippled_line_enable: Bool32,
+                stippled_line_enable: bool,
             ) {
                 unsafe {
-                    (self.fp.cmd_set_line_stipple_enable_ext)(command_buffer, stippled_line_enable)
+                    (self.fp.cmd_set_line_stipple_enable_ext)(
+                        command_buffer,
+                        stippled_line_enable as Bool32,
+                    )
                 }
             }
             #[doc = r" # Depends on"]
@@ -16627,12 +19292,12 @@ pub mod ext {
             pub unsafe fn cmd_set_depth_clip_negative_one_to_one(
                 &self,
                 command_buffer: CommandBuffer,
-                negative_one_to_one: Bool32,
+                negative_one_to_one: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_depth_clip_negative_one_to_one_ext)(
                         command_buffer,
-                        negative_one_to_one,
+                        negative_one_to_one as Bool32,
                     )
                 }
             }
@@ -16645,12 +19310,12 @@ pub mod ext {
             pub unsafe fn cmd_set_viewport_wscaling_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
-                viewport_wscaling_enable: Bool32,
+                viewport_wscaling_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_viewport_wscaling_enable_nv)(
                         command_buffer,
-                        viewport_wscaling_enable,
+                        viewport_wscaling_enable as Bool32,
                     )
                 }
             }
@@ -16671,7 +19336,11 @@ pub mod ext {
                         command_buffer,
                         first_viewport,
                         viewport_swizzles.len() as _,
-                        viewport_swizzles.as_ptr(),
+                        if !viewport_swizzles.is_empty() {
+                            viewport_swizzles.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -16684,12 +19353,12 @@ pub mod ext {
             pub unsafe fn cmd_set_coverage_to_color_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
-                coverage_to_color_enable: Bool32,
+                coverage_to_color_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_coverage_to_color_enable_nv)(
                         command_buffer,
-                        coverage_to_color_enable,
+                        coverage_to_color_enable as Bool32,
                     )
                 }
             }
@@ -16738,12 +19407,12 @@ pub mod ext {
             pub unsafe fn cmd_set_coverage_modulation_table_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
-                coverage_modulation_table_enable: Bool32,
+                coverage_modulation_table_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_coverage_modulation_table_enable_nv)(
                         command_buffer,
-                        coverage_modulation_table_enable,
+                        coverage_modulation_table_enable as Bool32,
                     )
                 }
             }
@@ -16762,7 +19431,11 @@ pub mod ext {
                     (self.fp.cmd_set_coverage_modulation_table_nv)(
                         command_buffer,
                         coverage_modulation_table.len() as _,
-                        coverage_modulation_table.as_ptr(),
+                        if !coverage_modulation_table.is_empty() {
+                            coverage_modulation_table.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -16775,12 +19448,12 @@ pub mod ext {
             pub unsafe fn cmd_set_shading_rate_image_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
-                shading_rate_image_enable: Bool32,
+                shading_rate_image_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_shading_rate_image_enable_nv)(
                         command_buffer,
-                        shading_rate_image_enable,
+                        shading_rate_image_enable as Bool32,
                     )
                 }
             }
@@ -16793,12 +19466,12 @@ pub mod ext {
             pub unsafe fn cmd_set_representative_fragment_test_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
-                representative_fragment_test_enable: Bool32,
+                representative_fragment_test_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_representative_fragment_test_enable_nv)(
                         command_buffer,
-                        representative_fragment_test_enable,
+                        representative_fragment_test_enable as Bool32,
                     )
                 }
             }
@@ -16821,18 +19494,42 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod subpass_merge_feedback {
         //! VK_EXT_subpass_merge_feedback device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_subpass_merge_feedback";
+        pub const NAME: &ffi::CStr = c"VK_EXT_subpass_merge_feedback";
     }
     pub mod shader_module_identifier {
         //! VK_EXT_shader_module_identifier device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_module_identifier";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_module_identifier";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_shader_module_identifier_ext: PFN_vkGetShaderModuleIdentifierEXT,
@@ -16890,20 +19587,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -16947,18 +19648,42 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod rasterization_order_attachment_access {
         //! VK_EXT_rasterization_order_attachment_access device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_rasterization_order_attachment_access";
+        pub const NAME: &ffi::CStr = c"VK_EXT_rasterization_order_attachment_access";
     }
     pub mod legacy_dithering {
         //! VK_EXT_legacy_dithering device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_legacy_dithering";
+        pub const NAME: &ffi::CStr = c"VK_EXT_legacy_dithering";
     }
     pub mod pipeline_protected_access {
         //! VK_EXT_pipeline_protected_access device extension.
@@ -16966,13 +19691,13 @@ pub mod ext {
         //! Promoted to core VK_VERSION_1_4
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_pipeline_protected_access";
+        pub const NAME: &ffi::CStr = c"VK_EXT_pipeline_protected_access";
     }
     pub mod shader_object {
         //! VK_EXT_shader_object device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_object";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_object";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_shaders_ext: PFN_vkCreateShadersEXT,
@@ -18106,20 +20831,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -18128,6 +20857,9 @@ pub mod ext {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPATIBLE_SHADER_BINARY_EXT`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -18136,21 +20868,24 @@ pub mod ext {
                 &self,
                 create_infos: &[ShaderCreateInfoEXT<'_>],
                 allocator: Option<&AllocationCallbacks>,
-                shaders: &mut ShaderEXT,
+                shaders: &mut [ShaderEXT],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::INCOMPATIBLE_SHADER_BINARY_EXT,
-                ];
                 unsafe {
                     (self.fp.create_shaders_ext)(
                         self.handle,
                         create_infos.len() as _,
-                        create_infos.as_ptr(),
+                        if !create_infos.is_empty() {
+                            create_infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         allocator.as_ptr(),
-                        shaders,
+                        shaders.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::INCOMPATIBLE_SHADER_BINARY_EXT,
+                    ])
                 }
             }
             #[doc = r" # Safety"]
@@ -18164,6 +20899,9 @@ pub mod ext {
             ) {
                 unsafe { (self.fp.destroy_shader_ext)(self.handle, shader, allocator.as_ptr()) }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -18172,8 +20910,6 @@ pub mod ext {
                 &self,
                 shader: ShaderEXT,
             ) -> crate::VkResult<usize> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut data_size = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_shader_binary_data_ext)(
@@ -18182,9 +20918,15 @@ pub mod ext {
                         data_size.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, data_size)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        data_size,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -18192,19 +20934,17 @@ pub mod ext {
             pub unsafe fn get_shader_binary_data(
                 &self,
                 shader: ShaderEXT,
-                out: &mut [ffi::c_void],
+                out: &mut [u8],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_shader_binary_data_ext)(
                         self.handle,
                         shader,
                         &mut len,
-                        out.as_mut_ptr(),
+                        out.as_mut_ptr().cast(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
             #[doc = r" # Safety"]
@@ -18221,8 +20961,14 @@ pub mod ext {
                     (self.fp.cmd_bind_shaders_ext)(
                         command_buffer,
                         stages.len() as _,
-                        stages.as_ptr(),
-                        shaders.map(|s| s.as_ptr()).unwrap_or_default(),
+                        if !stages.is_empty() {
+                            stages.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        shaders
+                            .and_then(|s| (!s.is_empty()).then_some(s.as_ptr()))
+                            .unwrap_or_default(),
                     )
                 }
             }
@@ -18272,7 +21018,11 @@ pub mod ext {
                     (self.fp.cmd_set_viewport_with_count)(
                         command_buffer,
                         viewports.len() as _,
-                        viewports.as_ptr(),
+                        if !viewports.is_empty() {
+                            viewports.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -18289,7 +21039,11 @@ pub mod ext {
                     (self.fp.cmd_set_scissor_with_count)(
                         command_buffer,
                         scissors.len() as _,
-                        scissors.as_ptr(),
+                        if !scissors.is_empty() {
+                            scissors.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -18312,10 +21066,22 @@ pub mod ext {
                         command_buffer,
                         first_binding,
                         buffers.len() as _,
-                        buffers.as_ptr(),
-                        offsets.as_ptr(),
-                        sizes.map(|s| s.as_ptr()).unwrap_or_default(),
-                        strides.map(|s| s.as_ptr()).unwrap_or_default(),
+                        if !buffers.is_empty() {
+                            buffers.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        if !offsets.is_empty() {
+                            offsets.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        sizes
+                            .and_then(|s| (!s.is_empty()).then_some(s.as_ptr()))
+                            .unwrap_or_default(),
+                        strides
+                            .and_then(|s| (!s.is_empty()).then_some(s.as_ptr()))
+                            .unwrap_or_default(),
                     )
                 }
             }
@@ -18326,9 +21092,11 @@ pub mod ext {
             pub unsafe fn cmd_set_depth_test_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                depth_test_enable: Bool32,
+                depth_test_enable: bool,
             ) {
-                unsafe { (self.fp.cmd_set_depth_test_enable)(command_buffer, depth_test_enable) }
+                unsafe {
+                    (self.fp.cmd_set_depth_test_enable)(command_buffer, depth_test_enable as Bool32)
+                }
             }
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
@@ -18337,9 +21105,14 @@ pub mod ext {
             pub unsafe fn cmd_set_depth_write_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                depth_write_enable: Bool32,
+                depth_write_enable: bool,
             ) {
-                unsafe { (self.fp.cmd_set_depth_write_enable)(command_buffer, depth_write_enable) }
+                unsafe {
+                    (self.fp.cmd_set_depth_write_enable)(
+                        command_buffer,
+                        depth_write_enable as Bool32,
+                    )
+                }
             }
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
@@ -18359,12 +21132,12 @@ pub mod ext {
             pub unsafe fn cmd_set_depth_bounds_test_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                depth_bounds_test_enable: Bool32,
+                depth_bounds_test_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_depth_bounds_test_enable)(
                         command_buffer,
-                        depth_bounds_test_enable,
+                        depth_bounds_test_enable as Bool32,
                     )
                 }
             }
@@ -18375,10 +21148,13 @@ pub mod ext {
             pub unsafe fn cmd_set_stencil_test_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                stencil_test_enable: Bool32,
+                stencil_test_enable: bool,
             ) {
                 unsafe {
-                    (self.fp.cmd_set_stencil_test_enable)(command_buffer, stencil_test_enable)
+                    (self.fp.cmd_set_stencil_test_enable)(
+                        command_buffer,
+                        stencil_test_enable as Bool32,
+                    )
                 }
             }
             #[doc = r" # Safety"]
@@ -18414,16 +21190,23 @@ pub mod ext {
                 &self,
                 command_buffer: CommandBuffer,
                 vertex_binding_descriptions: &[VertexInputBindingDescription2EXT<'_>],
-                vertex_attribute_description_count: u32,
                 vertex_attribute_descriptions: &[VertexInputAttributeDescription2EXT<'_>],
             ) {
                 unsafe {
                     (self.fp.cmd_set_vertex_input_ext)(
                         command_buffer,
                         vertex_binding_descriptions.len() as _,
-                        vertex_binding_descriptions.as_ptr(),
-                        vertex_attribute_description_count,
-                        vertex_attribute_descriptions.as_ptr(),
+                        if !vertex_binding_descriptions.is_empty() {
+                            vertex_binding_descriptions.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
+                        vertex_attribute_descriptions.len() as _,
+                        if !vertex_attribute_descriptions.is_empty() {
+                            vertex_attribute_descriptions.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -18447,12 +21230,12 @@ pub mod ext {
             pub unsafe fn cmd_set_rasterizer_discard_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                rasterizer_discard_enable: Bool32,
+                rasterizer_discard_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_rasterizer_discard_enable)(
                         command_buffer,
-                        rasterizer_discard_enable,
+                        rasterizer_discard_enable as Bool32,
                     )
                 }
             }
@@ -18463,9 +21246,11 @@ pub mod ext {
             pub unsafe fn cmd_set_depth_bias_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                depth_bias_enable: Bool32,
+                depth_bias_enable: bool,
             ) {
-                unsafe { (self.fp.cmd_set_depth_bias_enable)(command_buffer, depth_bias_enable) }
+                unsafe {
+                    (self.fp.cmd_set_depth_bias_enable)(command_buffer, depth_bias_enable as Bool32)
+                }
             }
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
@@ -18485,12 +21270,12 @@ pub mod ext {
             pub unsafe fn cmd_set_primitive_restart_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                primitive_restart_enable: Bool32,
+                primitive_restart_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_primitive_restart_enable)(
                         command_buffer,
-                        primitive_restart_enable,
+                        primitive_restart_enable as Bool32,
                     )
                 }
             }
@@ -18514,10 +21299,13 @@ pub mod ext {
             pub unsafe fn cmd_set_depth_clamp_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                depth_clamp_enable: Bool32,
+                depth_clamp_enable: bool,
             ) {
                 unsafe {
-                    (self.fp.cmd_set_depth_clamp_enable_ext)(command_buffer, depth_clamp_enable)
+                    (self.fp.cmd_set_depth_clamp_enable_ext)(
+                        command_buffer,
+                        depth_clamp_enable as Bool32,
+                    )
                 }
             }
             #[doc = r" # Safety"]
@@ -18555,10 +21343,16 @@ pub mod ext {
                 &self,
                 command_buffer: CommandBuffer,
                 samples: SampleCountFlags,
-                sample_mask: Option<&SampleMask>,
+                sample_mask: Option<&[SampleMask]>,
             ) {
                 unsafe {
-                    (self.fp.cmd_set_sample_mask_ext)(command_buffer, samples, sample_mask.as_ptr())
+                    (self.fp.cmd_set_sample_mask_ext)(
+                        command_buffer,
+                        samples,
+                        sample_mask
+                            .and_then(|s| (!s.is_empty()).then_some(s.as_ptr()))
+                            .unwrap_or_default(),
+                    )
                 }
             }
             #[doc = r" # Safety"]
@@ -18568,12 +21362,12 @@ pub mod ext {
             pub unsafe fn cmd_set_alpha_to_coverage_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                alpha_to_coverage_enable: Bool32,
+                alpha_to_coverage_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_alpha_to_coverage_enable_ext)(
                         command_buffer,
-                        alpha_to_coverage_enable,
+                        alpha_to_coverage_enable as Bool32,
                     )
                 }
             }
@@ -18584,10 +21378,13 @@ pub mod ext {
             pub unsafe fn cmd_set_alpha_to_one_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                alpha_to_one_enable: Bool32,
+                alpha_to_one_enable: bool,
             ) {
                 unsafe {
-                    (self.fp.cmd_set_alpha_to_one_enable_ext)(command_buffer, alpha_to_one_enable)
+                    (self.fp.cmd_set_alpha_to_one_enable_ext)(
+                        command_buffer,
+                        alpha_to_one_enable as Bool32,
+                    )
                 }
             }
             #[doc = r" # Safety"]
@@ -18597,9 +21394,11 @@ pub mod ext {
             pub unsafe fn cmd_set_logic_op_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                logic_op_enable: Bool32,
+                logic_op_enable: bool,
             ) {
-                unsafe { (self.fp.cmd_set_logic_op_enable_ext)(command_buffer, logic_op_enable) }
+                unsafe {
+                    (self.fp.cmd_set_logic_op_enable_ext)(command_buffer, logic_op_enable as Bool32)
+                }
             }
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
@@ -18616,7 +21415,11 @@ pub mod ext {
                         command_buffer,
                         first_attachment,
                         color_blend_enables.len() as _,
-                        color_blend_enables.as_ptr(),
+                        if !color_blend_enables.is_empty() {
+                            color_blend_enables.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -18635,7 +21438,11 @@ pub mod ext {
                         command_buffer,
                         first_attachment,
                         color_blend_equations.len() as _,
-                        color_blend_equations.as_ptr(),
+                        if !color_blend_equations.is_empty() {
+                            color_blend_equations.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -18654,7 +21461,11 @@ pub mod ext {
                         command_buffer,
                         first_attachment,
                         color_write_masks.len() as _,
-                        color_write_masks.as_ptr(),
+                        if !color_write_masks.is_empty() {
+                            color_write_masks.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -18718,10 +21529,13 @@ pub mod ext {
             pub unsafe fn cmd_set_depth_clip_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                depth_clip_enable: Bool32,
+                depth_clip_enable: bool,
             ) {
                 unsafe {
-                    (self.fp.cmd_set_depth_clip_enable_ext)(command_buffer, depth_clip_enable)
+                    (self.fp.cmd_set_depth_clip_enable_ext)(
+                        command_buffer,
+                        depth_clip_enable as Bool32,
+                    )
                 }
             }
             #[doc = r" # Depends on"]
@@ -18733,12 +21547,12 @@ pub mod ext {
             pub unsafe fn cmd_set_sample_locations_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                sample_locations_enable: Bool32,
+                sample_locations_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_sample_locations_enable_ext)(
                         command_buffer,
-                        sample_locations_enable,
+                        sample_locations_enable as Bool32,
                     )
                 }
             }
@@ -18759,7 +21573,11 @@ pub mod ext {
                         command_buffer,
                         first_attachment,
                         color_blend_advanced.len() as _,
-                        color_blend_advanced.as_ptr(),
+                        if !color_blend_advanced.is_empty() {
+                            color_blend_advanced.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -18808,10 +21626,13 @@ pub mod ext {
             pub unsafe fn cmd_set_line_stipple_enable(
                 &self,
                 command_buffer: CommandBuffer,
-                stippled_line_enable: Bool32,
+                stippled_line_enable: bool,
             ) {
                 unsafe {
-                    (self.fp.cmd_set_line_stipple_enable_ext)(command_buffer, stippled_line_enable)
+                    (self.fp.cmd_set_line_stipple_enable_ext)(
+                        command_buffer,
+                        stippled_line_enable as Bool32,
+                    )
                 }
             }
             #[doc = r" # Depends on"]
@@ -18823,12 +21644,12 @@ pub mod ext {
             pub unsafe fn cmd_set_depth_clip_negative_one_to_one(
                 &self,
                 command_buffer: CommandBuffer,
-                negative_one_to_one: Bool32,
+                negative_one_to_one: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_depth_clip_negative_one_to_one_ext)(
                         command_buffer,
-                        negative_one_to_one,
+                        negative_one_to_one as Bool32,
                     )
                 }
             }
@@ -18841,12 +21662,12 @@ pub mod ext {
             pub unsafe fn cmd_set_viewport_wscaling_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
-                viewport_wscaling_enable: Bool32,
+                viewport_wscaling_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_viewport_wscaling_enable_nv)(
                         command_buffer,
-                        viewport_wscaling_enable,
+                        viewport_wscaling_enable as Bool32,
                     )
                 }
             }
@@ -18867,7 +21688,11 @@ pub mod ext {
                         command_buffer,
                         first_viewport,
                         viewport_swizzles.len() as _,
-                        viewport_swizzles.as_ptr(),
+                        if !viewport_swizzles.is_empty() {
+                            viewport_swizzles.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -18880,12 +21705,12 @@ pub mod ext {
             pub unsafe fn cmd_set_coverage_to_color_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
-                coverage_to_color_enable: Bool32,
+                coverage_to_color_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_coverage_to_color_enable_nv)(
                         command_buffer,
-                        coverage_to_color_enable,
+                        coverage_to_color_enable as Bool32,
                     )
                 }
             }
@@ -18934,12 +21759,12 @@ pub mod ext {
             pub unsafe fn cmd_set_coverage_modulation_table_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
-                coverage_modulation_table_enable: Bool32,
+                coverage_modulation_table_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_coverage_modulation_table_enable_nv)(
                         command_buffer,
-                        coverage_modulation_table_enable,
+                        coverage_modulation_table_enable as Bool32,
                     )
                 }
             }
@@ -18958,7 +21783,11 @@ pub mod ext {
                     (self.fp.cmd_set_coverage_modulation_table_nv)(
                         command_buffer,
                         coverage_modulation_table.len() as _,
-                        coverage_modulation_table.as_ptr(),
+                        if !coverage_modulation_table.is_empty() {
+                            coverage_modulation_table.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -18971,12 +21800,12 @@ pub mod ext {
             pub unsafe fn cmd_set_shading_rate_image_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
-                shading_rate_image_enable: Bool32,
+                shading_rate_image_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_shading_rate_image_enable_nv)(
                         command_buffer,
-                        shading_rate_image_enable,
+                        shading_rate_image_enable as Bool32,
                     )
                 }
             }
@@ -18989,12 +21818,12 @@ pub mod ext {
             pub unsafe fn cmd_set_representative_fragment_test_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
-                representative_fragment_test_enable: Bool32,
+                representative_fragment_test_enable: bool,
             ) {
                 unsafe {
                     (self.fp.cmd_set_representative_fragment_test_enable_nv)(
                         command_buffer,
-                        representative_fragment_test_enable,
+                        representative_fragment_test_enable as Bool32,
                     )
                 }
             }
@@ -19037,42 +21866,66 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod mutable_descriptor_type {
         //! VK_EXT_mutable_descriptor_type device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_mutable_descriptor_type";
+        pub const NAME: &ffi::CStr = c"VK_EXT_mutable_descriptor_type";
     }
     pub mod legacy_vertex_attributes {
         //! VK_EXT_legacy_vertex_attributes device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_legacy_vertex_attributes";
+        pub const NAME: &ffi::CStr = c"VK_EXT_legacy_vertex_attributes";
     }
     pub mod layer_settings {
         //! VK_EXT_layer_settings instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_layer_settings";
+        pub const NAME: &ffi::CStr = c"VK_EXT_layer_settings";
     }
     pub mod pipeline_library_group_handles {
         //! VK_EXT_pipeline_library_group_handles device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_pipeline_library_group_handles";
+        pub const NAME: &ffi::CStr = c"VK_EXT_pipeline_library_group_handles";
     }
     pub mod dynamic_rendering_unused_attachments {
         //! VK_EXT_dynamic_rendering_unused_attachments device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_dynamic_rendering_unused_attachments";
+        pub const NAME: &ffi::CStr = c"VK_EXT_dynamic_rendering_unused_attachments";
     }
     pub mod attachment_feedback_loop_dynamic_state {
         //! VK_EXT_attachment_feedback_loop_dynamic_state device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_attachment_feedback_loop_dynamic_state";
+        pub const NAME: &ffi::CStr = c"VK_EXT_attachment_feedback_loop_dynamic_state";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_attachment_feedback_loop_enable_ext:
@@ -19107,20 +21960,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -19146,12 +22003,36 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod memory_decompression {
         //! VK_EXT_memory_decompression device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_memory_decompression";
+        pub const NAME: &ffi::CStr = c"VK_EXT_memory_decompression";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_decompress_memory_ext: PFN_vkCmdDecompressMemoryEXT,
@@ -19209,20 +22090,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -19270,24 +22155,48 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod shader_replicated_composites {
         //! VK_EXT_shader_replicated_composites device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_replicated_composites";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_replicated_composites";
     }
     pub mod shader_float8 {
         //! VK_EXT_shader_float8 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_float8";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_float8";
     }
     pub mod device_generated_commands {
         //! VK_EXT_device_generated_commands device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_device_generated_commands";
+        pub const NAME: &ffi::CStr = c"VK_EXT_device_generated_commands";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_generated_commands_memory_requirements_ext:
@@ -19504,20 +22413,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -19568,17 +22481,19 @@ pub mod ext {
             pub unsafe fn cmd_execute_generated_commands(
                 &self,
                 command_buffer: CommandBuffer,
-                is_preprocessed: Bool32,
+                is_preprocessed: bool,
                 generated_commands_info: &GeneratedCommandsInfoEXT<'_>,
             ) {
                 unsafe {
                     (self.fp.cmd_execute_generated_commands_ext)(
                         command_buffer,
-                        is_preprocessed,
+                        is_preprocessed as Bool32,
                         generated_commands_info,
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -19588,7 +22503,6 @@ pub mod ext {
                 create_info: &IndirectCommandsLayoutCreateInfoEXT<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<IndirectCommandsLayoutEXT> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut indirect_commands_layout = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_indirect_commands_layout_ext)(
@@ -19597,7 +22511,10 @@ pub mod ext {
                         allocator.as_ptr(),
                         indirect_commands_layout.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, indirect_commands_layout)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS],
+                        indirect_commands_layout,
+                    )
                 }
             }
             #[doc = r" # Safety"]
@@ -19617,6 +22534,8 @@ pub mod ext {
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -19626,7 +22545,6 @@ pub mod ext {
                 create_info: &IndirectExecutionSetCreateInfoEXT<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<IndirectExecutionSetEXT> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut indirect_execution_set = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_indirect_execution_set_ext)(
@@ -19635,7 +22553,7 @@ pub mod ext {
                         allocator.as_ptr(),
                         indirect_execution_set.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, indirect_execution_set)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], indirect_execution_set)
                 }
             }
             #[doc = r" # Safety"]
@@ -19669,7 +22587,11 @@ pub mod ext {
                         self.handle,
                         indirect_execution_set,
                         execution_set_writes.len() as _,
-                        execution_set_writes.as_ptr(),
+                        if !execution_set_writes.is_empty() {
+                            execution_set_writes.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -19687,9 +22609,37 @@ pub mod ext {
                         self.handle,
                         indirect_execution_set,
                         execution_set_writes.len() as _,
-                        execution_set_writes.as_ptr(),
+                        if !execution_set_writes.is_empty() {
+                            execution_set_writes.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -19697,13 +22647,13 @@ pub mod ext {
         //! VK_EXT_ray_tracing_invocation_reorder device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_ray_tracing_invocation_reorder";
+        pub const NAME: &ffi::CStr = c"VK_EXT_ray_tracing_invocation_reorder";
     }
     pub mod depth_clamp_control {
         //! VK_EXT_depth_clamp_control device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_depth_clamp_control";
+        pub const NAME: &ffi::CStr = c"VK_EXT_depth_clamp_control";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_depth_clamp_range_ext: PFN_vkCmdSetDepthClampRangeEXT,
@@ -19738,20 +22688,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -19779,12 +22733,36 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod external_memory_metal {
         //! VK_EXT_external_memory_metal device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_external_memory_metal";
+        pub const NAME: &ffi::CStr = c"VK_EXT_external_memory_metal";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_memory_metal_handle_ext: PFN_vkGetMemoryMetalHandleEXT,
@@ -19842,20 +22820,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -19864,6 +22846,8 @@ pub mod ext {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -19872,7 +22856,6 @@ pub mod ext {
                 &self,
                 get_metal_handle_info: &MemoryGetMetalHandleInfoEXT<'_>,
             ) -> crate::VkResult<*mut ffi::c_void> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut handle = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_memory_metal_handle_ext)(
@@ -19880,9 +22863,11 @@ pub mod ext {
                         get_metal_handle_info,
                         handle.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, handle)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], handle)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -19893,7 +22878,6 @@ pub mod ext {
                 handle: &ffi::c_void,
                 memory_metal_handle_properties: &mut MemoryMetalHandlePropertiesEXT<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_memory_metal_handle_properties_ext)(
                         self.handle,
@@ -19901,8 +22885,32 @@ pub mod ext {
                         handle,
                         memory_metal_handle_properties,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -19910,13 +22918,13 @@ pub mod ext {
         //! VK_EXT_vertex_attribute_robustness device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_vertex_attribute_robustness";
+        pub const NAME: &ffi::CStr = c"VK_EXT_vertex_attribute_robustness";
     }
     pub mod fragment_density_map_offset {
         //! VK_EXT_fragment_density_map_offset device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_fragment_density_map_offset";
+        pub const NAME: &ffi::CStr = c"VK_EXT_fragment_density_map_offset";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_end_rendering2_khr: PFN_vkCmdEndRendering2KHR,
@@ -19949,20 +22957,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -19985,24 +22997,48 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod zero_initialize_device_memory {
         //! VK_EXT_zero_initialize_device_memory device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_zero_initialize_device_memory";
+        pub const NAME: &ffi::CStr = c"VK_EXT_zero_initialize_device_memory";
     }
     pub mod shader_64bit_indexing {
         //! VK_EXT_shader_64bit_indexing device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_64bit_indexing";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_64bit_indexing";
     }
     pub mod custom_resolve {
         //! VK_EXT_custom_resolve device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_custom_resolve";
+        pub const NAME: &ffi::CStr = c"VK_EXT_custom_resolve";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_begin_custom_resolve_ext: PFN_vkCmdBeginCustomResolveEXT,
@@ -20036,20 +23072,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -20078,30 +23118,54 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod shader_long_vector {
         //! VK_EXT_shader_long_vector device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_long_vector";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_long_vector";
     }
     pub mod shader_uniform_buffer_unsized_array {
         //! VK_EXT_shader_uniform_buffer_unsized_array device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_uniform_buffer_unsized_array";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_uniform_buffer_unsized_array";
     }
     pub mod shader_subgroup_partitioned {
         //! VK_EXT_shader_subgroup_partitioned device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_shader_subgroup_partitioned";
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_subgroup_partitioned";
     }
     pub mod primitive_restart_index {
         //! VK_EXT_primitive_restart_index device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_EXT_primitive_restart_index";
+        pub const NAME: &ffi::CStr = c"VK_EXT_primitive_restart_index";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_primitive_restart_index_ext: PFN_vkCmdSetPrimitiveRestartIndexEXT,
@@ -20135,20 +23199,24 @@ pub mod ext {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -20174,6 +23242,30 @@ pub mod ext {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
 }
 pub mod nv {
@@ -20182,31 +23274,31 @@ pub mod nv {
         //! VK_NV_glsl_shader device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_glsl_shader";
+        pub const NAME: &ffi::CStr = c"VK_NV_glsl_shader";
     }
     pub mod dedicated_allocation {
         //! VK_NV_dedicated_allocation device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_dedicated_allocation";
+        pub const NAME: &ffi::CStr = c"VK_NV_dedicated_allocation";
     }
     pub mod corner_sampled_image {
         //! VK_NV_corner_sampled_image device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_corner_sampled_image";
+        pub const NAME: &ffi::CStr = c"VK_NV_corner_sampled_image";
     }
     pub mod private_vendor_info {
         //! VK_NV_private_vendor_info device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_private_vendor_info";
+        pub const NAME: &ffi::CStr = c"VK_NV_private_vendor_info";
     }
     pub mod external_memory_capabilities {
         //! VK_NV_external_memory_capabilities instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_external_memory_capabilities";
+        pub const NAME: &ffi::CStr = c"VK_NV_external_memory_capabilities";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub get_physical_device_external_image_format_properties_nv:
@@ -20247,20 +23339,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -20269,6 +23365,8 @@ pub mod nv {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -20284,7 +23382,6 @@ pub mod nv {
                 flags: ImageCreateFlags,
                 external_handle_type: ExternalMemoryHandleTypeFlagsNV,
             ) -> crate::VkResult<ExternalImageFormatPropertiesNV> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut external_image_format_properties = ::core::mem::MaybeUninit::uninit();
                     (self
@@ -20299,8 +23396,35 @@ pub mod nv {
                         external_handle_type,
                         external_image_format_properties.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, external_image_format_properties)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS],
+                        external_image_format_properties,
+                    )
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -20308,13 +23432,13 @@ pub mod nv {
         //! VK_NV_external_memory device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_external_memory";
+        pub const NAME: &ffi::CStr = c"VK_NV_external_memory";
     }
     pub mod external_memory_win32 {
         //! VK_NV_external_memory_win32 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_external_memory_win32";
+        pub const NAME: &ffi::CStr = c"VK_NV_external_memory_win32";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_memory_win32_handle_nv: PFN_vkGetMemoryWin32HandleNV,
@@ -20349,20 +23473,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -20371,6 +23499,8 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -20381,11 +23511,34 @@ pub mod nv {
                 handle_type: ExternalMemoryHandleTypeFlagsNV,
                 handle: *mut HANDLE,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_memory_win32_handle_nv)(self.handle, memory, handle_type, handle)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -20393,13 +23546,13 @@ pub mod nv {
         //! VK_NV_win32_keyed_mutex device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_win32_keyed_mutex";
+        pub const NAME: &ffi::CStr = c"VK_NV_win32_keyed_mutex";
     }
     pub mod clip_space_w_scaling {
         //! VK_NV_clip_space_w_scaling device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_clip_space_w_scaling";
+        pub const NAME: &ffi::CStr = c"VK_NV_clip_space_w_scaling";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_viewport_wscaling_nv: PFN_vkCmdSetViewportWScalingNV,
@@ -20435,20 +23588,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -20472,9 +23629,37 @@ pub mod nv {
                         command_buffer,
                         first_viewport,
                         viewport_wscalings.len() as _,
-                        viewport_wscalings.as_ptr(),
+                        if !viewport_wscalings.is_empty() {
+                            viewport_wscalings.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -20482,55 +23667,55 @@ pub mod nv {
         //! VK_NV_sample_mask_override_coverage device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_sample_mask_override_coverage";
+        pub const NAME: &ffi::CStr = c"VK_NV_sample_mask_override_coverage";
     }
     pub mod geometry_shader_passthrough {
         //! VK_NV_geometry_shader_passthrough device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_geometry_shader_passthrough";
+        pub const NAME: &ffi::CStr = c"VK_NV_geometry_shader_passthrough";
     }
     pub mod viewport_array2 {
         //! VK_NV_viewport_array2 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_viewport_array2";
+        pub const NAME: &ffi::CStr = c"VK_NV_viewport_array2";
     }
     pub mod viewport_swizzle {
         //! VK_NV_viewport_swizzle device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_viewport_swizzle";
+        pub const NAME: &ffi::CStr = c"VK_NV_viewport_swizzle";
     }
     pub mod fragment_coverage_to_color {
         //! VK_NV_fragment_coverage_to_color device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_fragment_coverage_to_color";
+        pub const NAME: &ffi::CStr = c"VK_NV_fragment_coverage_to_color";
     }
     pub mod framebuffer_mixed_samples {
         //! VK_NV_framebuffer_mixed_samples device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_framebuffer_mixed_samples";
+        pub const NAME: &ffi::CStr = c"VK_NV_framebuffer_mixed_samples";
     }
     pub mod fill_rectangle {
         //! VK_NV_fill_rectangle device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_fill_rectangle";
+        pub const NAME: &ffi::CStr = c"VK_NV_fill_rectangle";
     }
     pub mod shader_sm_builtins {
         //! VK_NV_shader_sm_builtins device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_shader_sm_builtins";
+        pub const NAME: &ffi::CStr = c"VK_NV_shader_sm_builtins";
     }
     pub mod shading_rate_image {
         //! VK_NV_shading_rate_image device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_shading_rate_image";
+        pub const NAME: &ffi::CStr = c"VK_NV_shading_rate_image";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_bind_shading_rate_image_nv: PFN_vkCmdBindShadingRateImageNV,
@@ -20611,20 +23796,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -20666,7 +23855,11 @@ pub mod nv {
                         command_buffer,
                         first_viewport,
                         shading_rate_palettes.len() as _,
-                        shading_rate_palettes.as_ptr(),
+                        if !shading_rate_palettes.is_empty() {
+                            shading_rate_palettes.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -20685,9 +23878,37 @@ pub mod nv {
                         command_buffer,
                         sample_order_type,
                         custom_sample_orders.len() as _,
-                        custom_sample_orders.as_ptr(),
+                        if !custom_sample_orders.is_empty() {
+                            custom_sample_orders.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -20695,7 +23916,7 @@ pub mod nv {
         //! VK_NV_ray_tracing device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_ray_tracing";
+        pub const NAME: &ffi::CStr = c"VK_NV_ray_tracing";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_acceleration_structure_nv: PFN_vkCreateAccelerationStructureNV,
@@ -20992,20 +24213,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -21014,6 +24239,8 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -21023,7 +24250,6 @@ pub mod nv {
                 create_info: &AccelerationStructureCreateInfoNV<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<AccelerationStructureNV> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut acceleration_structure = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_acceleration_structure_nv)(
@@ -21032,7 +24258,7 @@ pub mod nv {
                         allocator.as_ptr(),
                         acceleration_structure.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, acceleration_structure)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], acceleration_structure)
                 }
             }
             #[doc = r" # Safety"]
@@ -21069,6 +24295,8 @@ pub mod nv {
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -21077,14 +24305,17 @@ pub mod nv {
                 &self,
                 bind_infos: &[BindAccelerationStructureMemoryInfoNV<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.bind_acceleration_structure_memory_nv)(
                         self.handle,
                         bind_infos.len() as _,
-                        bind_infos.as_ptr(),
+                        if !bind_infos.is_empty() {
+                            bind_infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -21098,7 +24329,7 @@ pub mod nv {
                 info: &AccelerationStructureInfoNV<'_>,
                 instance_data: Buffer,
                 instance_offset: DeviceSize,
-                update: Bool32,
+                update: bool,
                 dst: AccelerationStructureNV,
                 src: AccelerationStructureNV,
                 scratch: Buffer,
@@ -21110,7 +24341,7 @@ pub mod nv {
                         info,
                         instance_data,
                         instance_offset,
-                        update,
+                        update as Bool32,
                         dst,
                         src,
                         scratch,
@@ -21176,6 +24407,9 @@ pub mod nv {
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`PIPELINE_COMPILE_REQUIRED_EXT`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -21185,22 +24419,25 @@ pub mod nv {
                 pipeline_cache: PipelineCache,
                 create_infos: &[RayTracingPipelineCreateInfoNV<'_>],
                 allocator: Option<&AllocationCallbacks>,
-                pipelines: &mut Pipeline,
+                pipelines: &mut [Pipeline],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::PIPELINE_COMPILE_REQUIRED_EXT,
-                ];
                 unsafe {
                     (self.fp.create_ray_tracing_pipelines_nv)(
                         self.handle,
                         pipeline_cache,
                         create_infos.len() as _,
-                        create_infos.as_ptr(),
+                        if !create_infos.is_empty() {
+                            create_infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         allocator.as_ptr(),
-                        pipelines,
+                        pipelines.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::PIPELINE_COMPILE_REQUIRED_EXT,
+                    ])
                 }
             }
             #[doc = r" # Safety"]
@@ -21213,9 +24450,8 @@ pub mod nv {
                 first_group: u32,
                 group_count: u32,
                 data_size: usize,
-                data: &mut ffi::c_void,
+                data: &mut [ffi::c_void],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_ray_tracing_shader_group_handles_khr)(
                         self.handle,
@@ -21223,11 +24459,13 @@ pub mod nv {
                         first_group,
                         group_count,
                         data_size,
-                        data,
+                        data.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -21236,17 +24474,16 @@ pub mod nv {
                 &self,
                 acceleration_structure: AccelerationStructureNV,
                 data_size: usize,
-                data: &mut ffi::c_void,
+                data: &mut [ffi::c_void],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_acceleration_structure_handle_nv)(
                         self.handle,
                         acceleration_structure,
                         data_size,
-                        data,
+                        data.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -21265,13 +24502,19 @@ pub mod nv {
                     (self.fp.cmd_write_acceleration_structures_properties_nv)(
                         command_buffer,
                         acceleration_structures.len() as _,
-                        acceleration_structures.as_ptr(),
+                        if !acceleration_structures.is_empty() {
+                            acceleration_structures.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         query_type,
                         query_pool,
                         first_query,
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -21281,11 +24524,34 @@ pub mod nv {
                 pipeline: Pipeline,
                 shader: u32,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.compile_deferred_nv)(self.handle, pipeline, shader)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -21293,25 +24559,25 @@ pub mod nv {
         //! VK_NV_representative_fragment_test device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_representative_fragment_test";
+        pub const NAME: &ffi::CStr = c"VK_NV_representative_fragment_test";
     }
     pub mod shader_subgroup_partitioned {
         //! VK_NV_shader_subgroup_partitioned device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_shader_subgroup_partitioned";
+        pub const NAME: &ffi::CStr = c"VK_NV_shader_subgroup_partitioned";
     }
     pub mod compute_shader_derivatives {
         //! VK_NV_compute_shader_derivatives device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_compute_shader_derivatives";
+        pub const NAME: &ffi::CStr = c"VK_NV_compute_shader_derivatives";
     }
     pub mod mesh_shader {
         //! VK_NV_mesh_shader device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_mesh_shader";
+        pub const NAME: &ffi::CStr = c"VK_NV_mesh_shader";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_draw_mesh_tasks_nv: PFN_vkCmdDrawMeshTasksNV,
@@ -21395,20 +24661,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -21483,24 +24753,48 @@ pub mod nv {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod fragment_shader_barycentric {
         //! VK_NV_fragment_shader_barycentric device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_fragment_shader_barycentric";
+        pub const NAME: &ffi::CStr = c"VK_NV_fragment_shader_barycentric";
     }
     pub mod shader_image_footprint {
         //! VK_NV_shader_image_footprint device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_shader_image_footprint";
+        pub const NAME: &ffi::CStr = c"VK_NV_shader_image_footprint";
     }
     pub mod scissor_exclusive {
         //! VK_NV_scissor_exclusive device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_scissor_exclusive";
+        pub const NAME: &ffi::CStr = c"VK_NV_scissor_exclusive";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_exclusive_scissor_enable_nv: PFN_vkCmdSetExclusiveScissorEnableNV,
@@ -21559,20 +24853,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -21596,7 +24894,11 @@ pub mod nv {
                         command_buffer,
                         first_exclusive_scissor,
                         exclusive_scissor_enables.len() as _,
-                        exclusive_scissor_enables.as_ptr(),
+                        if !exclusive_scissor_enables.is_empty() {
+                            exclusive_scissor_enables.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -21615,9 +24917,37 @@ pub mod nv {
                         command_buffer,
                         first_exclusive_scissor,
                         exclusive_scissors.len() as _,
-                        exclusive_scissors.as_ptr(),
+                        if !exclusive_scissors.is_empty() {
+                            exclusive_scissors.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -21625,7 +24955,7 @@ pub mod nv {
         //! VK_NV_device_diagnostic_checkpoints device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_device_diagnostic_checkpoints";
+        pub const NAME: &ffi::CStr = c"VK_NV_device_diagnostic_checkpoints";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_checkpoint_nv: PFN_vkCmdSetCheckpointNV,
@@ -21702,20 +25032,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -21800,18 +25134,42 @@ pub mod nv {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod dedicated_allocation_image_aliasing {
         //! VK_NV_dedicated_allocation_image_aliasing device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_dedicated_allocation_image_aliasing";
+        pub const NAME: &ffi::CStr = c"VK_NV_dedicated_allocation_image_aliasing";
     }
     pub mod cooperative_matrix {
         //! VK_NV_cooperative_matrix device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_cooperative_matrix";
+        pub const NAME: &ffi::CStr = c"VK_NV_cooperative_matrix";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_physical_device_cooperative_matrix_properties_nv:
@@ -21847,20 +25205,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -21869,6 +25231,9 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -21877,8 +25242,6 @@ pub mod nv {
                 &self,
                 physical_device: PhysicalDevice,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut property_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_cooperative_matrix_properties_nv)(
@@ -21886,9 +25249,15 @@ pub mod nv {
                         property_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, property_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        property_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -21898,8 +25267,6 @@ pub mod nv {
                 physical_device: PhysicalDevice,
                 out: &mut [CooperativeMatrixPropertiesNV<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_cooperative_matrix_properties_nv)(
@@ -21907,8 +25274,32 @@ pub mod nv {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -21916,7 +25307,7 @@ pub mod nv {
         //! VK_NV_coverage_reduction_mode device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_coverage_reduction_mode";
+        pub const NAME: &ffi::CStr = c"VK_NV_coverage_reduction_mode";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_physical_device_supported_framebuffer_mixed_samples_combinations_nv:
@@ -21948,20 +25339,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -21970,6 +25365,9 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -21978,8 +25376,6 @@ pub mod nv {
                 &self,
                 physical_device: PhysicalDevice,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut combination_count = ::core::mem::MaybeUninit::uninit();
                     (self
@@ -21989,9 +25385,15 @@ pub mod nv {
                         combination_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, combination_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        combination_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -22001,8 +25403,6 @@ pub mod nv {
                 physical_device: PhysicalDevice,
                 out: &mut [FramebufferMixedSamplesCombinationNV<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self
@@ -22012,8 +25412,32 @@ pub mod nv {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -22021,7 +25445,7 @@ pub mod nv {
         //! VK_NV_device_generated_commands device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_device_generated_commands";
+        pub const NAME: &ffi::CStr = c"VK_NV_device_generated_commands";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_generated_commands_memory_requirements_nv:
@@ -22168,20 +25592,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -22230,13 +25658,13 @@ pub mod nv {
             pub unsafe fn cmd_execute_generated_commands(
                 &self,
                 command_buffer: CommandBuffer,
-                is_preprocessed: Bool32,
+                is_preprocessed: bool,
                 generated_commands_info: &GeneratedCommandsInfoNV<'_>,
             ) {
                 unsafe {
                     (self.fp.cmd_execute_generated_commands_nv)(
                         command_buffer,
-                        is_preprocessed,
+                        is_preprocessed as Bool32,
                         generated_commands_info,
                     )
                 }
@@ -22261,6 +25689,8 @@ pub mod nv {
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -22270,7 +25700,6 @@ pub mod nv {
                 create_info: &IndirectCommandsLayoutCreateInfoNV<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<IndirectCommandsLayoutNV> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut indirect_commands_layout = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_indirect_commands_layout_nv)(
@@ -22279,7 +25708,10 @@ pub mod nv {
                         allocator.as_ptr(),
                         indirect_commands_layout.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, indirect_commands_layout)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS],
+                        indirect_commands_layout,
+                    )
                 }
             }
             #[doc = r" # Safety"]
@@ -22300,30 +25732,54 @@ pub mod nv {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod inherited_viewport_scissor {
         //! VK_NV_inherited_viewport_scissor device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_inherited_viewport_scissor";
+        pub const NAME: &ffi::CStr = c"VK_NV_inherited_viewport_scissor";
     }
     pub mod present_barrier {
         //! VK_NV_present_barrier device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_present_barrier";
+        pub const NAME: &ffi::CStr = c"VK_NV_present_barrier";
     }
     pub mod device_diagnostics_config {
         //! VK_NV_device_diagnostics_config device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_device_diagnostics_config";
+        pub const NAME: &ffi::CStr = c"VK_NV_device_diagnostics_config";
     }
     pub mod cuda_kernel_launch {
         //! VK_NV_cuda_kernel_launch device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_cuda_kernel_launch";
+        pub const NAME: &ffi::CStr = c"VK_NV_cuda_kernel_launch";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_cuda_module_nv: PFN_vkCreateCudaModuleNV,
@@ -22464,20 +25920,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -22486,6 +25946,8 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -22495,7 +25957,6 @@ pub mod nv {
                 create_info: &CudaModuleCreateInfoNV<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<CudaModuleNV> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut module = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_cuda_module_nv)(
@@ -22504,9 +25965,12 @@ pub mod nv {
                         allocator.as_ptr(),
                         module.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, module)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], module)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -22515,8 +25979,6 @@ pub mod nv {
                 &self,
                 module: CudaModuleNV,
             ) -> crate::VkResult<usize> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut cache_size = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_cuda_module_cache_nv)(
@@ -22525,9 +25987,15 @@ pub mod nv {
                         cache_size.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, cache_size)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        cache_size,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -22535,21 +26003,21 @@ pub mod nv {
             pub unsafe fn get_cuda_module_cache(
                 &self,
                 module: CudaModuleNV,
-                out: &mut [ffi::c_void],
+                out: &mut [u8],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_cuda_module_cache_nv)(
                         self.handle,
                         module,
                         &mut len,
-                        out.as_mut_ptr(),
+                        out.as_mut_ptr().cast(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -22559,7 +26027,6 @@ pub mod nv {
                 create_info: &CudaFunctionCreateInfoNV<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<CudaFunctionNV> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut function = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_cuda_function_nv)(
@@ -22568,7 +26035,7 @@ pub mod nv {
                         allocator.as_ptr(),
                         function.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, function)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], function)
                 }
             }
             #[doc = r" # Safety"]
@@ -22607,18 +26074,42 @@ pub mod nv {
                 unsafe { (self.fp.cmd_cuda_launch_kernel_nv)(command_buffer, launch_info) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod low_latency {
         //! VK_NV_low_latency device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_low_latency";
+        pub const NAME: &ffi::CStr = c"VK_NV_low_latency";
     }
     pub mod fragment_shading_rate_enums {
         //! VK_NV_fragment_shading_rate_enums device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_fragment_shading_rate_enums";
+        pub const NAME: &ffi::CStr = c"VK_NV_fragment_shading_rate_enums";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_fragment_shading_rate_enum_nv: PFN_vkCmdSetFragmentShadingRateEnumNV,
@@ -22653,20 +26144,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -22694,18 +26189,42 @@ pub mod nv {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod ray_tracing_motion_blur {
         //! VK_NV_ray_tracing_motion_blur device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_ray_tracing_motion_blur";
+        pub const NAME: &ffi::CStr = c"VK_NV_ray_tracing_motion_blur";
     }
     pub mod acquire_winrt_display {
         //! VK_NV_acquire_winrt_display device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_acquire_winrt_display";
+        pub const NAME: &ffi::CStr = c"VK_NV_acquire_winrt_display";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub acquire_winrt_display_nv: PFN_vkAcquireWinrtDisplayNV,
@@ -22754,20 +26273,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -22776,6 +26299,8 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -22785,12 +26310,13 @@ pub mod nv {
                 physical_device: PhysicalDevice,
                 display: DisplayKHR,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.acquire_winrt_display_nv)(physical_device, display)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -22800,7 +26326,6 @@ pub mod nv {
                 physical_device: PhysicalDevice,
                 device_relative_id: u32,
             ) -> crate::VkResult<DisplayKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut display = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_winrt_display_nv)(
@@ -22808,8 +26333,32 @@ pub mod nv {
                         device_relative_id,
                         display.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, display)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], display)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -22817,7 +26366,7 @@ pub mod nv {
         //! VK_NV_external_memory_rdma device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_external_memory_rdma";
+        pub const NAME: &ffi::CStr = c"VK_NV_external_memory_rdma";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_memory_remote_address_nv: PFN_vkGetMemoryRemoteAddressNV,
@@ -22852,20 +26401,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -22874,6 +26427,8 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -22882,7 +26437,6 @@ pub mod nv {
                 &self,
                 memory_get_remote_address_info: &MemoryGetRemoteAddressInfoNV<'_>,
             ) -> crate::VkResult<RemoteAddressNV> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut address = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_memory_remote_address_nv)(
@@ -22890,8 +26444,32 @@ pub mod nv {
                         memory_get_remote_address_info,
                         address.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, address)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], address)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -22899,7 +26477,7 @@ pub mod nv {
         //! VK_NV_external_sci_sync device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_external_sci_sync";
+        pub const NAME: &ffi::CStr = c"VK_NV_external_sci_sync";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_fence_sci_sync_fence_nv: PFN_vkGetFenceSciSyncFenceNV,
@@ -23062,20 +26640,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -23084,6 +26666,8 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -23092,7 +26676,6 @@ pub mod nv {
                 &self,
                 get_sci_sync_handle_info: &FenceGetSciSyncInfoNV<'_>,
             ) -> crate::VkResult<ffi::c_void> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut handle = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_fence_sci_sync_fence_nv)(
@@ -23100,9 +26683,11 @@ pub mod nv {
                         get_sci_sync_handle_info,
                         handle.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, handle)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], handle)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -23111,7 +26696,6 @@ pub mod nv {
                 &self,
                 get_sci_sync_handle_info: &FenceGetSciSyncInfoNV<'_>,
             ) -> crate::VkResult<ffi::c_void> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut handle = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_fence_sci_sync_obj_nv)(
@@ -23119,9 +26703,11 @@ pub mod nv {
                         get_sci_sync_handle_info,
                         handle.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, handle)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], handle)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -23130,15 +26716,16 @@ pub mod nv {
                 &self,
                 import_fence_sci_sync_info: &ImportFenceSciSyncInfoNV<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.import_fence_sci_sync_fence_nv)(
                         self.handle,
                         import_fence_sci_sync_info,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -23147,12 +26734,13 @@ pub mod nv {
                 &self,
                 import_fence_sci_sync_info: &ImportFenceSciSyncInfoNV<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.import_fence_sci_sync_obj_nv)(self.handle, import_fence_sci_sync_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -23163,16 +26751,17 @@ pub mod nv {
                 sci_sync_attributes_info: &SciSyncAttributesInfoNV<'_>,
                 attributes: NvSciSyncAttrList,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_physical_device_sci_sync_attributes_nv)(
                         physical_device,
                         sci_sync_attributes_info,
                         attributes,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -23181,7 +26770,6 @@ pub mod nv {
                 &self,
                 get_sci_sync_info: &SemaphoreGetSciSyncInfoNV<'_>,
             ) -> crate::VkResult<ffi::c_void> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut handle = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_semaphore_sci_sync_obj_nv)(
@@ -23189,9 +26777,11 @@ pub mod nv {
                         get_sci_sync_info,
                         handle.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, handle)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], handle)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -23200,14 +26790,37 @@ pub mod nv {
                 &self,
                 import_semaphore_sci_sync_info: &ImportSemaphoreSciSyncInfoNV<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.import_semaphore_sci_sync_obj_nv)(
                         self.handle,
                         import_semaphore_sci_sync_info,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -23215,7 +26828,7 @@ pub mod nv {
         //! VK_NV_external_memory_sci_buf device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_external_memory_sci_buf";
+        pub const NAME: &ffi::CStr = c"VK_NV_external_memory_sci_buf";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_memory_sci_buf_nv: PFN_vkGetMemorySciBufNV,
@@ -23295,20 +26908,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -23317,6 +26934,8 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -23325,7 +26944,6 @@ pub mod nv {
                 &self,
                 get_sci_buf_info: &MemoryGetSciBufInfoNV<'_>,
             ) -> crate::VkResult<NvSciBufObj> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut handle = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_memory_sci_buf_nv)(
@@ -23333,9 +26951,11 @@ pub mod nv {
                         get_sci_buf_info,
                         handle.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, handle)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], handle)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -23347,7 +26967,6 @@ pub mod nv {
                 handle: NvSciBufObj,
                 memory_sci_buf_properties: &mut MemorySciBufPropertiesNV<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self
                         .fp
@@ -23357,9 +26976,11 @@ pub mod nv {
                         handle,
                         memory_sci_buf_properties,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -23369,11 +26990,34 @@ pub mod nv {
                 physical_device: PhysicalDevice,
                 attributes: NvSciBufAttrList,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_physical_device_sci_buf_attributes_nv)(physical_device, attributes)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -23381,13 +27025,13 @@ pub mod nv {
         //! VK_NV_displacement_micromap device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_displacement_micromap";
+        pub const NAME: &ffi::CStr = c"VK_NV_displacement_micromap";
     }
     pub mod copy_memory_indirect {
         //! VK_NV_copy_memory_indirect device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_copy_memory_indirect";
+        pub const NAME: &ffi::CStr = c"VK_NV_copy_memory_indirect";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_copy_memory_indirect_nv: PFN_vkCmdCopyMemoryIndirectNV,
@@ -23449,20 +27093,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -23513,9 +27161,37 @@ pub mod nv {
                         stride,
                         dst_image,
                         dst_image_layout,
-                        image_subresources.as_ptr(),
+                        if !image_subresources.is_empty() {
+                            image_subresources.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -23523,7 +27199,7 @@ pub mod nv {
         //! VK_NV_memory_decompression device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_memory_decompression";
+        pub const NAME: &ffi::CStr = c"VK_NV_memory_decompression";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_decompress_memory_nv: PFN_vkCmdDecompressMemoryNV,
@@ -23580,20 +27256,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -23615,7 +27295,11 @@ pub mod nv {
                     (self.fp.cmd_decompress_memory_nv)(
                         command_buffer,
                         decompress_memory_regions.len() as _,
-                        decompress_memory_regions.as_ptr(),
+                        if !decompress_memory_regions.is_empty() {
+                            decompress_memory_regions.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
             }
@@ -23640,12 +27324,36 @@ pub mod nv {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod device_generated_commands_compute {
         //! VK_NV_device_generated_commands_compute device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_device_generated_commands_compute";
+        pub const NAME: &ffi::CStr = c"VK_NV_device_generated_commands_compute";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_pipeline_indirect_memory_requirements_nv:
@@ -23724,20 +27432,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -23792,24 +27504,48 @@ pub mod nv {
                 unsafe { (self.fp.get_pipeline_indirect_device_address_nv)(self.handle, info) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod ray_tracing_linear_swept_spheres {
         //! VK_NV_ray_tracing_linear_swept_spheres device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_ray_tracing_linear_swept_spheres";
+        pub const NAME: &ffi::CStr = c"VK_NV_ray_tracing_linear_swept_spheres";
     }
     pub mod linear_color_attachment {
         //! VK_NV_linear_color_attachment device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_linear_color_attachment";
+        pub const NAME: &ffi::CStr = c"VK_NV_linear_color_attachment";
     }
     pub mod optical_flow {
         //! VK_NV_optical_flow device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_optical_flow";
+        pub const NAME: &ffi::CStr = c"VK_NV_optical_flow";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_physical_device_optical_flow_image_formats_nv:
@@ -23937,20 +27673,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -23959,6 +27699,9 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -23968,8 +27711,6 @@ pub mod nv {
                 physical_device: PhysicalDevice,
                 optical_flow_image_format_info: &OpticalFlowImageFormatInfoNV<'_>,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut format_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_optical_flow_image_formats_nv)(
@@ -23978,9 +27719,15 @@ pub mod nv {
                         format_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, format_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        format_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -23991,8 +27738,6 @@ pub mod nv {
                 optical_flow_image_format_info: &OpticalFlowImageFormatInfoNV<'_>,
                 out: &mut [OpticalFlowImageFormatPropertiesNV<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_optical_flow_image_formats_nv)(
@@ -24001,9 +27746,11 @@ pub mod nv {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -24013,7 +27760,6 @@ pub mod nv {
                 create_info: &OpticalFlowSessionCreateInfoNV<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<OpticalFlowSessionNV> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut session = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_optical_flow_session_nv)(
@@ -24022,7 +27768,7 @@ pub mod nv {
                         allocator.as_ptr(),
                         session.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, session)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], session)
                 }
             }
             #[doc = r" # Safety"]
@@ -24042,6 +27788,8 @@ pub mod nv {
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -24053,7 +27801,6 @@ pub mod nv {
                 view: ImageView,
                 layout: ImageLayout,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.bind_optical_flow_session_image_nv)(
                         self.handle,
@@ -24062,7 +27809,7 @@ pub mod nv {
                         view,
                         layout,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -24080,12 +27827,36 @@ pub mod nv {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod external_sci_sync2 {
         //! VK_NV_external_sci_sync2 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_external_sci_sync2";
+        pub const NAME: &ffi::CStr = c"VK_NV_external_sci_sync2";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_semaphore_sci_sync_pool_nv: PFN_vkCreateSemaphoreSciSyncPoolNV,
@@ -24250,20 +28021,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -24272,6 +28047,8 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -24281,7 +28058,6 @@ pub mod nv {
                 create_info: &SemaphoreSciSyncPoolCreateInfoNV<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SemaphoreSciSyncPoolNV> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut semaphore_pool = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_semaphore_sci_sync_pool_nv)(
@@ -24290,7 +28066,7 @@ pub mod nv {
                         allocator.as_ptr(),
                         semaphore_pool.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, semaphore_pool)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], semaphore_pool)
                 }
             }
             #[doc = r" # Safety"]
@@ -24310,6 +28086,8 @@ pub mod nv {
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -24318,7 +28096,6 @@ pub mod nv {
                 &self,
                 get_sci_sync_handle_info: &FenceGetSciSyncInfoNV<'_>,
             ) -> crate::VkResult<ffi::c_void> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut handle = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_fence_sci_sync_fence_nv)(
@@ -24326,9 +28103,11 @@ pub mod nv {
                         get_sci_sync_handle_info,
                         handle.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, handle)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], handle)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -24337,7 +28116,6 @@ pub mod nv {
                 &self,
                 get_sci_sync_handle_info: &FenceGetSciSyncInfoNV<'_>,
             ) -> crate::VkResult<ffi::c_void> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut handle = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_fence_sci_sync_obj_nv)(
@@ -24345,9 +28123,11 @@ pub mod nv {
                         get_sci_sync_handle_info,
                         handle.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, handle)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], handle)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -24356,15 +28136,16 @@ pub mod nv {
                 &self,
                 import_fence_sci_sync_info: &ImportFenceSciSyncInfoNV<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.import_fence_sci_sync_fence_nv)(
                         self.handle,
                         import_fence_sci_sync_info,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -24373,12 +28154,13 @@ pub mod nv {
                 &self,
                 import_fence_sci_sync_info: &ImportFenceSciSyncInfoNV<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.import_fence_sci_sync_obj_nv)(self.handle, import_fence_sci_sync_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -24389,15 +28171,38 @@ pub mod nv {
                 sci_sync_attributes_info: &SciSyncAttributesInfoNV<'_>,
                 attributes: NvSciSyncAttrList,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_physical_device_sci_sync_attributes_nv)(
                         physical_device,
                         sci_sync_attributes_info,
                         attributes,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -24405,13 +28210,13 @@ pub mod nv {
         //! VK_NV_ray_tracing_invocation_reorder device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_ray_tracing_invocation_reorder";
+        pub const NAME: &ffi::CStr = c"VK_NV_ray_tracing_invocation_reorder";
     }
     pub mod cooperative_vector {
         //! VK_NV_cooperative_vector device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 4u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_cooperative_vector";
+        pub const NAME: &ffi::CStr = c"VK_NV_cooperative_vector";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_physical_device_cooperative_vector_properties_nv:
@@ -24490,20 +28295,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -24512,6 +28321,9 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -24520,8 +28332,6 @@ pub mod nv {
                 &self,
                 physical_device: PhysicalDevice,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut property_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_physical_device_cooperative_vector_properties_nv)(
@@ -24529,9 +28339,15 @@ pub mod nv {
                         property_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, property_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        property_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -24541,8 +28357,6 @@ pub mod nv {
                 physical_device: PhysicalDevice,
                 out: &mut [CooperativeVectorPropertiesNV<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_physical_device_cooperative_vector_properties_nv)(
@@ -24550,9 +28364,12 @@ pub mod nv {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -24561,11 +28378,9 @@ pub mod nv {
                 &self,
                 info: &ConvertCooperativeVectorMatrixInfoNV<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     (self.fp.convert_cooperative_vector_matrix_nv)(self.handle, info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
             #[doc = r" # Safety"]
@@ -24581,9 +28396,37 @@ pub mod nv {
                     (self.fp.cmd_convert_cooperative_vector_matrix_nv)(
                         command_buffer,
                         infos.len() as _,
-                        infos.as_ptr(),
+                        if !infos.is_empty() {
+                            infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -24591,13 +28434,13 @@ pub mod nv {
         //! VK_NV_extended_sparse_address_space device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_extended_sparse_address_space";
+        pub const NAME: &ffi::CStr = c"VK_NV_extended_sparse_address_space";
     }
     pub mod low_latency2 {
         //! VK_NV_low_latency2 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_low_latency2";
+        pub const NAME: &ffi::CStr = c"VK_NV_low_latency2";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub set_latency_sleep_mode_nv: PFN_vkSetLatencySleepModeNV,
@@ -24709,20 +28552,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -24731,6 +28578,8 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -24740,12 +28589,13 @@ pub mod nv {
                 swapchain: SwapchainKHR,
                 sleep_mode_info: &LatencySleepModeInfoNV<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.set_latency_sleep_mode_nv)(self.handle, swapchain, sleep_mode_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -24755,10 +28605,9 @@ pub mod nv {
                 swapchain: SwapchainKHR,
                 sleep_info: &LatencySleepInfoNV<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.latency_sleep_nv)(self.handle, swapchain, sleep_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -24799,36 +28648,60 @@ pub mod nv {
                 unsafe { (self.fp.queue_notify_out_of_band_nv)(queue, queue_type_info) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod per_stage_descriptor_set {
         //! VK_NV_per_stage_descriptor_set device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_per_stage_descriptor_set";
+        pub const NAME: &ffi::CStr = c"VK_NV_per_stage_descriptor_set";
     }
     pub mod descriptor_pool_overallocation {
         //! VK_NV_descriptor_pool_overallocation device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_descriptor_pool_overallocation";
+        pub const NAME: &ffi::CStr = c"VK_NV_descriptor_pool_overallocation";
     }
     pub mod display_stereo {
         //! VK_NV_display_stereo instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_display_stereo";
+        pub const NAME: &ffi::CStr = c"VK_NV_display_stereo";
     }
     pub mod raw_access_chains {
         //! VK_NV_raw_access_chains device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_raw_access_chains";
+        pub const NAME: &ffi::CStr = c"VK_NV_raw_access_chains";
     }
     pub mod external_compute_queue {
         //! VK_NV_external_compute_queue device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_external_compute_queue";
+        pub const NAME: &ffi::CStr = c"VK_NV_external_compute_queue";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_external_compute_queue_nv: PFN_vkCreateExternalComputeQueueNV,
@@ -24908,20 +28781,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -24930,6 +28807,8 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -24939,7 +28818,6 @@ pub mod nv {
                 create_info: &ExternalComputeQueueCreateInfoNV<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<ExternalComputeQueueNV> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut external_queue = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_external_compute_queue_nv)(
@@ -24948,7 +28826,7 @@ pub mod nv {
                         allocator.as_ptr(),
                         external_queue.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, external_queue)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], external_queue)
                 }
             }
             #[doc = r" # Safety"]
@@ -24976,11 +28854,40 @@ pub mod nv {
                 &self,
                 external_queue: ExternalComputeQueueNV,
                 params: &mut ExternalComputeQueueDataParamsNV<'_>,
-                data: &mut ffi::c_void,
-            ) {
+            ) -> ffi::c_void {
                 unsafe {
-                    (self.fp.get_external_compute_queue_data_nv)(external_queue, params, data)
+                    let mut data = ::core::mem::MaybeUninit::uninit();
+                    (self.fp.get_external_compute_queue_data_nv)(
+                        external_queue,
+                        params,
+                        data.as_mut_ptr(),
+                    );
+                    data.assume_init()
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -24988,25 +28895,25 @@ pub mod nv {
         //! VK_NV_command_buffer_inheritance device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_command_buffer_inheritance";
+        pub const NAME: &ffi::CStr = c"VK_NV_command_buffer_inheritance";
     }
     pub mod shader_atomic_float16_vector {
         //! VK_NV_shader_atomic_float16_vector device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_shader_atomic_float16_vector";
+        pub const NAME: &ffi::CStr = c"VK_NV_shader_atomic_float16_vector";
     }
     pub mod ray_tracing_validation {
         //! VK_NV_ray_tracing_validation device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_ray_tracing_validation";
+        pub const NAME: &ffi::CStr = c"VK_NV_ray_tracing_validation";
     }
     pub mod cluster_acceleration_structure {
         //! VK_NV_cluster_acceleration_structure device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 4u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_cluster_acceleration_structure";
+        pub const NAME: &ffi::CStr = c"VK_NV_cluster_acceleration_structure";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_cluster_acceleration_structure_build_sizes_nv:
@@ -25064,20 +28971,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -25120,12 +29031,36 @@ pub mod nv {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod partitioned_acceleration_structure {
         //! VK_NV_partitioned_acceleration_structure device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_partitioned_acceleration_structure";
+        pub const NAME: &ffi::CStr = c"VK_NV_partitioned_acceleration_structure";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_partitioned_acceleration_structures_build_sizes_nv:
@@ -25183,20 +29118,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -25241,18 +29180,42 @@ pub mod nv {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod push_constant_bank {
         //! VK_NV_push_constant_bank device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_push_constant_bank";
+        pub const NAME: &ffi::CStr = c"VK_NV_push_constant_bank";
     }
     pub mod cooperative_matrix2 {
         //! VK_NV_cooperative_matrix2 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_cooperative_matrix2";
+        pub const NAME: &ffi::CStr = c"VK_NV_cooperative_matrix2";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_physical_device_cooperative_matrix_flexible_dimensions_properties_nv:
@@ -25284,20 +29247,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -25306,6 +29273,9 @@ pub mod nv {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -25314,8 +29284,6 @@ pub mod nv {
                 &self,
                 physical_device: PhysicalDevice,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut property_count = ::core::mem::MaybeUninit::uninit();
                     (self
@@ -25325,9 +29293,15 @@ pub mod nv {
                         property_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, property_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        property_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -25337,8 +29311,6 @@ pub mod nv {
                 physical_device: PhysicalDevice,
                 out: &mut [CooperativeMatrixFlexibleDimensionsPropertiesNV<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self
@@ -25348,8 +29320,32 @@ pub mod nv {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -25357,13 +29353,13 @@ pub mod nv {
         //! VK_NV_present_metering device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_present_metering";
+        pub const NAME: &ffi::CStr = c"VK_NV_present_metering";
     }
     pub mod compute_occupancy_priority {
         //! VK_NV_compute_occupancy_priority device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NV_compute_occupancy_priority";
+        pub const NAME: &ffi::CStr = c"VK_NV_compute_occupancy_priority";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_compute_occupancy_priority_nv: PFN_vkCmdSetComputeOccupancyPriorityNV,
@@ -25397,20 +29393,24 @@ pub mod nv {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -25433,6 +29433,30 @@ pub mod nv {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
 }
 pub mod img {
@@ -25441,19 +29465,19 @@ pub mod img {
         //! VK_IMG_filter_cubic device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_IMG_filter_cubic";
+        pub const NAME: &ffi::CStr = c"VK_IMG_filter_cubic";
     }
     pub mod format_pvrtc {
         //! VK_IMG_format_pvrtc device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_IMG_format_pvrtc";
+        pub const NAME: &ffi::CStr = c"VK_IMG_format_pvrtc";
     }
     pub mod relaxed_line_rasterization {
         //! VK_IMG_relaxed_line_rasterization device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_IMG_relaxed_line_rasterization";
+        pub const NAME: &ffi::CStr = c"VK_IMG_relaxed_line_rasterization";
     }
 }
 pub mod amd {
@@ -25462,31 +29486,31 @@ pub mod amd {
         //! VK_AMD_rasterization_order device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_rasterization_order";
+        pub const NAME: &ffi::CStr = c"VK_AMD_rasterization_order";
     }
     pub mod shader_trinary_minmax {
         //! VK_AMD_shader_trinary_minmax device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_shader_trinary_minmax";
+        pub const NAME: &ffi::CStr = c"VK_AMD_shader_trinary_minmax";
     }
     pub mod shader_explicit_vertex_parameter {
         //! VK_AMD_shader_explicit_vertex_parameter device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_shader_explicit_vertex_parameter";
+        pub const NAME: &ffi::CStr = c"VK_AMD_shader_explicit_vertex_parameter";
     }
     pub mod gcn_shader {
         //! VK_AMD_gcn_shader device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_gcn_shader";
+        pub const NAME: &ffi::CStr = c"VK_AMD_gcn_shader";
     }
     pub mod draw_indirect_count {
         //! VK_AMD_draw_indirect_count device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_draw_indirect_count";
+        pub const NAME: &ffi::CStr = c"VK_AMD_draw_indirect_count";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_draw_indirect_count: PFN_vkCmdDrawIndirectCount,
@@ -25550,20 +29574,24 @@ pub mod amd {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -25627,36 +29655,60 @@ pub mod amd {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod negative_viewport_height {
         //! VK_AMD_negative_viewport_height device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_negative_viewport_height";
+        pub const NAME: &ffi::CStr = c"VK_AMD_negative_viewport_height";
     }
     pub mod gpu_shader_half_float {
         //! VK_AMD_gpu_shader_half_float device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_gpu_shader_half_float";
+        pub const NAME: &ffi::CStr = c"VK_AMD_gpu_shader_half_float";
     }
     pub mod shader_ballot {
         //! VK_AMD_shader_ballot device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_shader_ballot";
+        pub const NAME: &ffi::CStr = c"VK_AMD_shader_ballot";
     }
     pub mod texture_gather_bias_lod {
         //! VK_AMD_texture_gather_bias_lod device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_texture_gather_bias_lod";
+        pub const NAME: &ffi::CStr = c"VK_AMD_texture_gather_bias_lod";
     }
     pub mod shader_info {
         //! VK_AMD_shader_info device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_shader_info";
+        pub const NAME: &ffi::CStr = c"VK_AMD_shader_info";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_shader_info_amd: PFN_vkGetShaderInfoAMD,
@@ -25688,20 +29740,24 @@ pub mod amd {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -25710,6 +29766,9 @@ pub mod amd {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -25720,8 +29779,6 @@ pub mod amd {
                 shader_stage: ShaderStageFlags,
                 info_type: ShaderInfoTypeAMD,
             ) -> crate::VkResult<usize> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut info_size = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_shader_info_amd)(
@@ -25732,9 +29789,15 @@ pub mod amd {
                         info_size.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, info_size)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        info_size,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -25744,10 +29807,8 @@ pub mod amd {
                 pipeline: Pipeline,
                 shader_stage: ShaderStageFlags,
                 info_type: ShaderInfoTypeAMD,
-                out: &mut [ffi::c_void],
+                out: &mut [u8],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_shader_info_amd)(
@@ -25756,10 +29817,34 @@ pub mod amd {
                         shader_stage,
                         info_type,
                         &mut len,
-                        out.as_mut_ptr(),
+                        out.as_mut_ptr().cast(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -25767,31 +29852,31 @@ pub mod amd {
         //! VK_AMD_shader_image_load_store_lod device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_shader_image_load_store_lod";
+        pub const NAME: &ffi::CStr = c"VK_AMD_shader_image_load_store_lod";
     }
     pub mod gpu_shader_int16 {
         //! VK_AMD_gpu_shader_int16 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_gpu_shader_int16";
+        pub const NAME: &ffi::CStr = c"VK_AMD_gpu_shader_int16";
     }
     pub mod mixed_attachment_samples {
         //! VK_AMD_mixed_attachment_samples device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_mixed_attachment_samples";
+        pub const NAME: &ffi::CStr = c"VK_AMD_mixed_attachment_samples";
     }
     pub mod shader_fragment_mask {
         //! VK_AMD_shader_fragment_mask device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_shader_fragment_mask";
+        pub const NAME: &ffi::CStr = c"VK_AMD_shader_fragment_mask";
     }
     pub mod buffer_marker {
         //! VK_AMD_buffer_marker device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_buffer_marker";
+        pub const NAME: &ffi::CStr = c"VK_AMD_buffer_marker";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_write_buffer_marker_amd: PFN_vkCmdWriteBufferMarkerAMD,
@@ -25852,20 +29937,24 @@ pub mod amd {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -25922,30 +30011,54 @@ pub mod amd {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod pipeline_compiler_control {
         //! VK_AMD_pipeline_compiler_control device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_pipeline_compiler_control";
+        pub const NAME: &ffi::CStr = c"VK_AMD_pipeline_compiler_control";
     }
     pub mod shader_core_properties {
         //! VK_AMD_shader_core_properties device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_shader_core_properties";
+        pub const NAME: &ffi::CStr = c"VK_AMD_shader_core_properties";
     }
     pub mod memory_overallocation_behavior {
         //! VK_AMD_memory_overallocation_behavior device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_memory_overallocation_behavior";
+        pub const NAME: &ffi::CStr = c"VK_AMD_memory_overallocation_behavior";
     }
     pub mod display_native_hdr {
         //! VK_AMD_display_native_hdr device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_display_native_hdr";
+        pub const NAME: &ffi::CStr = c"VK_AMD_display_native_hdr";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub set_local_dimming_amd: PFN_vkSetLocalDimmingAMD,
@@ -25979,20 +30092,24 @@ pub mod amd {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -26008,11 +30125,39 @@ pub mod amd {
             pub unsafe fn set_local_dimming(
                 &self,
                 swap_chain: SwapchainKHR,
-                local_dimming_enable: Bool32,
+                local_dimming_enable: bool,
             ) {
                 unsafe {
-                    (self.fp.set_local_dimming_amd)(self.handle, swap_chain, local_dimming_enable)
+                    (self.fp.set_local_dimming_amd)(
+                        self.handle,
+                        swap_chain,
+                        local_dimming_enable as Bool32,
+                    )
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -26020,25 +30165,25 @@ pub mod amd {
         //! VK_AMD_shader_core_properties2 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_shader_core_properties2";
+        pub const NAME: &ffi::CStr = c"VK_AMD_shader_core_properties2";
     }
     pub mod device_coherent_memory {
         //! VK_AMD_device_coherent_memory device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_device_coherent_memory";
+        pub const NAME: &ffi::CStr = c"VK_AMD_device_coherent_memory";
     }
     pub mod shader_early_and_late_fragment_tests {
         //! VK_AMD_shader_early_and_late_fragment_tests device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_shader_early_and_late_fragment_tests";
+        pub const NAME: &ffi::CStr = c"VK_AMD_shader_early_and_late_fragment_tests";
     }
     pub mod anti_lag {
         //! VK_AMD_anti_lag device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMD_anti_lag";
+        pub const NAME: &ffi::CStr = c"VK_AMD_anti_lag";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub anti_lag_update_amd: PFN_vkAntiLagUpdateAMD,
@@ -26066,20 +30211,24 @@ pub mod amd {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -26096,6 +30245,30 @@ pub mod amd {
                 unsafe { (self.fp.anti_lag_update_amd)(self.handle, data) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
 }
 pub mod nvx {
@@ -26104,7 +30277,7 @@ pub mod nvx {
         //! VK_NVX_binary_import device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NVX_binary_import";
+        pub const NAME: &ffi::CStr = c"VK_NVX_binary_import";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_cu_module_nvx: PFN_vkCreateCuModuleNVX,
@@ -26218,20 +30391,24 @@ pub mod nvx {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -26240,6 +30417,8 @@ pub mod nvx {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -26249,7 +30428,6 @@ pub mod nvx {
                 create_info: &CuModuleCreateInfoNVX<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<CuModuleNVX> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut module = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_cu_module_nvx)(
@@ -26258,9 +30436,11 @@ pub mod nvx {
                         allocator.as_ptr(),
                         module.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, module)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], module)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -26270,7 +30450,6 @@ pub mod nvx {
                 create_info: &CuFunctionCreateInfoNVX<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<CuFunctionNVX> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut function = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_cu_function_nvx)(
@@ -26279,7 +30458,7 @@ pub mod nvx {
                         allocator.as_ptr(),
                         function.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, function)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], function)
                 }
             }
             #[doc = r" # Safety"]
@@ -26318,12 +30497,36 @@ pub mod nvx {
                 unsafe { (self.fp.cmd_cu_launch_kernel_nvx)(command_buffer, launch_info) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod image_view_handle {
         //! VK_NVX_image_view_handle device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 4u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NVX_image_view_handle";
+        pub const NAME: &ffi::CStr = c"VK_NVX_image_view_handle";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_image_view_handle_nvx: PFN_vkGetImageViewHandleNVX,
@@ -26421,20 +30624,24 @@ pub mod nvx {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -26457,6 +30664,8 @@ pub mod nvx {
             pub unsafe fn get_image_view_handle64(&self, info: &ImageViewHandleInfoNVX<'_>) -> u64 {
                 unsafe { (self.fp.get_image_view_handle64_nvx)(self.handle, info) }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -26466,10 +30675,9 @@ pub mod nvx {
                 image_view: ImageView,
                 properties: &mut ImageViewAddressPropertiesNVX<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_image_view_address_nvx)(self.handle, image_view, properties)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -26490,12 +30698,36 @@ pub mod nvx {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod multiview_per_view_attributes {
         //! VK_NVX_multiview_per_view_attributes device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NVX_multiview_per_view_attributes";
+        pub const NAME: &ffi::CStr = c"VK_NVX_multiview_per_view_attributes";
     }
 }
 pub mod ggp {
@@ -26504,7 +30736,7 @@ pub mod ggp {
         //! VK_GGP_stream_descriptor_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_GGP_stream_descriptor_surface";
+        pub const NAME: &ffi::CStr = c"VK_GGP_stream_descriptor_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_stream_descriptor_surface_ggp: PFN_vkCreateStreamDescriptorSurfaceGGP,
@@ -26540,20 +30772,24 @@ pub mod ggp {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -26562,6 +30798,8 @@ pub mod ggp {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -26571,7 +30809,6 @@ pub mod ggp {
                 create_info: &StreamDescriptorSurfaceCreateInfoGGP<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_stream_descriptor_surface_ggp)(
@@ -26580,8 +30817,32 @@ pub mod ggp {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -26589,7 +30850,7 @@ pub mod ggp {
         //! VK_GGP_frame_token device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_GGP_frame_token";
+        pub const NAME: &ffi::CStr = c"VK_GGP_frame_token";
     }
 }
 pub mod nn {
@@ -26598,7 +30859,7 @@ pub mod nn {
         //! VK_NN_vi_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_NN_vi_surface";
+        pub const NAME: &ffi::CStr = c"VK_NN_vi_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_vi_surface_nn: PFN_vkCreateViSurfaceNN,
@@ -26628,20 +30889,24 @@ pub mod nn {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -26650,6 +30915,8 @@ pub mod nn {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -26659,7 +30926,6 @@ pub mod nn {
                 create_info: &ViSurfaceCreateInfoNN<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_vi_surface_nn)(
@@ -26668,8 +30934,32 @@ pub mod nn {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -26680,7 +30970,7 @@ pub mod google {
         //! VK_GOOGLE_display_timing device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_GOOGLE_display_timing";
+        pub const NAME: &ffi::CStr = c"VK_GOOGLE_display_timing";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_refresh_cycle_duration_google: PFN_vkGetRefreshCycleDurationGOOGLE,
@@ -26738,20 +31028,24 @@ pub mod google {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -26760,6 +31054,8 @@ pub mod google {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -26768,7 +31064,6 @@ pub mod google {
                 &self,
                 swapchain: SwapchainKHR,
             ) -> crate::VkResult<RefreshCycleDurationGOOGLE> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut display_timing_properties = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_refresh_cycle_duration_google)(
@@ -26776,9 +31071,15 @@ pub mod google {
                         swapchain,
                         display_timing_properties.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, display_timing_properties)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS],
+                        display_timing_properties,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -26787,8 +31088,6 @@ pub mod google {
                 &self,
                 swapchain: SwapchainKHR,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut presentation_timing_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_past_presentation_timing_google)(
@@ -26797,9 +31096,15 @@ pub mod google {
                         presentation_timing_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, presentation_timing_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        presentation_timing_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -26809,8 +31114,6 @@ pub mod google {
                 swapchain: SwapchainKHR,
                 out: &mut [PastPresentationTimingGOOGLE],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_past_presentation_timing_google)(
@@ -26819,8 +31122,32 @@ pub mod google {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -26828,25 +31155,25 @@ pub mod google {
         //! VK_GOOGLE_hlsl_functionality1 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_GOOGLE_hlsl_functionality1";
+        pub const NAME: &ffi::CStr = c"VK_GOOGLE_hlsl_functionality1";
     }
     pub mod decorate_string {
         //! VK_GOOGLE_decorate_string device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_GOOGLE_decorate_string";
+        pub const NAME: &ffi::CStr = c"VK_GOOGLE_decorate_string";
     }
     pub mod user_type {
         //! VK_GOOGLE_user_type device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_GOOGLE_user_type";
+        pub const NAME: &ffi::CStr = c"VK_GOOGLE_user_type";
     }
     pub mod surfaceless_query {
         //! VK_GOOGLE_surfaceless_query instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_GOOGLE_surfaceless_query";
+        pub const NAME: &ffi::CStr = c"VK_GOOGLE_surfaceless_query";
     }
 }
 pub mod mvk {
@@ -26855,7 +31182,7 @@ pub mod mvk {
         //! VK_MVK_ios_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_MVK_ios_surface";
+        pub const NAME: &ffi::CStr = c"VK_MVK_ios_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_iossurface_mvk: PFN_vkCreateIOSSurfaceMVK,
@@ -26890,20 +31217,24 @@ pub mod mvk {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -26912,6 +31243,8 @@ pub mod mvk {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -26921,7 +31254,6 @@ pub mod mvk {
                 create_info: &IOSSurfaceCreateInfoMVK<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_iossurface_mvk)(
@@ -26930,8 +31262,32 @@ pub mod mvk {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -26939,7 +31295,7 @@ pub mod mvk {
         //! VK_MVK_macos_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_MVK_macos_surface";
+        pub const NAME: &ffi::CStr = c"VK_MVK_macos_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_mac_ossurface_mvk: PFN_vkCreateMacOSSurfaceMVK,
@@ -26974,20 +31330,24 @@ pub mod mvk {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -26996,6 +31356,8 @@ pub mod mvk {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -27005,7 +31367,6 @@ pub mod mvk {
                 create_info: &MacOSSurfaceCreateInfoMVK<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_mac_ossurface_mvk)(
@@ -27014,8 +31375,32 @@ pub mod mvk {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -27026,8 +31411,7 @@ pub mod android {
         //! VK_ANDROID_external_memory_android_hardware_buffer device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 5u32;
-        pub const EXTENSION_NAME: &ffi::CStr =
-            c"VK_ANDROID_external_memory_android_hardware_buffer";
+        pub const NAME: &ffi::CStr = c"VK_ANDROID_external_memory_android_hardware_buffer";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_android_hardware_buffer_properties_android:
@@ -27086,20 +31470,24 @@ pub mod android {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -27108,6 +31496,8 @@ pub mod android {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -27117,16 +31507,17 @@ pub mod android {
                 buffer: &AHardwareBuffer,
                 properties: &mut AndroidHardwareBufferPropertiesANDROID<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_android_hardware_buffer_properties_android)(
                         self.handle,
                         buffer,
                         properties,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -27135,7 +31526,6 @@ pub mod android {
                 &self,
                 info: &MemoryGetAndroidHardwareBufferInfoANDROID<'_>,
             ) -> crate::VkResult<*mut AHardwareBuffer> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut buffer = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_memory_android_hardware_buffer_android)(
@@ -27143,8 +31533,32 @@ pub mod android {
                         info,
                         buffer.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, buffer)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], buffer)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -27152,7 +31566,7 @@ pub mod android {
         //! VK_ANDROID_external_format_resolve device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_ANDROID_external_format_resolve";
+        pub const NAME: &ffi::CStr = c"VK_ANDROID_external_format_resolve";
     }
 }
 pub mod amdx {
@@ -27161,7 +31575,7 @@ pub mod amdx {
         //! VK_AMDX_shader_enqueue device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMDX_shader_enqueue";
+        pub const NAME: &ffi::CStr = c"VK_AMDX_shader_enqueue";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_execution_graph_pipelines_amdx: PFN_vkCreateExecutionGraphPipelinesAMDX,
@@ -27337,20 +31751,24 @@ pub mod amdx {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -27359,6 +31777,9 @@ pub mod amdx {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`PIPELINE_COMPILE_REQUIRED_EXT`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -27368,24 +31789,29 @@ pub mod amdx {
                 pipeline_cache: PipelineCache,
                 create_infos: &[ExecutionGraphPipelineCreateInfoAMDX<'_>],
                 allocator: Option<&AllocationCallbacks>,
-                pipelines: &mut Pipeline,
+                pipelines: &mut [Pipeline],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::PIPELINE_COMPILE_REQUIRED_EXT,
-                ];
                 unsafe {
                     (self.fp.create_execution_graph_pipelines_amdx)(
                         self.handle,
                         pipeline_cache,
                         create_infos.len() as _,
-                        create_infos.as_ptr(),
+                        if !create_infos.is_empty() {
+                            create_infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         allocator.as_ptr(),
-                        pipelines,
+                        pipelines.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::PIPELINE_COMPILE_REQUIRED_EXT,
+                    ])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -27395,16 +31821,17 @@ pub mod amdx {
                 execution_graph: Pipeline,
                 size_info: &mut ExecutionGraphPipelineScratchSizeAMDX<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_execution_graph_pipeline_scratch_size_amdx)(
                         self.handle,
                         execution_graph,
                         size_info,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -27414,7 +31841,6 @@ pub mod amdx {
                 execution_graph: Pipeline,
                 node_info: &PipelineShaderStageNodeCreateInfoAMDX<'_>,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut node_index = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_execution_graph_pipeline_node_index_amdx)(
@@ -27423,7 +31849,7 @@ pub mod amdx {
                         node_info,
                         node_index.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, node_index)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], node_index)
                 }
             }
             #[doc = r" # Safety"]
@@ -27507,12 +31933,36 @@ pub mod amdx {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod dense_geometry_format {
         //! VK_AMDX_dense_geometry_format device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_AMDX_dense_geometry_format";
+        pub const NAME: &ffi::CStr = c"VK_AMDX_dense_geometry_format";
     }
 }
 pub mod qcom {
@@ -27521,31 +31971,31 @@ pub mod qcom {
         //! VK_QCOM_render_pass_shader_resolve device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 4u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_render_pass_shader_resolve";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_render_pass_shader_resolve";
     }
     pub mod cooperative_matrix_conversion {
         //! VK_QCOM_cooperative_matrix_conversion device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_cooperative_matrix_conversion";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_cooperative_matrix_conversion";
     }
     pub mod render_pass_transform {
         //! VK_QCOM_render_pass_transform device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 5u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_render_pass_transform";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_render_pass_transform";
     }
     pub mod render_pass_store_ops {
         //! VK_QCOM_render_pass_store_ops device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_render_pass_store_ops";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_render_pass_store_ops";
     }
     pub mod queue_perf_hint {
         //! VK_QCOM_queue_perf_hint device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_queue_perf_hint";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_queue_perf_hint";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub queue_set_perf_hint_qcom: PFN_vkQueueSetPerfHintQCOM,
@@ -27578,20 +32028,24 @@ pub mod qcom {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -27600,6 +32054,8 @@ pub mod qcom {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -27609,10 +32065,34 @@ pub mod qcom {
                 queue: Queue,
                 perf_hint_info: &PerfHintInfoQCOM<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
-                    (self.fp.queue_set_perf_hint_qcom)(queue, perf_hint_info).result(SUCCESS_CODES)
+                    (self.fp.queue_set_perf_hint_qcom)(queue, perf_hint_info)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -27620,7 +32100,7 @@ pub mod qcom {
         //! VK_QCOM_tile_shading device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_tile_shading";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_tile_shading";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_dispatch_tile_qcom: PFN_vkCmdDispatchTileQCOM,
@@ -27695,20 +32175,24 @@ pub mod qcom {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -27755,30 +32239,54 @@ pub mod qcom {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod rotated_copy_commands {
         //! VK_QCOM_rotated_copy_commands device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_rotated_copy_commands";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_rotated_copy_commands";
     }
     pub mod fragment_density_map_offset {
         //! VK_QCOM_fragment_density_map_offset device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_fragment_density_map_offset";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_fragment_density_map_offset";
     }
     pub mod image_processing {
         //! VK_QCOM_image_processing device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_image_processing";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_image_processing";
     }
     pub mod tile_properties {
         //! VK_QCOM_tile_properties device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_tile_properties";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_tile_properties";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_framebuffer_tile_properties_qcom: PFN_vkGetFramebufferTilePropertiesQCOM,
@@ -27837,20 +32345,24 @@ pub mod qcom {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -27859,6 +32371,9 @@ pub mod qcom {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -27867,8 +32382,6 @@ pub mod qcom {
                 &self,
                 framebuffer: Framebuffer,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut properties_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_framebuffer_tile_properties_qcom)(
@@ -27877,9 +32390,15 @@ pub mod qcom {
                         properties_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, properties_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        properties_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -27889,8 +32408,6 @@ pub mod qcom {
                 framebuffer: Framebuffer,
                 out: &mut [TilePropertiesQCOM<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_framebuffer_tile_properties_qcom)(
@@ -27899,9 +32416,11 @@ pub mod qcom {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -27911,15 +32430,38 @@ pub mod qcom {
                 rendering_info: &RenderingInfo<'_>,
                 properties: &mut TilePropertiesQCOM<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_dynamic_rendering_tile_properties_qcom)(
                         self.handle,
                         rendering_info,
                         properties,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -27927,43 +32469,43 @@ pub mod qcom {
         //! VK_QCOM_multiview_per_view_viewports device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_multiview_per_view_viewports";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_multiview_per_view_viewports";
     }
     pub mod multiview_per_view_render_areas {
         //! VK_QCOM_multiview_per_view_render_areas device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_multiview_per_view_render_areas";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_multiview_per_view_render_areas";
     }
     pub mod image_processing2 {
         //! VK_QCOM_image_processing2 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_image_processing2";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_image_processing2";
     }
     pub mod filter_cubic_weights {
         //! VK_QCOM_filter_cubic_weights device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_filter_cubic_weights";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_filter_cubic_weights";
     }
     pub mod ycbcr_degamma {
         //! VK_QCOM_ycbcr_degamma device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_ycbcr_degamma";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_ycbcr_degamma";
     }
     pub mod filter_cubic_clamp {
         //! VK_QCOM_filter_cubic_clamp device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_filter_cubic_clamp";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_filter_cubic_clamp";
     }
     pub mod tile_memory_heap {
         //! VK_QCOM_tile_memory_heap device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_tile_memory_heap";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_tile_memory_heap";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_bind_tile_memory_qcom: PFN_vkCmdBindTileMemoryQCOM,
@@ -27996,20 +32538,24 @@ pub mod qcom {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -28035,12 +32581,36 @@ pub mod qcom {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod data_graph_model {
         //! VK_QCOM_data_graph_model device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QCOM_data_graph_model";
+        pub const NAME: &ffi::CStr = c"VK_QCOM_data_graph_model";
     }
 }
 pub mod intel {
@@ -28049,13 +32619,13 @@ pub mod intel {
         //! VK_INTEL_shader_integer_functions2 device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_INTEL_shader_integer_functions2";
+        pub const NAME: &ffi::CStr = c"VK_INTEL_shader_integer_functions2";
     }
     pub mod performance_query {
         //! VK_INTEL_performance_query device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_INTEL_performance_query";
+        pub const NAME: &ffi::CStr = c"VK_INTEL_performance_query";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub initialize_performance_api_intel: PFN_vkInitializePerformanceApiINTEL,
@@ -28259,20 +32829,24 @@ pub mod intel {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -28281,6 +32855,8 @@ pub mod intel {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28289,10 +32865,9 @@ pub mod intel {
                 &self,
                 initialize_info: &InitializePerformanceApiInfoINTEL<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.initialize_performance_api_intel)(self.handle, initialize_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -28302,6 +32877,8 @@ pub mod intel {
             pub unsafe fn uninitialize_performance_api(&self) {
                 unsafe { (self.fp.uninitialize_performance_api_intel)(self.handle) }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28311,12 +32888,13 @@ pub mod intel {
                 command_buffer: CommandBuffer,
                 marker_info: &PerformanceMarkerInfoINTEL<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.cmd_set_performance_marker_intel)(command_buffer, marker_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28326,12 +32904,13 @@ pub mod intel {
                 command_buffer: CommandBuffer,
                 marker_info: &PerformanceStreamMarkerInfoINTEL<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.cmd_set_performance_stream_marker_intel)(command_buffer, marker_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28341,12 +32920,13 @@ pub mod intel {
                 command_buffer: CommandBuffer,
                 override_info: &PerformanceOverrideInfoINTEL<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.cmd_set_performance_override_intel)(command_buffer, override_info)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28355,7 +32935,6 @@ pub mod intel {
                 &self,
                 acquire_info: &PerformanceConfigurationAcquireInfoINTEL<'_>,
             ) -> crate::VkResult<PerformanceConfigurationINTEL> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut configuration = ::core::mem::MaybeUninit::uninit();
                     (self.fp.acquire_performance_configuration_intel)(
@@ -28363,9 +32942,11 @@ pub mod intel {
                         acquire_info,
                         configuration.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, configuration)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], configuration)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28374,12 +32955,13 @@ pub mod intel {
                 &self,
                 configuration: PerformanceConfigurationINTEL,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.release_performance_configuration_intel)(self.handle, configuration)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28389,12 +32971,13 @@ pub mod intel {
                 queue: Queue,
                 configuration: PerformanceConfigurationINTEL,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.queue_set_performance_configuration_intel)(queue, configuration)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28403,7 +32986,6 @@ pub mod intel {
                 &self,
                 parameter: PerformanceParameterTypeINTEL,
             ) -> crate::VkResult<PerformanceValueINTEL> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut value = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_performance_parameter_intel)(
@@ -28411,8 +32993,32 @@ pub mod intel {
                         parameter,
                         value.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, value)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], value)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -28423,7 +33029,7 @@ pub mod fuchsia {
         //! VK_FUCHSIA_imagepipe_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_FUCHSIA_imagepipe_surface";
+        pub const NAME: &ffi::CStr = c"VK_FUCHSIA_imagepipe_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_image_pipe_surface_fuchsia: PFN_vkCreateImagePipeSurfaceFUCHSIA,
@@ -28459,20 +33065,24 @@ pub mod fuchsia {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -28481,6 +33091,8 @@ pub mod fuchsia {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28490,7 +33102,6 @@ pub mod fuchsia {
                 create_info: &ImagePipeSurfaceCreateInfoFUCHSIA<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_image_pipe_surface_fuchsia)(
@@ -28499,8 +33110,32 @@ pub mod fuchsia {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -28508,7 +33143,7 @@ pub mod fuchsia {
         //! VK_FUCHSIA_external_memory device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_FUCHSIA_external_memory";
+        pub const NAME: &ffi::CStr = c"VK_FUCHSIA_external_memory";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_memory_zircon_handle_fuchsia: PFN_vkGetMemoryZirconHandleFUCHSIA,
@@ -28567,20 +33202,24 @@ pub mod fuchsia {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -28589,6 +33228,8 @@ pub mod fuchsia {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28597,7 +33238,6 @@ pub mod fuchsia {
                 &self,
                 get_zircon_handle_info: &MemoryGetZirconHandleInfoFUCHSIA<'_>,
             ) -> crate::VkResult<zx_handle_t> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut zircon_handle = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_memory_zircon_handle_fuchsia)(
@@ -28605,9 +33245,11 @@ pub mod fuchsia {
                         get_zircon_handle_info,
                         zircon_handle.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, zircon_handle)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], zircon_handle)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28618,7 +33260,6 @@ pub mod fuchsia {
                 zircon_handle: zx_handle_t,
                 memory_zircon_handle_properties: &mut MemoryZirconHandlePropertiesFUCHSIA<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_memory_zircon_handle_properties_fuchsia)(
                         self.handle,
@@ -28626,8 +33267,32 @@ pub mod fuchsia {
                         zircon_handle,
                         memory_zircon_handle_properties,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -28635,7 +33300,7 @@ pub mod fuchsia {
         //! VK_FUCHSIA_external_semaphore device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_FUCHSIA_external_semaphore";
+        pub const NAME: &ffi::CStr = c"VK_FUCHSIA_external_semaphore";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub import_semaphore_zircon_handle_fuchsia: PFN_vkImportSemaphoreZirconHandleFUCHSIA,
@@ -28691,20 +33356,24 @@ pub mod fuchsia {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -28713,6 +33382,8 @@ pub mod fuchsia {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28721,15 +33392,16 @@ pub mod fuchsia {
                 &self,
                 import_semaphore_zircon_handle_info: &ImportSemaphoreZirconHandleInfoFUCHSIA<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.import_semaphore_zircon_handle_fuchsia)(
                         self.handle,
                         import_semaphore_zircon_handle_info,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28738,7 +33410,6 @@ pub mod fuchsia {
                 &self,
                 get_zircon_handle_info: &SemaphoreGetZirconHandleInfoFUCHSIA<'_>,
             ) -> crate::VkResult<zx_handle_t> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut zircon_handle = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_semaphore_zircon_handle_fuchsia)(
@@ -28746,8 +33417,32 @@ pub mod fuchsia {
                         get_zircon_handle_info,
                         zircon_handle.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, zircon_handle)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], zircon_handle)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -28755,7 +33450,7 @@ pub mod fuchsia {
         //! VK_FUCHSIA_buffer_collection device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_FUCHSIA_buffer_collection";
+        pub const NAME: &ffi::CStr = c"VK_FUCHSIA_buffer_collection";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_buffer_collection_fuchsia: PFN_vkCreateBufferCollectionFUCHSIA,
@@ -28882,20 +33577,24 @@ pub mod fuchsia {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -28904,6 +33603,8 @@ pub mod fuchsia {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28913,7 +33614,6 @@ pub mod fuchsia {
                 create_info: &BufferCollectionCreateInfoFUCHSIA<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<BufferCollectionFUCHSIA> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut collection = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_buffer_collection_fuchsia)(
@@ -28922,9 +33622,11 @@ pub mod fuchsia {
                         allocator.as_ptr(),
                         collection.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, collection)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], collection)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28934,16 +33636,17 @@ pub mod fuchsia {
                 collection: BufferCollectionFUCHSIA,
                 image_constraints_info: &ImageConstraintsInfoFUCHSIA<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.set_buffer_collection_image_constraints_fuchsia)(
                         self.handle,
                         collection,
                         image_constraints_info,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28953,14 +33656,13 @@ pub mod fuchsia {
                 collection: BufferCollectionFUCHSIA,
                 buffer_constraints_info: &BufferConstraintsInfoFUCHSIA<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.set_buffer_collection_buffer_constraints_fuchsia)(
                         self.handle,
                         collection,
                         buffer_constraints_info,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -28980,6 +33682,8 @@ pub mod fuchsia {
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -28989,15 +33693,38 @@ pub mod fuchsia {
                 collection: BufferCollectionFUCHSIA,
                 properties: &mut BufferCollectionPropertiesFUCHSIA<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_buffer_collection_properties_fuchsia)(
                         self.handle,
                         collection,
                         properties,
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -29008,19 +33735,19 @@ pub mod arm {
         //! VK_ARM_rasterization_order_attachment_access device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_ARM_rasterization_order_attachment_access";
+        pub const NAME: &ffi::CStr = c"VK_ARM_rasterization_order_attachment_access";
     }
     pub mod shader_core_properties {
         //! VK_ARM_shader_core_properties device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_ARM_shader_core_properties";
+        pub const NAME: &ffi::CStr = c"VK_ARM_shader_core_properties";
     }
     pub mod scheduling_controls {
         //! VK_ARM_scheduling_controls device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_ARM_scheduling_controls";
+        pub const NAME: &ffi::CStr = c"VK_ARM_scheduling_controls";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_set_dispatch_parameters_arm: PFN_vkCmdSetDispatchParametersARM,
@@ -29054,20 +33781,24 @@ pub mod arm {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -29090,18 +33821,42 @@ pub mod arm {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod render_pass_striped {
         //! VK_ARM_render_pass_striped device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_ARM_render_pass_striped";
+        pub const NAME: &ffi::CStr = c"VK_ARM_render_pass_striped";
     }
     pub mod tensors {
         //! VK_ARM_tensors device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_ARM_tensors";
+        pub const NAME: &ffi::CStr = c"VK_ARM_tensors";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_tensor_arm: PFN_vkCreateTensorARM,
@@ -29340,20 +34095,24 @@ pub mod arm {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -29362,6 +34121,8 @@ pub mod arm {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -29371,7 +34132,6 @@ pub mod arm {
                 create_info: &TensorCreateInfoARM<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<TensorARM> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut tensor = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_tensor_arm)(
@@ -29380,7 +34140,7 @@ pub mod arm {
                         allocator.as_ptr(),
                         tensor.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, tensor)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], tensor)
                 }
             }
             #[doc = r" # Safety"]
@@ -29394,6 +34154,8 @@ pub mod arm {
             ) {
                 unsafe { (self.fp.destroy_tensor_arm)(self.handle, tensor, allocator.as_ptr()) }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -29403,7 +34165,6 @@ pub mod arm {
                 create_info: &TensorViewCreateInfoARM<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<TensorViewARM> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut view = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_tensor_view_arm)(
@@ -29412,7 +34173,7 @@ pub mod arm {
                         allocator.as_ptr(),
                         view.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, view)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], view)
                 }
             }
             #[doc = r" # Safety"]
@@ -29445,6 +34206,8 @@ pub mod arm {
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -29453,14 +34216,17 @@ pub mod arm {
                 &self,
                 bind_infos: &[BindTensorMemoryInfoARM<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.bind_tensor_memory_arm)(
                         self.handle,
                         bind_infos.len() as _,
-                        bind_infos.as_ptr(),
+                        if !bind_infos.is_empty() {
+                            bind_infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -29511,6 +34277,8 @@ pub mod arm {
             }
             #[doc = r" # Depends on"]
             #[doc = "* VK_EXT_descriptor_buffer"]
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -29519,7 +34287,6 @@ pub mod arm {
                 &self,
                 info: &TensorCaptureDescriptorDataInfoARM<'_>,
             ) -> crate::VkResult<ffi::c_void> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut data = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_tensor_opaque_capture_descriptor_data_arm)(
@@ -29527,11 +34294,13 @@ pub mod arm {
                         info,
                         data.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, data)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], data)
                 }
             }
             #[doc = r" # Depends on"]
             #[doc = "* VK_EXT_descriptor_buffer"]
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -29540,7 +34309,6 @@ pub mod arm {
                 &self,
                 info: &TensorViewCaptureDescriptorDataInfoARM<'_>,
             ) -> crate::VkResult<ffi::c_void> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut data = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_tensor_view_opaque_capture_descriptor_data_arm)(
@@ -29548,8 +34316,32 @@ pub mod arm {
                         info,
                         data.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, data)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], data)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -29557,13 +34349,13 @@ pub mod arm {
         //! VK_ARM_shader_core_builtins device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_ARM_shader_core_builtins";
+        pub const NAME: &ffi::CStr = c"VK_ARM_shader_core_builtins";
     }
     pub mod data_graph {
         //! VK_ARM_data_graph device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_ARM_data_graph";
+        pub const NAME: &ffi::CStr = c"VK_ARM_data_graph";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub create_data_graph_pipelines_arm: PFN_vkCreateDataGraphPipelinesARM,
@@ -29833,20 +34625,24 @@ pub mod arm {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -29855,6 +34651,9 @@ pub mod arm {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`PIPELINE_COMPILE_REQUIRED_EXT`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -29865,25 +34664,30 @@ pub mod arm {
                 pipeline_cache: PipelineCache,
                 create_infos: &[DataGraphPipelineCreateInfoARM<'_>],
                 allocator: Option<&AllocationCallbacks>,
-                pipelines: &mut Pipeline,
+                pipelines: &mut [Pipeline],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[
-                    crate::vk::Result::SUCCESS,
-                    crate::vk::Result::PIPELINE_COMPILE_REQUIRED_EXT,
-                ];
                 unsafe {
                     (self.fp.create_data_graph_pipelines_arm)(
                         self.handle,
                         deferred_operation,
                         pipeline_cache,
                         create_infos.len() as _,
-                        create_infos.as_ptr(),
+                        if !create_infos.is_empty() {
+                            create_infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                         allocator.as_ptr(),
-                        pipelines,
+                        pipelines.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[
+                        crate::vk::Result::SUCCESS,
+                        crate::vk::Result::PIPELINE_COMPILE_REQUIRED_EXT,
+                    ])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -29893,7 +34697,6 @@ pub mod arm {
                 create_info: &DataGraphPipelineSessionCreateInfoARM<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<DataGraphPipelineSessionARM> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut session = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_data_graph_pipeline_session_arm)(
@@ -29902,9 +34705,12 @@ pub mod arm {
                         allocator.as_ptr(),
                         session.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, session)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], session)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -29913,8 +34719,6 @@ pub mod arm {
                 &self,
                 info: &DataGraphPipelineSessionBindPointRequirementsInfoARM<'_>,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut bind_point_requirement_count = ::core::mem::MaybeUninit::uninit();
                     (self
@@ -29925,9 +34729,15 @@ pub mod arm {
                         bind_point_requirement_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, bind_point_requirement_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        bind_point_requirement_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -29937,8 +34747,6 @@ pub mod arm {
                 info: &DataGraphPipelineSessionBindPointRequirementsInfoARM<'_>,
                 out: &mut [DataGraphPipelineSessionBindPointRequirementARM<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self
@@ -29949,7 +34757,7 @@ pub mod arm {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
             #[doc = r" # Safety"]
@@ -29971,6 +34779,8 @@ pub mod arm {
                     )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -29979,14 +34789,17 @@ pub mod arm {
                 &self,
                 bind_infos: &[BindDataGraphPipelineSessionMemoryInfoARM<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.bind_data_graph_pipeline_session_memory_arm)(
                         self.handle,
                         bind_infos.len() as _,
-                        bind_infos.as_ptr(),
+                        if !bind_infos.is_empty() {
+                            bind_infos.as_ptr()
+                        } else {
+                            ::core::ptr::null()
+                        },
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -30020,6 +34833,9 @@ pub mod arm {
                     (self.fp.cmd_dispatch_data_graph_arm)(command_buffer, session, info.as_ptr())
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30028,8 +34844,6 @@ pub mod arm {
                 &self,
                 pipeline_info: &DataGraphPipelineInfoARM<'_>,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut properties_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_data_graph_pipeline_available_properties_arm)(
@@ -30038,9 +34852,15 @@ pub mod arm {
                         properties_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, properties_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        properties_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30050,8 +34870,6 @@ pub mod arm {
                 pipeline_info: &DataGraphPipelineInfoARM<'_>,
                 out: &mut [DataGraphPipelinePropertyARM],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self.fp.get_data_graph_pipeline_available_properties_arm)(
@@ -30060,9 +34878,12 @@ pub mod arm {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30071,20 +34892,21 @@ pub mod arm {
                 &self,
                 pipeline_info: &DataGraphPipelineInfoARM<'_>,
                 properties_count: u32,
-                properties: &mut DataGraphPipelinePropertyQueryResultARM<'_>,
+                properties: &mut [DataGraphPipelinePropertyQueryResultARM<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     (self.fp.get_data_graph_pipeline_properties_arm)(
                         self.handle,
                         pipeline_info,
                         properties_count,
-                        properties,
+                        properties.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30094,8 +34916,6 @@ pub mod arm {
                 physical_device: PhysicalDevice,
                 queue_family_index: u32,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut queue_family_data_graph_property_count =
                         ::core::mem::MaybeUninit::uninit();
@@ -30107,9 +34927,15 @@ pub mod arm {
                         queue_family_data_graph_property_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, queue_family_data_graph_property_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        queue_family_data_graph_property_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30120,8 +34946,6 @@ pub mod arm {
                 queue_family_index: u32,
                 out: &mut [QueueFamilyDataGraphPropertiesARM<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self
@@ -30132,7 +34956,7 @@ pub mod arm {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
             #[doc = r" # Safety"]
@@ -30150,12 +34974,36 @@ pub mod arm {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod data_graph_instruction_set_tosa {
         //! VK_ARM_data_graph_instruction_set_tosa device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_ARM_data_graph_instruction_set_tosa";
+        pub const NAME: &ffi::CStr = c"VK_ARM_data_graph_instruction_set_tosa";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_physical_device_queue_family_data_graph_engine_operation_properties_arm:
@@ -30188,20 +35036,24 @@ pub mod arm {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -30210,6 +35062,8 @@ pub mod arm {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30221,10 +35075,33 @@ pub mod arm {
                 queue_family_data_graph_properties: &QueueFamilyDataGraphPropertiesARM<'_>,
                 properties: &mut BaseOutStructure<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
-                    (self . fp . get_physical_device_queue_family_data_graph_engine_operation_properties_arm) (physical_device , queue_family_index , queue_family_data_graph_properties , properties ,) . result (SUCCESS_CODES)
+                    (self . fp . get_physical_device_queue_family_data_graph_engine_operation_properties_arm) (physical_device , queue_family_index , queue_family_data_graph_properties , properties ,) . result (& [crate :: vk :: Result :: SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -30232,13 +35109,13 @@ pub mod arm {
         //! VK_ARM_pipeline_opacity_micromap device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_ARM_pipeline_opacity_micromap";
+        pub const NAME: &ffi::CStr = c"VK_ARM_pipeline_opacity_micromap";
     }
     pub mod performance_counters_by_region {
         //! VK_ARM_performance_counters_by_region device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_ARM_performance_counters_by_region";
+        pub const NAME: &ffi::CStr = c"VK_ARM_performance_counters_by_region";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub enumerate_physical_device_queue_family_performance_counters_by_region_arm:
@@ -30272,20 +35149,24 @@ pub mod arm {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -30294,6 +35175,9 @@ pub mod arm {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30303,8 +35187,6 @@ pub mod arm {
                 physical_device: PhysicalDevice,
                 queue_family_index: u32,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut counter_count = ::core::mem::MaybeUninit::uninit();
                     (self
@@ -30316,9 +35198,15 @@ pub mod arm {
                         core::ptr::null_mut(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, counter_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        counter_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30330,8 +35218,6 @@ pub mod arm {
                 out_counters: &mut [PerformanceCounterARM<'_>],
                 out_counter_descriptions: &mut [PerformanceCounterDescriptionARM<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out_counters.len() as _;
                     (self
@@ -30343,8 +35229,32 @@ pub mod arm {
                         out_counters.as_mut_ptr(),
                         out_counter_descriptions.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -30352,7 +35262,7 @@ pub mod arm {
         //! VK_ARM_shader_instrumentation device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_ARM_shader_instrumentation";
+        pub const NAME: &ffi::CStr = c"VK_ARM_shader_instrumentation";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub enumerate_physical_device_shader_instrumentation_metrics_arm:
@@ -30522,20 +35432,24 @@ pub mod arm {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -30544,6 +35458,9 @@ pub mod arm {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30552,8 +35469,6 @@ pub mod arm {
                 &self,
                 physical_device: PhysicalDevice,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut description_count = ::core::mem::MaybeUninit::uninit();
                     (self
@@ -30563,9 +35478,15 @@ pub mod arm {
                         description_count.as_mut_ptr(),
                         core::ptr::null_mut(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, description_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        description_count,
+                    )
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30575,8 +35496,6 @@ pub mod arm {
                 physical_device: PhysicalDevice,
                 out: &mut [ShaderInstrumentationMetricDescriptionARM<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
                     (self
@@ -30586,9 +35505,11 @@ pub mod arm {
                         &mut len,
                         out.as_mut_ptr(),
                     )
-                    .result(SUCCESS_CODES)
+                    .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30598,7 +35519,6 @@ pub mod arm {
                 create_info: &ShaderInstrumentationCreateInfoARM<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<ShaderInstrumentationARM> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut instrumentation = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_shader_instrumentation_arm)(
@@ -30607,7 +35527,7 @@ pub mod arm {
                         allocator.as_ptr(),
                         instrumentation.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, instrumentation)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], instrumentation)
                 }
             }
             #[doc = r" # Safety"]
@@ -30647,6 +35567,9 @@ pub mod arm {
             pub unsafe fn cmd_end_shader_instrumentation(&self, command_buffer: CommandBuffer) {
                 unsafe { (self.fp.cmd_end_shader_instrumentation_arm)(command_buffer) }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30656,8 +35579,6 @@ pub mod arm {
                 instrumentation: ShaderInstrumentationARM,
                 flags: ShaderInstrumentationValuesFlagsARM,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut metric_block_count = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_shader_instrumentation_values_arm)(
@@ -30667,7 +35588,10 @@ pub mod arm {
                         core::ptr::null_mut(),
                         flags,
                     )
-                    .result_with_assume_init(SUCCESS_CODES, metric_block_count)
+                    .result_with_assume_init(
+                        &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                        metric_block_count,
+                    )
                 }
             }
             #[doc = r" # Safety"]
@@ -30683,18 +35607,42 @@ pub mod arm {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod format_pack {
         //! VK_ARM_format_pack device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_ARM_format_pack";
+        pub const NAME: &ffi::CStr = c"VK_ARM_format_pack";
     }
     pub mod data_graph_optical_flow {
         //! VK_ARM_data_graph_optical_flow device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_ARM_data_graph_optical_flow";
+        pub const NAME: &ffi::CStr = c"VK_ARM_data_graph_optical_flow";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_physical_device_queue_family_data_graph_optical_flow_image_formats_arm:
@@ -30749,20 +35697,24 @@ pub mod arm {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -30771,6 +35723,9 @@ pub mod arm {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30782,13 +35737,14 @@ pub mod arm {
                 queue_family_data_graph_properties: &QueueFamilyDataGraphPropertiesARM<'_>,
                 optical_flow_image_format_info: &DataGraphOpticalFlowImageFormatInfoARM<'_>,
             ) -> crate::VkResult<u32> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut format_count = ::core::mem::MaybeUninit::uninit();
-                    (self . fp . get_physical_device_queue_family_data_graph_optical_flow_image_formats_arm) (physical_device , queue_family_index , queue_family_data_graph_properties , optical_flow_image_format_info , format_count . as_mut_ptr () , core :: ptr :: null_mut () ,) . result_with_assume_init (SUCCESS_CODES , format_count)
+                    (self . fp . get_physical_device_queue_family_data_graph_optical_flow_image_formats_arm) (physical_device , queue_family_index , queue_family_data_graph_properties , optical_flow_image_format_info , format_count . as_mut_ptr () , core :: ptr :: null_mut () ,) . result_with_assume_init (& [crate :: vk :: Result :: SUCCESS , crate :: vk :: Result :: INCOMPLETE] , format_count)
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30801,13 +35757,13 @@ pub mod arm {
                 optical_flow_image_format_info: &DataGraphOpticalFlowImageFormatInfoARM<'_>,
                 out: &mut [DataGraphOpticalFlowImageFormatPropertiesARM<'_>],
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] =
-                    &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
                 unsafe {
                     let mut len = out.len() as _;
-                    (self . fp . get_physical_device_queue_family_data_graph_optical_flow_image_formats_arm) (physical_device , queue_family_index , queue_family_data_graph_properties , optical_flow_image_format_info , & mut len , out . as_mut_ptr () ,) . result (SUCCESS_CODES)
+                    (self . fp . get_physical_device_queue_family_data_graph_optical_flow_image_formats_arm) (physical_device , queue_family_index , queue_family_data_graph_properties , optical_flow_image_format_info , & mut len , out . as_mut_ptr () ,) . result (& [crate :: vk :: Result :: SUCCESS , crate :: vk :: Result :: INCOMPLETE])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -30819,10 +35775,33 @@ pub mod arm {
                 queue_family_data_graph_properties: &QueueFamilyDataGraphPropertiesARM<'_>,
                 properties: &mut BaseOutStructure<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
-                    (self . fp . get_physical_device_queue_family_data_graph_engine_operation_properties_arm) (physical_device , queue_family_index , queue_family_data_graph_properties , properties ,) . result (SUCCESS_CODES)
+                    (self . fp . get_physical_device_queue_family_data_graph_engine_operation_properties_arm) (physical_device , queue_family_index , queue_family_data_graph_properties , properties ,) . result (& [crate :: vk :: Result :: SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -30833,19 +35812,19 @@ pub mod valve {
         //! VK_VALVE_mutable_descriptor_type device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_VALVE_mutable_descriptor_type";
+        pub const NAME: &ffi::CStr = c"VK_VALVE_mutable_descriptor_type";
     }
     pub mod video_encode_rgb_conversion {
         //! VK_VALVE_video_encode_rgb_conversion device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_VALVE_video_encode_rgb_conversion";
+        pub const NAME: &ffi::CStr = c"VK_VALVE_video_encode_rgb_conversion";
     }
     pub mod descriptor_set_host_mapping {
         //! VK_VALVE_descriptor_set_host_mapping device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_VALVE_descriptor_set_host_mapping";
+        pub const NAME: &ffi::CStr = c"VK_VALVE_descriptor_set_host_mapping";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_descriptor_set_layout_host_mapping_info_valve:
@@ -30903,20 +35882,24 @@ pub mod valve {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -30961,18 +35944,42 @@ pub mod valve {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod fragment_density_map_layered {
         //! VK_VALVE_fragment_density_map_layered device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_VALVE_fragment_density_map_layered";
+        pub const NAME: &ffi::CStr = c"VK_VALVE_fragment_density_map_layered";
     }
     pub mod shader_mixed_float_dot_product {
         //! VK_VALVE_shader_mixed_float_dot_product device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_VALVE_shader_mixed_float_dot_product";
+        pub const NAME: &ffi::CStr = c"VK_VALVE_shader_mixed_float_dot_product";
     }
 }
 pub mod huawei {
@@ -30981,7 +35988,7 @@ pub mod huawei {
         //! VK_HUAWEI_subpass_shading device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_HUAWEI_subpass_shading";
+        pub const NAME: &ffi::CStr = c"VK_HUAWEI_subpass_shading";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_device_subpass_shading_max_workgroup_size_huawei:
@@ -31037,20 +36044,24 @@ pub mod huawei {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -31059,6 +36070,8 @@ pub mod huawei {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -31066,16 +36079,15 @@ pub mod huawei {
             pub unsafe fn get_device_subpass_shading_max_workgroup_size(
                 &self,
                 renderpass: RenderPass,
-            ) -> crate::VkResult<Extent2D> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
+                max_workgroup_size: &mut [Extent2D],
+            ) -> crate::VkResult<()> {
                 unsafe {
-                    let mut max_workgroup_size = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_device_subpass_shading_max_workgroup_size_huawei)(
                         self.handle,
                         renderpass,
                         max_workgroup_size.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, max_workgroup_size)
+                    .result(&[crate::vk::Result::SUCCESS])
                 }
             }
             #[doc = r" # Safety"]
@@ -31086,12 +36098,36 @@ pub mod huawei {
                 unsafe { (self.fp.cmd_subpass_shading_huawei)(command_buffer) }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod invocation_mask {
         //! VK_HUAWEI_invocation_mask device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_HUAWEI_invocation_mask";
+        pub const NAME: &ffi::CStr = c"VK_HUAWEI_invocation_mask";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_bind_invocation_mask_huawei: PFN_vkCmdBindInvocationMaskHUAWEI,
@@ -31126,20 +36162,24 @@ pub mod huawei {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -31167,12 +36207,36 @@ pub mod huawei {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod cluster_culling_shader {
         //! VK_HUAWEI_cluster_culling_shader device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_HUAWEI_cluster_culling_shader";
+        pub const NAME: &ffi::CStr = c"VK_HUAWEI_cluster_culling_shader";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub cmd_draw_cluster_huawei: PFN_vkCmdDrawClusterHUAWEI,
@@ -31229,20 +36293,24 @@ pub mod huawei {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -31286,12 +36354,36 @@ pub mod huawei {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod hdr_vivid {
         //! VK_HUAWEI_hdr_vivid device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_HUAWEI_hdr_vivid";
+        pub const NAME: &ffi::CStr = c"VK_HUAWEI_hdr_vivid";
     }
 }
 pub mod qnx {
@@ -31300,7 +36392,7 @@ pub mod qnx {
         //! VK_QNX_screen_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QNX_screen_surface";
+        pub const NAME: &ffi::CStr = c"VK_QNX_screen_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_screen_surface_qnx: PFN_vkCreateScreenSurfaceQNX,
@@ -31358,20 +36450,24 @@ pub mod qnx {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -31380,6 +36476,8 @@ pub mod qnx {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -31389,7 +36487,6 @@ pub mod qnx {
                 create_info: &ScreenSurfaceCreateInfoQNX<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_screen_surface_qnx)(
@@ -31398,7 +36495,7 @@ pub mod qnx {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
             }
             #[doc = r" # Safety"]
@@ -31420,12 +36517,36 @@ pub mod qnx {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod external_memory_screen_buffer {
         //! VK_QNX_external_memory_screen_buffer device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_QNX_external_memory_screen_buffer";
+        pub const NAME: &ffi::CStr = c"VK_QNX_external_memory_screen_buffer";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_screen_buffer_properties_qnx: PFN_vkGetScreenBufferPropertiesQNX,
@@ -31460,20 +36581,24 @@ pub mod qnx {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -31482,6 +36607,8 @@ pub mod qnx {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -31491,11 +36618,34 @@ pub mod qnx {
                 buffer: &_screen_buffer,
                 properties: &mut ScreenBufferPropertiesQNX<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_screen_buffer_properties_qnx)(self.handle, buffer, properties)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -31506,7 +36656,7 @@ pub mod ohos {
         //! VK_OHOS_external_memory device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_OHOS_external_memory";
+        pub const NAME: &ffi::CStr = c"VK_OHOS_external_memory";
         #[derive(Clone, Copy)]
         pub struct DeviceFp {
             pub get_native_buffer_properties_ohos: PFN_vkGetNativeBufferPropertiesOHOS,
@@ -31563,20 +36713,24 @@ pub mod ohos {
             }
         }
         #[derive(Clone)]
-        pub struct Device {
+        pub struct Device<Ext = nop::Device> {
             handle: crate::vk::Device,
             fp: DeviceFp,
+            _ext: Ext,
         }
         impl Device {
             #[inline]
-            pub fn new(device: &crate::Device) -> Self {
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                 Self {
                     handle: device.handle(),
                     fp: DeviceFp::load(&mut |cname| unsafe {
                         device.get_device_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Device,
                 }
             }
+        }
+        impl<Ext> Device<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Device {
                 self.handle
@@ -31585,6 +36739,8 @@ pub mod ohos {
             pub fn fp(&self) -> &DeviceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -31594,12 +36750,13 @@ pub mod ohos {
                 buffer: &OH_NativeBuffer,
                 properties: &mut NativeBufferPropertiesOHOS<'_>,
             ) -> crate::VkResult<()> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     (self.fp.get_native_buffer_properties_ohos)(self.handle, buffer, properties)
-                        .result(SUCCESS_CODES)
+                        .result(&[crate::vk::Result::SUCCESS])
                 }
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -31608,12 +36765,35 @@ pub mod ohos {
                 &self,
                 info: &MemoryGetNativeBufferInfoOHOS<'_>,
             ) -> crate::VkResult<*mut OH_NativeBuffer> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut buffer = ::core::mem::MaybeUninit::uninit();
                     (self.fp.get_memory_native_buffer_ohos)(self.handle, info, buffer.as_mut_ptr())
-                        .result_with_assume_init(SUCCESS_CODES, buffer)
+                        .result_with_assume_init(&[crate::vk::Result::SUCCESS], buffer)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -31621,7 +36801,7 @@ pub mod ohos {
         //! VK_OHOS_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_OHOS_surface";
+        pub const NAME: &ffi::CStr = c"VK_OHOS_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_surface_ohos: PFN_vkCreateSurfaceOHOS,
@@ -31651,20 +36831,24 @@ pub mod ohos {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -31673,6 +36857,8 @@ pub mod ohos {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -31682,7 +36868,6 @@ pub mod ohos {
                 create_info: &SurfaceCreateInfoOHOS<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_surface_ohos)(
@@ -31691,8 +36876,32 @@ pub mod ohos {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
             }
         }
     }
@@ -31703,7 +36912,7 @@ pub mod lunarg {
         //! VK_LUNARG_direct_driver_loading instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_LUNARG_direct_driver_loading";
+        pub const NAME: &ffi::CStr = c"VK_LUNARG_direct_driver_loading";
     }
 }
 pub mod sec {
@@ -31712,19 +36921,19 @@ pub mod sec {
         //! VK_SEC_amigo_profiling device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_SEC_amigo_profiling";
+        pub const NAME: &ffi::CStr = c"VK_SEC_amigo_profiling";
     }
     pub mod pipeline_cache_incremental_mode {
         //! VK_SEC_pipeline_cache_incremental_mode device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_SEC_pipeline_cache_incremental_mode";
+        pub const NAME: &ffi::CStr = c"VK_SEC_pipeline_cache_incremental_mode";
     }
     pub mod ubm_surface {
         //! VK_SEC_ubm_surface instance extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_SEC_ubm_surface";
+        pub const NAME: &ffi::CStr = c"VK_SEC_ubm_surface";
         #[derive(Clone, Copy)]
         pub struct InstanceFp {
             pub create_ubm_surface_sec: PFN_vkCreateUbmSurfaceSEC,
@@ -31782,20 +36991,24 @@ pub mod sec {
             }
         }
         #[derive(Clone)]
-        pub struct Instance {
+        pub struct Instance<Ext = nop::Instance> {
             handle: crate::vk::Instance,
             fp: InstanceFp,
+            _ext: Ext,
         }
         impl Instance {
             #[inline]
-            pub fn new(instance: &crate::Instance) -> Self {
+            pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                 Self {
                     handle: instance.handle(),
                     fp: InstanceFp::load(&mut |cname| unsafe {
                         instance.get_instance_proc_addr(cname) as *const ffi::c_void
                     }),
+                    _ext: nop::Instance,
                 }
             }
+        }
+        impl<Ext> Instance<Ext> {
             #[inline]
             pub fn handle(&self) -> crate::vk::Instance {
                 self.handle
@@ -31804,6 +37017,8 @@ pub mod sec {
             pub fn fp(&self) -> &InstanceFp {
                 &self.fp
             }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
@@ -31813,7 +37028,6 @@ pub mod sec {
                 create_info: &UbmSurfaceCreateInfoSEC<'_>,
                 allocator: Option<&AllocationCallbacks>,
             ) -> crate::VkResult<SurfaceKHR> {
-                static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
                     (self.fp.create_ubm_surface_sec)(
@@ -31822,7 +37036,7 @@ pub mod sec {
                         allocator.as_ptr(),
                         surface.as_mut_ptr(),
                     )
-                    .result_with_assume_init(SUCCESS_CODES, surface)
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], surface)
                 }
             }
             #[doc = r" # Safety"]
@@ -31844,6 +37058,30 @@ pub mod sec {
                 }
             }
         }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Instance<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Instance>,
+        {
+            type Handle = crate::vk::Instance;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: InstanceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Instance<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
 }
 pub mod msft {
@@ -31852,7 +37090,7 @@ pub mod msft {
         //! VK_MSFT_layered_driver device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_MSFT_layered_driver";
+        pub const NAME: &ffi::CStr = c"VK_MSFT_layered_driver";
     }
 }
 pub mod mesa {
@@ -31861,6 +37099,6 @@ pub mod mesa {
         //! VK_MESA_image_alignment_control device extension.
         use super::*;
         pub const SPEC_VERSION: u32 = 1u32;
-        pub const EXTENSION_NAME: &ffi::CStr = c"VK_MESA_image_alignment_control";
+        pub const NAME: &ffi::CStr = c"VK_MESA_image_alignment_control";
     }
 }

@@ -99,15 +99,16 @@ impl crate::Library {
     #[doc = "[0]: Result::SUCCESS"]
     #[doc = "[1]: Result::INCOMPLETE"]
     pub unsafe fn enumerate_instance_layer_properties_len(&self) -> crate::VkResult<u32> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut property_count = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.enumerate_instance_layer_properties)(
                 property_count.as_mut_ptr(),
                 core::ptr::null_mut(),
             )
-            .result_with_assume_init(SUCCESS_CODES, property_count)
+            .result_with_assume_init(
+                &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                property_count,
+            )
         }
     }
     #[doc = "# Success codes"]
@@ -124,12 +125,10 @@ impl crate::Library {
         &self,
         out: &mut [LayerProperties],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut len = out.len() as _;
             (self.fp_v10.enumerate_instance_layer_properties)(&mut len, out.as_mut_ptr())
-                .result(SUCCESS_CODES)
+                .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
         }
     }
     #[doc = "# Success codes"]
@@ -146,8 +145,6 @@ impl crate::Library {
         &self,
         layer_name: Option<&ffi::CStr>,
     ) -> crate::VkResult<u32> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut property_count = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.enumerate_instance_extension_properties)(
@@ -157,7 +154,10 @@ impl crate::Library {
                 property_count.as_mut_ptr(),
                 core::ptr::null_mut(),
             )
-            .result_with_assume_init(SUCCESS_CODES, property_count)
+            .result_with_assume_init(
+                &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                property_count,
+            )
         }
     }
     #[doc = "# Success codes"]
@@ -175,8 +175,6 @@ impl crate::Library {
         layer_name: Option<&ffi::CStr>,
         out: &mut [ExtensionProperties],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut len = out.len() as _;
             (self.fp_v10.enumerate_instance_extension_properties)(
@@ -186,7 +184,7 @@ impl crate::Library {
                 &mut len,
                 out.as_mut_ptr(),
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
         }
     }
 }
@@ -517,15 +515,7 @@ impl InstanceFpV10 {
         }
     }
 }
-impl crate::Instance {
-    #[doc = r" # Safety"]
-    #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
-    #[doc = r" # Vulkan docs"]
-    #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyInstance.html>"]
-    #[doc = r""]
-    pub unsafe fn destroy_instance(&self, allocator: Option<&AllocationCallbacks>) {
-        unsafe { (self.fp_v10.destroy_instance)(self.handle, allocator.as_ptr()) }
-    }
+impl<Ext> crate::Instance<Ext> {
     #[doc = "# Success codes"]
     #[doc = "* [`SUCCESS`][0]"]
     #[doc = "* [`INCOMPLETE`][1]"]
@@ -537,8 +527,6 @@ impl crate::Instance {
     #[doc = "[0]: Result::SUCCESS"]
     #[doc = "[1]: Result::INCOMPLETE"]
     pub unsafe fn enumerate_physical_devices_len(&self) -> crate::VkResult<u32> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut physical_device_count = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.enumerate_physical_devices)(
@@ -546,7 +534,10 @@ impl crate::Instance {
                 physical_device_count.as_mut_ptr(),
                 core::ptr::null_mut(),
             )
-            .result_with_assume_init(SUCCESS_CODES, physical_device_count)
+            .result_with_assume_init(
+                &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                physical_device_count,
+            )
         }
     }
     #[doc = "# Success codes"]
@@ -563,12 +554,10 @@ impl crate::Instance {
         &self,
         out: &mut [PhysicalDevice],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut len = out.len() as _;
             (self.fp_v10.enumerate_physical_devices)(self.handle, &mut len, out.as_mut_ptr())
-                .result(SUCCESS_CODES)
+                .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
         }
     }
     #[doc = r" # Safety"]
@@ -584,18 +573,23 @@ impl crate::Instance {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceProperties.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkGetPhysicalDeviceProperties2"]
     pub unsafe fn get_physical_device_properties(
         &self,
         physical_device: PhysicalDevice,
-        properties: &mut PhysicalDeviceProperties,
-    ) {
-        unsafe { (self.fp_v10.get_physical_device_properties)(physical_device, properties) }
+    ) -> PhysicalDeviceProperties {
+        unsafe {
+            let mut properties = ::core::mem::MaybeUninit::uninit();
+            (self.fp_v10.get_physical_device_properties)(physical_device, properties.as_mut_ptr());
+            properties.assume_init()
+        }
     }
     #[doc = r" # Safety"]
     #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceQueueFamilyProperties.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkGetPhysicalDeviceQueueFamilyProperties2"]
     pub unsafe fn get_physical_device_queue_family_properties_len(
         &self,
         physical_device: PhysicalDevice,
@@ -615,6 +609,7 @@ impl crate::Instance {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceQueueFamilyProperties.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkGetPhysicalDeviceQueueFamilyProperties2"]
     pub unsafe fn get_physical_device_queue_family_properties(
         &self,
         physical_device: PhysicalDevice,
@@ -634,13 +629,18 @@ impl crate::Instance {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceMemoryProperties.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkGetPhysicalDeviceMemoryProperties2"]
     pub unsafe fn get_physical_device_memory_properties(
         &self,
         physical_device: PhysicalDevice,
-        memory_properties: &mut PhysicalDeviceMemoryProperties,
-    ) {
+    ) -> PhysicalDeviceMemoryProperties {
         unsafe {
-            (self.fp_v10.get_physical_device_memory_properties)(physical_device, memory_properties)
+            let mut memory_properties = ::core::mem::MaybeUninit::uninit();
+            (self.fp_v10.get_physical_device_memory_properties)(
+                physical_device,
+                memory_properties.as_mut_ptr(),
+            );
+            memory_properties.assume_init()
         }
     }
     #[doc = r" # Safety"]
@@ -648,30 +648,36 @@ impl crate::Instance {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceFeatures.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkGetPhysicalDeviceFeatures2"]
     pub unsafe fn get_physical_device_features(
         &self,
         physical_device: PhysicalDevice,
-        features: &mut PhysicalDeviceFeatures,
-    ) {
-        unsafe { (self.fp_v10.get_physical_device_features)(physical_device, features) }
+    ) -> PhysicalDeviceFeatures {
+        unsafe {
+            let mut features = ::core::mem::MaybeUninit::uninit();
+            (self.fp_v10.get_physical_device_features)(physical_device, features.as_mut_ptr());
+            features.assume_init()
+        }
     }
     #[doc = r" # Safety"]
     #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceFormatProperties.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkGetPhysicalDeviceFormatProperties2"]
     pub unsafe fn get_physical_device_format_properties(
         &self,
         physical_device: PhysicalDevice,
         format: Format,
-        format_properties: &mut FormatProperties,
-    ) {
+    ) -> FormatProperties {
         unsafe {
+            let mut format_properties = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.get_physical_device_format_properties)(
                 physical_device,
                 format,
-                format_properties,
-            )
+                format_properties.as_mut_ptr(),
+            );
+            format_properties.assume_init()
         }
     }
     #[doc = "# Success codes"]
@@ -682,6 +688,7 @@ impl crate::Instance {
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceImageFormatProperties.html>"]
     #[doc = r""]
     #[doc = "[0]: Result::SUCCESS"]
+    #[deprecated = "superseded by vkGetPhysicalDeviceImageFormatProperties2"]
     #[allow(clippy::too_many_arguments)]
     pub unsafe fn get_physical_device_image_format_properties(
         &self,
@@ -692,7 +699,6 @@ impl crate::Instance {
         usage: ImageUsageFlags,
         flags: ImageCreateFlags,
     ) -> crate::VkResult<ImageFormatProperties> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut image_format_properties = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.get_physical_device_image_format_properties)(
@@ -704,7 +710,7 @@ impl crate::Instance {
                 flags,
                 image_format_properties.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, image_format_properties)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], image_format_properties)
         }
     }
     #[doc = "# Success codes"]
@@ -717,12 +723,11 @@ impl crate::Instance {
     #[doc = r""]
     #[doc = "[0]: Result::SUCCESS"]
     #[doc = "[1]: Result::INCOMPLETE"]
+    #[deprecated]
     pub unsafe fn enumerate_device_layer_properties_len(
         &self,
         physical_device: PhysicalDevice,
     ) -> crate::VkResult<u32> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut property_count = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.enumerate_device_layer_properties)(
@@ -730,7 +735,10 @@ impl crate::Instance {
                 property_count.as_mut_ptr(),
                 core::ptr::null_mut(),
             )
-            .result_with_assume_init(SUCCESS_CODES, property_count)
+            .result_with_assume_init(
+                &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                property_count,
+            )
         }
     }
     #[doc = "# Success codes"]
@@ -743,13 +751,12 @@ impl crate::Instance {
     #[doc = r""]
     #[doc = "[0]: Result::SUCCESS"]
     #[doc = "[1]: Result::INCOMPLETE"]
+    #[deprecated]
     pub unsafe fn enumerate_device_layer_properties(
         &self,
         physical_device: PhysicalDevice,
         out: &mut [LayerProperties],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut len = out.len() as _;
             (self.fp_v10.enumerate_device_layer_properties)(
@@ -757,7 +764,7 @@ impl crate::Instance {
                 &mut len,
                 out.as_mut_ptr(),
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
         }
     }
     #[doc = "# Success codes"]
@@ -775,8 +782,6 @@ impl crate::Instance {
         physical_device: PhysicalDevice,
         layer_name: Option<&ffi::CStr>,
     ) -> crate::VkResult<u32> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut property_count = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.enumerate_device_extension_properties)(
@@ -787,7 +792,10 @@ impl crate::Instance {
                 property_count.as_mut_ptr(),
                 core::ptr::null_mut(),
             )
-            .result_with_assume_init(SUCCESS_CODES, property_count)
+            .result_with_assume_init(
+                &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                property_count,
+            )
         }
     }
     #[doc = "# Success codes"]
@@ -806,8 +814,6 @@ impl crate::Instance {
         layer_name: Option<&ffi::CStr>,
         out: &mut [ExtensionProperties],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut len = out.len() as _;
             (self.fp_v10.enumerate_device_extension_properties)(
@@ -818,7 +824,7 @@ impl crate::Instance {
                 &mut len,
                 out.as_mut_ptr(),
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
         }
     }
     #[doc = r" # Safety"]
@@ -826,6 +832,7 @@ impl crate::Instance {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSparseImageFormatProperties.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkGetPhysicalDeviceSparseImageFormatProperties2"]
     #[allow(clippy::too_many_arguments)]
     pub unsafe fn get_physical_device_sparse_image_format_properties_len(
         &self,
@@ -858,6 +865,7 @@ impl crate::Instance {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSparseImageFormatProperties.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkGetPhysicalDeviceSparseImageFormatProperties2"]
     #[allow(clippy::too_many_arguments)]
     pub unsafe fn get_physical_device_sparse_image_format_properties(
         &self,
@@ -1375,7 +1383,7 @@ impl InstanceFpV11 {
         }
     }
 }
-impl crate::Instance {
+impl<Ext> crate::Instance<Ext> {
     #[doc = "Requires Vulkan version 1.1, otherwise provided by VK_KHR_get_physical_device_properties2.\n"]
     #[doc = r""]
     #[doc = r" # Safety"]
@@ -1441,14 +1449,13 @@ impl crate::Instance {
         image_format_info: &PhysicalDeviceImageFormatInfo2<'_>,
         image_format_properties: &mut ImageFormatProperties2<'_>,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v11.get_physical_device_image_format_properties2)(
                 physical_device,
                 image_format_info,
                 image_format_properties,
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "Requires Vulkan version 1.1, otherwise provided by VK_KHR_get_physical_device_properties2.\n"]
@@ -1637,8 +1644,6 @@ impl crate::Instance {
     #[doc = "[0]: Result::SUCCESS"]
     #[doc = "[1]: Result::INCOMPLETE"]
     pub unsafe fn enumerate_physical_device_groups_len(&self) -> crate::VkResult<u32> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut physical_device_group_count = ::core::mem::MaybeUninit::uninit();
             (self.fp_v11.enumerate_physical_device_groups)(
@@ -1646,7 +1651,10 @@ impl crate::Instance {
                 physical_device_group_count.as_mut_ptr(),
                 core::ptr::null_mut(),
             )
-            .result_with_assume_init(SUCCESS_CODES, physical_device_group_count)
+            .result_with_assume_init(
+                &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                physical_device_group_count,
+            )
         }
     }
     #[doc = "Requires Vulkan version 1.1, otherwise provided by VK_KHR_device_group_creation.\n"]
@@ -1665,12 +1673,10 @@ impl crate::Instance {
         &self,
         out: &mut [PhysicalDeviceGroupProperties<'_>],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut len = out.len() as _;
             (self.fp_v11.enumerate_physical_device_groups)(self.handle, &mut len, out.as_mut_ptr())
-                .result(SUCCESS_CODES)
+                .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
         }
     }
 }
@@ -1734,7 +1740,7 @@ impl InstanceFpV13 {
         }
     }
 }
-impl crate::Instance {
+impl<Ext> crate::Instance<Ext> {
     #[doc = "Requires Vulkan version 1.3, otherwise provided by VK_EXT_tooling_info.\n"]
     #[doc = r""]
     #[doc = "# Success codes"]
@@ -1751,8 +1757,6 @@ impl crate::Instance {
         &self,
         physical_device: PhysicalDevice,
     ) -> crate::VkResult<u32> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut tool_count = ::core::mem::MaybeUninit::uninit();
             (self.fp_v13.get_physical_device_tool_properties)(
@@ -1760,7 +1764,10 @@ impl crate::Instance {
                 tool_count.as_mut_ptr(),
                 core::ptr::null_mut(),
             )
-            .result_with_assume_init(SUCCESS_CODES, tool_count)
+            .result_with_assume_init(
+                &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                tool_count,
+            )
         }
     }
     #[doc = "Requires Vulkan version 1.3, otherwise provided by VK_EXT_tooling_info.\n"]
@@ -1780,8 +1787,6 @@ impl crate::Instance {
         physical_device: PhysicalDevice,
         out: &mut [PhysicalDeviceToolProperties<'_>],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut len = out.len() as _;
             (self.fp_v13.get_physical_device_tool_properties)(
@@ -1789,7 +1794,7 @@ impl crate::Instance {
                 &mut len,
                 out.as_mut_ptr(),
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
         }
     }
 }
@@ -3979,7 +3984,7 @@ impl DeviceFpV10 {
         }
     }
 }
-impl crate::Device {
+impl<Ext> crate::Device<Ext> {
     #[doc = r" # Safety"]
     #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
     #[doc = r" # Vulkan docs"]
@@ -3991,24 +3996,18 @@ impl crate::Device {
     #[doc = r" # Safety"]
     #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
     #[doc = r" # Vulkan docs"]
-    #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyDevice.html>"]
-    #[doc = r""]
-    pub unsafe fn destroy_device(&self, allocator: Option<&AllocationCallbacks>) {
-        unsafe { (self.fp_v10.destroy_device)(self.handle, allocator.as_ptr()) }
-    }
-    #[doc = r" # Safety"]
-    #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
-    #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceQueue.html>"]
     #[doc = r""]
-    pub unsafe fn get_device_queue(
-        &self,
-        queue_family_index: u32,
-        queue_index: u32,
-        queue: &mut Queue,
-    ) {
+    pub unsafe fn get_device_queue(&self, queue_family_index: u32, queue_index: u32) -> Queue {
         unsafe {
-            (self.fp_v10.get_device_queue)(self.handle, queue_family_index, queue_index, queue)
+            let mut queue = ::core::mem::MaybeUninit::uninit();
+            (self.fp_v10.get_device_queue)(
+                self.handle,
+                queue_family_index,
+                queue_index,
+                queue.as_mut_ptr(),
+            );
+            queue.assume_init()
         }
     }
     #[doc = "# Success codes"]
@@ -4019,16 +4018,25 @@ impl crate::Device {
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkQueueSubmit.html>"]
     #[doc = r""]
     #[doc = "[0]: Result::SUCCESS"]
+    #[deprecated = "superseded by vkQueueSubmit2"]
     pub unsafe fn queue_submit(
         &self,
         queue: Queue,
         submits: &[SubmitInfo<'_>],
         fence: Fence,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
-            (self.fp_v10.queue_submit)(queue, submits.len() as _, submits.as_ptr(), fence)
-                .result(SUCCESS_CODES)
+            (self.fp_v10.queue_submit)(
+                queue,
+                submits.len() as _,
+                if !submits.is_empty() {
+                    submits.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                fence,
+            )
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "# Success codes"]
@@ -4040,8 +4048,7 @@ impl crate::Device {
     #[doc = r""]
     #[doc = "[0]: Result::SUCCESS"]
     pub unsafe fn queue_wait_idle(&self, queue: Queue) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
-        unsafe { (self.fp_v10.queue_wait_idle)(queue).result(SUCCESS_CODES) }
+        unsafe { (self.fp_v10.queue_wait_idle)(queue).result(&[crate::vk::Result::SUCCESS]) }
     }
     #[doc = "# Success codes"]
     #[doc = "* [`SUCCESS`][0]"]
@@ -4052,8 +4059,7 @@ impl crate::Device {
     #[doc = r""]
     #[doc = "[0]: Result::SUCCESS"]
     pub unsafe fn device_wait_idle(&self) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
-        unsafe { (self.fp_v10.device_wait_idle)(self.handle).result(SUCCESS_CODES) }
+        unsafe { (self.fp_v10.device_wait_idle)(self.handle).result(&[crate::vk::Result::SUCCESS]) }
     }
     #[doc = "# Success codes"]
     #[doc = "* [`SUCCESS`][0]"]
@@ -4068,7 +4074,6 @@ impl crate::Device {
         allocate_info: &MemoryAllocateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<DeviceMemory> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut memory = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.allocate_memory)(
@@ -4077,7 +4082,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 memory.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, memory)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], memory)
         }
     }
     #[doc = r" # Safety"]
@@ -4107,7 +4112,6 @@ impl crate::Device {
         size: DeviceSize,
         flags: MemoryMapFlags,
     ) -> crate::VkResult<*mut ffi::c_void> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut pp_data = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.map_memory)(
@@ -4118,7 +4122,7 @@ impl crate::Device {
                 flags,
                 pp_data.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, pp_data)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], pp_data)
         }
     }
     #[doc = r" # Safety"]
@@ -4141,14 +4145,17 @@ impl crate::Device {
         &self,
         memory_ranges: &[MappedMemoryRange<'_>],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v10.flush_mapped_memory_ranges)(
                 self.handle,
                 memory_ranges.len() as _,
-                memory_ranges.as_ptr(),
+                if !memory_ranges.is_empty() {
+                    memory_ranges.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "# Success codes"]
@@ -4163,14 +4170,17 @@ impl crate::Device {
         &self,
         memory_ranges: &[MappedMemoryRange<'_>],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v10.invalidate_mapped_memory_ranges)(
                 self.handle,
                 memory_ranges.len() as _,
-                memory_ranges.as_ptr(),
+                if !memory_ranges.is_empty() {
+                    memory_ranges.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = r" # Safety"]
@@ -4178,17 +4188,15 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceMemoryCommitment.html>"]
     #[doc = r""]
-    pub unsafe fn get_device_memory_commitment(
-        &self,
-        memory: DeviceMemory,
-        committed_memory_in_bytes: &mut DeviceSize,
-    ) {
+    pub unsafe fn get_device_memory_commitment(&self, memory: DeviceMemory) -> DeviceSize {
         unsafe {
+            let mut committed_memory_in_bytes = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.get_device_memory_commitment)(
                 self.handle,
                 memory,
-                committed_memory_in_bytes,
-            )
+                committed_memory_in_bytes.as_mut_ptr(),
+            );
+            committed_memory_in_bytes.assume_init()
         }
     }
     #[doc = r" # Safety"]
@@ -4196,13 +4204,15 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetBufferMemoryRequirements.html>"]
     #[doc = r""]
-    pub unsafe fn get_buffer_memory_requirements(
-        &self,
-        buffer: Buffer,
-        memory_requirements: &mut MemoryRequirements,
-    ) {
+    pub unsafe fn get_buffer_memory_requirements(&self, buffer: Buffer) -> MemoryRequirements {
         unsafe {
-            (self.fp_v10.get_buffer_memory_requirements)(self.handle, buffer, memory_requirements)
+            let mut memory_requirements = ::core::mem::MaybeUninit::uninit();
+            (self.fp_v10.get_buffer_memory_requirements)(
+                self.handle,
+                buffer,
+                memory_requirements.as_mut_ptr(),
+            );
+            memory_requirements.assume_init()
         }
     }
     #[doc = "# Success codes"]
@@ -4219,10 +4229,9 @@ impl crate::Device {
         memory: DeviceMemory,
         memory_offset: DeviceSize,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v10.bind_buffer_memory)(self.handle, buffer, memory, memory_offset)
-                .result(SUCCESS_CODES)
+                .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = r" # Safety"]
@@ -4230,13 +4239,15 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetImageMemoryRequirements.html>"]
     #[doc = r""]
-    pub unsafe fn get_image_memory_requirements(
-        &self,
-        image: Image,
-        memory_requirements: &mut MemoryRequirements,
-    ) {
+    pub unsafe fn get_image_memory_requirements(&self, image: Image) -> MemoryRequirements {
         unsafe {
-            (self.fp_v10.get_image_memory_requirements)(self.handle, image, memory_requirements)
+            let mut memory_requirements = ::core::mem::MaybeUninit::uninit();
+            (self.fp_v10.get_image_memory_requirements)(
+                self.handle,
+                image,
+                memory_requirements.as_mut_ptr(),
+            );
+            memory_requirements.assume_init()
         }
     }
     #[doc = "# Success codes"]
@@ -4253,10 +4264,9 @@ impl crate::Device {
         memory: DeviceMemory,
         memory_offset: DeviceSize,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v10.bind_image_memory)(self.handle, image, memory, memory_offset)
-                .result(SUCCESS_CODES)
+                .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = r" # Safety"]
@@ -4310,10 +4320,18 @@ impl crate::Device {
         bind_info: &[BindSparseInfo<'_>],
         fence: Fence,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
-            (self.fp_v10.queue_bind_sparse)(queue, bind_info.len() as _, bind_info.as_ptr(), fence)
-                .result(SUCCESS_CODES)
+            (self.fp_v10.queue_bind_sparse)(
+                queue,
+                bind_info.len() as _,
+                if !bind_info.is_empty() {
+                    bind_info.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                fence,
+            )
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "# Success codes"]
@@ -4329,7 +4347,6 @@ impl crate::Device {
         create_info: &FenceCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<Fence> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut fence = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_fence)(
@@ -4338,7 +4355,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 fence.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, fence)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], fence)
         }
     }
     #[doc = r" # Safety"]
@@ -4358,10 +4375,17 @@ impl crate::Device {
     #[doc = r""]
     #[doc = "[0]: Result::SUCCESS"]
     pub unsafe fn reset_fences(&self, fences: &[Fence]) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
-            (self.fp_v10.reset_fences)(self.handle, fences.len() as _, fences.as_ptr())
-                .result(SUCCESS_CODES)
+            (self.fp_v10.reset_fences)(
+                self.handle,
+                fences.len() as _,
+                if !fences.is_empty() {
+                    fences.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+            )
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "# Success codes"]
@@ -4375,9 +4399,10 @@ impl crate::Device {
     #[doc = "[0]: Result::SUCCESS"]
     #[doc = "[1]: Result::NOT_READY"]
     pub unsafe fn get_fence_status(&self, fence: Fence) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::NOT_READY];
-        unsafe { (self.fp_v10.get_fence_status)(self.handle, fence).result(SUCCESS_CODES) }
+        unsafe {
+            (self.fp_v10.get_fence_status)(self.handle, fence)
+                .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::NOT_READY])
+        }
     }
     #[doc = "# Success codes"]
     #[doc = "* [`SUCCESS`][0]"]
@@ -4392,20 +4417,22 @@ impl crate::Device {
     pub unsafe fn wait_for_fences(
         &self,
         fences: &[Fence],
-        wait_all: Bool32,
+        wait_all: bool,
         timeout: u64,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::TIMEOUT];
         unsafe {
             (self.fp_v10.wait_for_fences)(
                 self.handle,
                 fences.len() as _,
-                fences.as_ptr(),
-                wait_all,
+                if !fences.is_empty() {
+                    fences.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                wait_all as Bool32,
                 timeout,
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::TIMEOUT])
         }
     }
     #[doc = "# Success codes"]
@@ -4421,7 +4448,6 @@ impl crate::Device {
         create_info: &SemaphoreCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<Semaphore> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut semaphore = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_semaphore)(
@@ -4430,7 +4456,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 semaphore.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, semaphore)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], semaphore)
         }
     }
     #[doc = r" # Safety"]
@@ -4458,7 +4484,6 @@ impl crate::Device {
         create_info: &EventCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<Event> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut event = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_event)(
@@ -4467,7 +4492,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 event.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, event)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], event)
         }
     }
     #[doc = r" # Safety"]
@@ -4489,9 +4514,10 @@ impl crate::Device {
     #[doc = "[0]: Result::EVENT_SET"]
     #[doc = "[1]: Result::EVENT_RESET"]
     pub unsafe fn get_event_status(&self, event: Event) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::EVENT_SET, crate::vk::Result::EVENT_RESET];
-        unsafe { (self.fp_v10.get_event_status)(self.handle, event).result(SUCCESS_CODES) }
+        unsafe {
+            (self.fp_v10.get_event_status)(self.handle, event)
+                .result(&[crate::vk::Result::EVENT_SET, crate::vk::Result::EVENT_RESET])
+        }
     }
     #[doc = "# Success codes"]
     #[doc = "* [`SUCCESS`][0]"]
@@ -4502,8 +4528,7 @@ impl crate::Device {
     #[doc = r""]
     #[doc = "[0]: Result::SUCCESS"]
     pub unsafe fn set_event(&self, event: Event) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
-        unsafe { (self.fp_v10.set_event)(self.handle, event).result(SUCCESS_CODES) }
+        unsafe { (self.fp_v10.set_event)(self.handle, event).result(&[crate::vk::Result::SUCCESS]) }
     }
     #[doc = "# Success codes"]
     #[doc = "* [`SUCCESS`][0]"]
@@ -4514,8 +4539,9 @@ impl crate::Device {
     #[doc = r""]
     #[doc = "[0]: Result::SUCCESS"]
     pub unsafe fn reset_event(&self, event: Event) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
-        unsafe { (self.fp_v10.reset_event)(self.handle, event).result(SUCCESS_CODES) }
+        unsafe {
+            (self.fp_v10.reset_event)(self.handle, event).result(&[crate::vk::Result::SUCCESS])
+        }
     }
     #[doc = "# Success codes"]
     #[doc = "* [`SUCCESS`][0]"]
@@ -4530,7 +4556,6 @@ impl crate::Device {
         create_info: &QueryPoolCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<QueryPool> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut query_pool = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_query_pool)(
@@ -4539,7 +4564,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 query_pool.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, query_pool)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], query_pool)
         }
     }
     #[doc = r" # Safety"]
@@ -4571,12 +4596,10 @@ impl crate::Device {
         first_query: u32,
         query_count: u32,
         data_size: usize,
-        data: &mut ffi::c_void,
+        data: &mut [ffi::c_void],
         stride: DeviceSize,
         flags: QueryResultFlags,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::NOT_READY];
         unsafe {
             (self.fp_v10.get_query_pool_results)(
                 self.handle,
@@ -4584,11 +4607,11 @@ impl crate::Device {
                 first_query,
                 query_count,
                 data_size,
-                data,
+                data.as_mut_ptr(),
                 stride,
                 flags,
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::NOT_READY])
         }
     }
     #[doc = "# Success codes"]
@@ -4604,7 +4627,6 @@ impl crate::Device {
         create_info: &BufferCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<Buffer> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut buffer = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_buffer)(
@@ -4613,7 +4635,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 buffer.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, buffer)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], buffer)
         }
     }
     #[doc = r" # Safety"]
@@ -4637,7 +4659,6 @@ impl crate::Device {
         create_info: &BufferViewCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<BufferView> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut view = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_buffer_view)(
@@ -4646,7 +4667,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 view.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, view)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], view)
         }
     }
     #[doc = r" # Safety"]
@@ -4674,7 +4695,6 @@ impl crate::Device {
         create_info: &ImageCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<Image> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut image = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_image)(
@@ -4683,7 +4703,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 image.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, image)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], image)
         }
     }
     #[doc = r" # Safety"]
@@ -4703,10 +4723,16 @@ impl crate::Device {
         &self,
         image: Image,
         subresource: &ImageSubresource,
-        layout: &mut SubresourceLayout,
-    ) {
+    ) -> SubresourceLayout {
         unsafe {
-            (self.fp_v10.get_image_subresource_layout)(self.handle, image, subresource, layout)
+            let mut layout = ::core::mem::MaybeUninit::uninit();
+            (self.fp_v10.get_image_subresource_layout)(
+                self.handle,
+                image,
+                subresource,
+                layout.as_mut_ptr(),
+            );
+            layout.assume_init()
         }
     }
     #[doc = "# Success codes"]
@@ -4722,7 +4748,6 @@ impl crate::Device {
         create_info: &ImageViewCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<ImageView> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut view = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_image_view)(
@@ -4731,7 +4756,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 view.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, view)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], view)
         }
     }
     #[doc = r" # Safety"]
@@ -4759,7 +4784,6 @@ impl crate::Device {
         create_info: &ShaderModuleCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<ShaderModule> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut shader_module = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_shader_module)(
@@ -4768,7 +4792,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 shader_module.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, shader_module)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], shader_module)
         }
     }
     #[doc = r" # Safety"]
@@ -4798,7 +4822,6 @@ impl crate::Device {
         create_info: &PipelineCacheCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<PipelineCache> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut pipeline_cache = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_pipeline_cache)(
@@ -4807,7 +4830,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 pipeline_cache.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, pipeline_cache)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], pipeline_cache)
         }
     }
     #[doc = r" # Safety"]
@@ -4838,8 +4861,6 @@ impl crate::Device {
         &self,
         pipeline_cache: PipelineCache,
     ) -> crate::VkResult<usize> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut data_size = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.get_pipeline_cache_data)(
@@ -4848,7 +4869,10 @@ impl crate::Device {
                 data_size.as_mut_ptr(),
                 core::ptr::null_mut(),
             )
-            .result_with_assume_init(SUCCESS_CODES, data_size)
+            .result_with_assume_init(
+                &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE],
+                data_size,
+            )
         }
     }
     #[doc = "# Success codes"]
@@ -4864,19 +4888,17 @@ impl crate::Device {
     pub unsafe fn get_pipeline_cache_data(
         &self,
         pipeline_cache: PipelineCache,
-        out: &mut [ffi::c_void],
+        out: &mut [u8],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE];
         unsafe {
             let mut len = out.len() as _;
             (self.fp_v10.get_pipeline_cache_data)(
                 self.handle,
                 pipeline_cache,
                 &mut len,
-                out.as_mut_ptr(),
+                out.as_mut_ptr().cast(),
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::INCOMPLETE])
         }
     }
     #[doc = "# Success codes"]
@@ -4892,15 +4914,18 @@ impl crate::Device {
         dst_cache: PipelineCache,
         src_caches: &[PipelineCache],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v10.merge_pipeline_caches)(
                 self.handle,
                 dst_cache,
                 src_caches.len() as _,
-                src_caches.as_ptr(),
+                if !src_caches.is_empty() {
+                    src_caches.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "# Success codes"]
@@ -4918,22 +4943,25 @@ impl crate::Device {
         pipeline_cache: PipelineCache,
         create_infos: &[GraphicsPipelineCreateInfo<'_>],
         allocator: Option<&AllocationCallbacks>,
-        pipelines: &mut Pipeline,
+        pipelines: &mut [Pipeline],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[
-            crate::vk::Result::SUCCESS,
-            crate::vk::Result::PIPELINE_COMPILE_REQUIRED_EXT,
-        ];
         unsafe {
             (self.fp_v10.create_graphics_pipelines)(
                 self.handle,
                 pipeline_cache,
                 create_infos.len() as _,
-                create_infos.as_ptr(),
+                if !create_infos.is_empty() {
+                    create_infos.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
                 allocator.as_ptr(),
-                pipelines,
+                pipelines.as_mut_ptr(),
             )
-            .result(SUCCESS_CODES)
+            .result(&[
+                crate::vk::Result::SUCCESS,
+                crate::vk::Result::PIPELINE_COMPILE_REQUIRED_EXT,
+            ])
         }
     }
     #[doc = "# Success codes"]
@@ -4951,22 +4979,25 @@ impl crate::Device {
         pipeline_cache: PipelineCache,
         create_infos: &[ComputePipelineCreateInfo<'_>],
         allocator: Option<&AllocationCallbacks>,
-        pipelines: &mut Pipeline,
+        pipelines: &mut [Pipeline],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[
-            crate::vk::Result::SUCCESS,
-            crate::vk::Result::PIPELINE_COMPILE_REQUIRED_EXT,
-        ];
         unsafe {
             (self.fp_v10.create_compute_pipelines)(
                 self.handle,
                 pipeline_cache,
                 create_infos.len() as _,
-                create_infos.as_ptr(),
+                if !create_infos.is_empty() {
+                    create_infos.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
                 allocator.as_ptr(),
-                pipelines,
+                pipelines.as_mut_ptr(),
             )
-            .result(SUCCESS_CODES)
+            .result(&[
+                crate::vk::Result::SUCCESS,
+                crate::vk::Result::PIPELINE_COMPILE_REQUIRED_EXT,
+            ])
         }
     }
     #[doc = r" # Safety"]
@@ -4994,7 +5025,6 @@ impl crate::Device {
         create_info: &PipelineLayoutCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<PipelineLayout> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut pipeline_layout = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_pipeline_layout)(
@@ -5003,7 +5033,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 pipeline_layout.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, pipeline_layout)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], pipeline_layout)
         }
     }
     #[doc = r" # Safety"]
@@ -5033,7 +5063,6 @@ impl crate::Device {
         create_info: &SamplerCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<Sampler> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut sampler = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_sampler)(
@@ -5042,7 +5071,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 sampler.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, sampler)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], sampler)
         }
     }
     #[doc = r" # Safety"]
@@ -5070,7 +5099,6 @@ impl crate::Device {
         create_info: &DescriptorSetLayoutCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<DescriptorSetLayout> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut set_layout = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_descriptor_set_layout)(
@@ -5079,7 +5107,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 set_layout.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, set_layout)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], set_layout)
         }
     }
     #[doc = r" # Safety"]
@@ -5113,7 +5141,6 @@ impl crate::Device {
         create_info: &DescriptorPoolCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<DescriptorPool> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut descriptor_pool = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_descriptor_pool)(
@@ -5122,7 +5149,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 descriptor_pool.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, descriptor_pool)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], descriptor_pool)
         }
     }
     #[doc = r" # Safety"]
@@ -5152,10 +5179,9 @@ impl crate::Device {
         descriptor_pool: DescriptorPool,
         flags: DescriptorPoolResetFlags,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v10.reset_descriptor_pool)(self.handle, descriptor_pool, flags)
-                .result(SUCCESS_CODES)
+                .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "# Success codes"]
@@ -5169,16 +5195,15 @@ impl crate::Device {
     pub unsafe fn allocate_descriptor_sets(
         &self,
         allocate_info: &DescriptorSetAllocateInfo<'_>,
-    ) -> crate::VkResult<DescriptorSet> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
+        descriptor_sets: &mut [DescriptorSet],
+    ) -> crate::VkResult<()> {
         unsafe {
-            let mut descriptor_sets = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.allocate_descriptor_sets)(
                 self.handle,
                 allocate_info,
                 descriptor_sets.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, descriptor_sets)
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "# Success codes"]
@@ -5194,15 +5219,18 @@ impl crate::Device {
         descriptor_pool: DescriptorPool,
         descriptor_sets: &[DescriptorSet],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v10.free_descriptor_sets)(
                 self.handle,
                 descriptor_pool,
                 descriptor_sets.len() as _,
-                descriptor_sets.as_ptr(),
+                if !descriptor_sets.is_empty() {
+                    descriptor_sets.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = r" # Safety"]
@@ -5213,16 +5241,23 @@ impl crate::Device {
     pub unsafe fn update_descriptor_sets(
         &self,
         descriptor_writes: &[WriteDescriptorSet<'_>],
-        descriptor_copy_count: u32,
         descriptor_copies: &[CopyDescriptorSet<'_>],
     ) {
         unsafe {
             (self.fp_v10.update_descriptor_sets)(
                 self.handle,
                 descriptor_writes.len() as _,
-                descriptor_writes.as_ptr(),
-                descriptor_copy_count,
-                descriptor_copies.as_ptr(),
+                if !descriptor_writes.is_empty() {
+                    descriptor_writes.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                descriptor_copies.len() as _,
+                if !descriptor_copies.is_empty() {
+                    descriptor_copies.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -5234,12 +5269,12 @@ impl crate::Device {
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateFramebuffer.html>"]
     #[doc = r""]
     #[doc = "[0]: Result::SUCCESS"]
+    #[deprecated]
     pub unsafe fn create_framebuffer(
         &self,
         create_info: &FramebufferCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<Framebuffer> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut framebuffer = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_framebuffer)(
@@ -5248,7 +5283,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 framebuffer.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, framebuffer)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], framebuffer)
         }
     }
     #[doc = r" # Safety"]
@@ -5256,6 +5291,7 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyFramebuffer.html>"]
     #[doc = r""]
+    #[deprecated]
     pub unsafe fn destroy_framebuffer(
         &self,
         framebuffer: Framebuffer,
@@ -5271,12 +5307,12 @@ impl crate::Device {
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateRenderPass.html>"]
     #[doc = r""]
     #[doc = "[0]: Result::SUCCESS"]
+    #[deprecated = "superseded by vkCreateRenderPass2"]
     pub unsafe fn create_render_pass(
         &self,
         create_info: &RenderPassCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<RenderPass> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut render_pass = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_render_pass)(
@@ -5285,7 +5321,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 render_pass.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, render_pass)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], render_pass)
         }
     }
     #[doc = r" # Safety"]
@@ -5293,6 +5329,7 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyRenderPass.html>"]
     #[doc = r""]
+    #[deprecated]
     pub unsafe fn destroy_render_pass(
         &self,
         render_pass: RenderPass,
@@ -5305,12 +5342,17 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetRenderAreaGranularity.html>"]
     #[doc = r""]
-    pub unsafe fn get_render_area_granularity(
-        &self,
-        render_pass: RenderPass,
-        granularity: &mut Extent2D,
-    ) {
-        unsafe { (self.fp_v10.get_render_area_granularity)(self.handle, render_pass, granularity) }
+    #[deprecated]
+    pub unsafe fn get_render_area_granularity(&self, render_pass: RenderPass) -> Extent2D {
+        unsafe {
+            let mut granularity = ::core::mem::MaybeUninit::uninit();
+            (self.fp_v10.get_render_area_granularity)(
+                self.handle,
+                render_pass,
+                granularity.as_mut_ptr(),
+            );
+            granularity.assume_init()
+        }
     }
     #[doc = "# Success codes"]
     #[doc = "* [`SUCCESS`][0]"]
@@ -5325,7 +5367,6 @@ impl crate::Device {
         create_info: &CommandPoolCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<CommandPool> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut command_pool = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.create_command_pool)(
@@ -5334,7 +5375,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 command_pool.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, command_pool)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], command_pool)
         }
     }
     #[doc = r" # Safety"]
@@ -5362,9 +5403,9 @@ impl crate::Device {
         command_pool: CommandPool,
         flags: CommandPoolResetFlags,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
-            (self.fp_v10.reset_command_pool)(self.handle, command_pool, flags).result(SUCCESS_CODES)
+            (self.fp_v10.reset_command_pool)(self.handle, command_pool, flags)
+                .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "# Success codes"]
@@ -5378,16 +5419,15 @@ impl crate::Device {
     pub unsafe fn allocate_command_buffers(
         &self,
         allocate_info: &CommandBufferAllocateInfo<'_>,
-    ) -> crate::VkResult<CommandBuffer> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
+        command_buffers: &mut [CommandBuffer],
+    ) -> crate::VkResult<()> {
         unsafe {
-            let mut command_buffers = ::core::mem::MaybeUninit::uninit();
             (self.fp_v10.allocate_command_buffers)(
                 self.handle,
                 allocate_info,
                 command_buffers.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, command_buffers)
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = r" # Safety"]
@@ -5405,7 +5445,11 @@ impl crate::Device {
                 self.handle,
                 command_pool,
                 command_buffers.len() as _,
-                command_buffers.as_ptr(),
+                if !command_buffers.is_empty() {
+                    command_buffers.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -5422,9 +5466,9 @@ impl crate::Device {
         command_buffer: CommandBuffer,
         begin_info: &CommandBufferBeginInfo<'_>,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
-            (self.fp_v10.begin_command_buffer)(command_buffer, begin_info).result(SUCCESS_CODES)
+            (self.fp_v10.begin_command_buffer)(command_buffer, begin_info)
+                .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "# Success codes"]
@@ -5436,8 +5480,9 @@ impl crate::Device {
     #[doc = r""]
     #[doc = "[0]: Result::SUCCESS"]
     pub unsafe fn end_command_buffer(&self, command_buffer: CommandBuffer) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
-        unsafe { (self.fp_v10.end_command_buffer)(command_buffer).result(SUCCESS_CODES) }
+        unsafe {
+            (self.fp_v10.end_command_buffer)(command_buffer).result(&[crate::vk::Result::SUCCESS])
+        }
     }
     #[doc = "# Success codes"]
     #[doc = "* [`SUCCESS`][0]"]
@@ -5452,8 +5497,10 @@ impl crate::Device {
         command_buffer: CommandBuffer,
         flags: CommandBufferResetFlags,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
-        unsafe { (self.fp_v10.reset_command_buffer)(command_buffer, flags).result(SUCCESS_CODES) }
+        unsafe {
+            (self.fp_v10.reset_command_buffer)(command_buffer, flags)
+                .result(&[crate::vk::Result::SUCCESS])
+        }
     }
     #[doc = r" # Safety"]
     #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
@@ -5484,7 +5531,11 @@ impl crate::Device {
                 command_buffer,
                 first_viewport,
                 viewports.len() as _,
-                viewports.as_ptr(),
+                if !viewports.is_empty() {
+                    viewports.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -5504,7 +5555,11 @@ impl crate::Device {
                 command_buffer,
                 first_scissor,
                 scissors.len() as _,
-                scissors.as_ptr(),
+                if !scissors.is_empty() {
+                    scissors.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -5618,7 +5673,6 @@ impl crate::Device {
         layout: PipelineLayout,
         first_set: u32,
         descriptor_sets: &[DescriptorSet],
-        dynamic_offset_count: u32,
         dynamic_offsets: &[u32],
     ) {
         unsafe {
@@ -5628,9 +5682,17 @@ impl crate::Device {
                 layout,
                 first_set,
                 descriptor_sets.len() as _,
-                descriptor_sets.as_ptr(),
-                dynamic_offset_count,
-                dynamic_offsets.as_ptr(),
+                if !descriptor_sets.is_empty() {
+                    descriptor_sets.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                dynamic_offsets.len() as _,
+                if !dynamic_offsets.is_empty() {
+                    dynamic_offsets.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -5665,8 +5727,16 @@ impl crate::Device {
                 command_buffer,
                 first_binding,
                 buffers.len() as _,
-                buffers.as_ptr(),
-                offsets.as_ptr(),
+                if !buffers.is_empty() {
+                    buffers.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                if !offsets.is_empty() {
+                    offsets.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -5806,7 +5876,11 @@ impl crate::Device {
                 src_buffer,
                 dst_buffer,
                 regions.len() as _,
-                regions.as_ptr(),
+                if !regions.is_empty() {
+                    regions.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -5833,7 +5907,11 @@ impl crate::Device {
                 dst_image,
                 dst_image_layout,
                 regions.len() as _,
-                regions.as_ptr(),
+                if !regions.is_empty() {
+                    regions.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -5861,7 +5939,11 @@ impl crate::Device {
                 dst_image,
                 dst_image_layout,
                 regions.len() as _,
-                regions.as_ptr(),
+                if !regions.is_empty() {
+                    regions.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
                 filter,
             )
         }
@@ -5886,7 +5968,11 @@ impl crate::Device {
                 dst_image,
                 dst_image_layout,
                 regions.len() as _,
-                regions.as_ptr(),
+                if !regions.is_empty() {
+                    regions.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -5910,7 +5996,11 @@ impl crate::Device {
                 src_image_layout,
                 dst_buffer,
                 regions.len() as _,
-                regions.as_ptr(),
+                if !regions.is_empty() {
+                    regions.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -5924,7 +6014,7 @@ impl crate::Device {
         command_buffer: CommandBuffer,
         dst_buffer: Buffer,
         dst_offset: DeviceSize,
-        data: &[ffi::c_void],
+        data: &[u8],
     ) {
         unsafe {
             (self.fp_v10.cmd_update_buffer)(
@@ -5932,7 +6022,11 @@ impl crate::Device {
                 dst_buffer,
                 dst_offset,
                 data.len() as _,
-                data.as_ptr(),
+                if !data.is_empty() {
+                    data.as_ptr().cast()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -5971,7 +6065,11 @@ impl crate::Device {
                 image_layout,
                 color,
                 ranges.len() as _,
-                ranges.as_ptr(),
+                if !ranges.is_empty() {
+                    ranges.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -5995,7 +6093,11 @@ impl crate::Device {
                 image_layout,
                 depth_stencil,
                 ranges.len() as _,
-                ranges.as_ptr(),
+                if !ranges.is_empty() {
+                    ranges.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -6008,16 +6110,23 @@ impl crate::Device {
         &self,
         command_buffer: CommandBuffer,
         attachments: &[ClearAttachment],
-        rect_count: u32,
         rects: &[ClearRect],
     ) {
         unsafe {
             (self.fp_v10.cmd_clear_attachments)(
                 command_buffer,
                 attachments.len() as _,
-                attachments.as_ptr(),
-                rect_count,
-                rects.as_ptr(),
+                if !attachments.is_empty() {
+                    attachments.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                rects.len() as _,
+                if !rects.is_empty() {
+                    rects.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -6044,7 +6153,11 @@ impl crate::Device {
                 dst_image,
                 dst_image_layout,
                 regions.len() as _,
-                regions.as_ptr(),
+                if !regions.is_empty() {
+                    regions.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -6053,6 +6166,7 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetEvent.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkCmdSetEvent2"]
     pub unsafe fn cmd_set_event(
         &self,
         command_buffer: CommandBuffer,
@@ -6066,6 +6180,7 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdResetEvent.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkCmdResetEvent2"]
     pub unsafe fn cmd_reset_event(
         &self,
         command_buffer: CommandBuffer,
@@ -6079,6 +6194,7 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdWaitEvents.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkCmdWaitEvents2"]
     #[allow(clippy::too_many_arguments)]
     pub unsafe fn cmd_wait_events(
         &self,
@@ -6086,26 +6202,39 @@ impl crate::Device {
         events: &[Event],
         src_stage_mask: PipelineStageFlags,
         dst_stage_mask: PipelineStageFlags,
-        memory_barrier_count: u32,
         memory_barriers: &[MemoryBarrier<'_>],
-        buffer_memory_barrier_count: u32,
         buffer_memory_barriers: &[BufferMemoryBarrier<'_>],
-        image_memory_barrier_count: u32,
         image_memory_barriers: &[ImageMemoryBarrier<'_>],
     ) {
         unsafe {
             (self.fp_v10.cmd_wait_events)(
                 command_buffer,
                 events.len() as _,
-                events.as_ptr(),
+                if !events.is_empty() {
+                    events.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
                 src_stage_mask,
                 dst_stage_mask,
-                memory_barrier_count,
-                memory_barriers.as_ptr(),
-                buffer_memory_barrier_count,
-                buffer_memory_barriers.as_ptr(),
-                image_memory_barrier_count,
-                image_memory_barriers.as_ptr(),
+                memory_barriers.len() as _,
+                if !memory_barriers.is_empty() {
+                    memory_barriers.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                buffer_memory_barriers.len() as _,
+                if !buffer_memory_barriers.is_empty() {
+                    buffer_memory_barriers.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                image_memory_barriers.len() as _,
+                if !image_memory_barriers.is_empty() {
+                    image_memory_barriers.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -6114,6 +6243,7 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdPipelineBarrier.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkCmdPipelineBarrier2"]
     #[allow(clippy::too_many_arguments)]
     pub unsafe fn cmd_pipeline_barrier(
         &self,
@@ -6122,9 +6252,7 @@ impl crate::Device {
         dst_stage_mask: PipelineStageFlags,
         dependency_flags: DependencyFlags,
         memory_barriers: &[MemoryBarrier<'_>],
-        buffer_memory_barrier_count: u32,
         buffer_memory_barriers: &[BufferMemoryBarrier<'_>],
-        image_memory_barrier_count: u32,
         image_memory_barriers: &[ImageMemoryBarrier<'_>],
     ) {
         unsafe {
@@ -6134,11 +6262,23 @@ impl crate::Device {
                 dst_stage_mask,
                 dependency_flags,
                 memory_barriers.len() as _,
-                memory_barriers.as_ptr(),
-                buffer_memory_barrier_count,
-                buffer_memory_barriers.as_ptr(),
-                image_memory_barrier_count,
-                image_memory_barriers.as_ptr(),
+                if !memory_barriers.is_empty() {
+                    memory_barriers.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                buffer_memory_barriers.len() as _,
+                if !buffer_memory_barriers.is_empty() {
+                    buffer_memory_barriers.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                image_memory_barriers.len() as _,
+                if !image_memory_barriers.is_empty() {
+                    image_memory_barriers.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -6190,6 +6330,7 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdWriteTimestamp.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkCmdWriteTimestamp2"]
     pub unsafe fn cmd_write_timestamp(
         &self,
         command_buffer: CommandBuffer,
@@ -6242,7 +6383,7 @@ impl crate::Device {
         layout: PipelineLayout,
         stage_flags: ShaderStageFlags,
         offset: u32,
-        values: &[ffi::c_void],
+        values: &[u8],
     ) {
         unsafe {
             (self.fp_v10.cmd_push_constants)(
@@ -6251,7 +6392,11 @@ impl crate::Device {
                 stage_flags,
                 offset,
                 values.len() as _,
-                values.as_ptr(),
+                if !values.is_empty() {
+                    values.as_ptr().cast()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -6260,6 +6405,7 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginRenderPass.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkCmdBeginRenderPass2"]
     pub unsafe fn cmd_begin_render_pass(
         &self,
         command_buffer: CommandBuffer,
@@ -6273,6 +6419,7 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdNextSubpass.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkCmdNextSubpass2"]
     pub unsafe fn cmd_next_subpass(
         &self,
         command_buffer: CommandBuffer,
@@ -6285,6 +6432,7 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEndRenderPass.html>"]
     #[doc = r""]
+    #[deprecated = "superseded by vkCmdEndRenderPass2"]
     pub unsafe fn cmd_end_render_pass(&self, command_buffer: CommandBuffer) {
         unsafe { (self.fp_v10.cmd_end_render_pass)(command_buffer) }
     }
@@ -6302,7 +6450,11 @@ impl crate::Device {
             (self.fp_v10.cmd_execute_commands)(
                 command_buffer,
                 command_buffers.len() as _,
-                command_buffers.as_ptr(),
+                if !command_buffers.is_empty() {
+                    command_buffers.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -6958,7 +7110,7 @@ impl DeviceFpV11 {
         }
     }
 }
-impl crate::Device {
+impl<Ext> crate::Device<Ext> {
     #[doc = "Requires Vulkan version 1.1, otherwise provided by VK_KHR_maintenance1.\n"]
     #[doc = r""]
     #[doc = r" # Safety"]
@@ -6981,16 +7133,17 @@ impl crate::Device {
         heap_index: u32,
         local_device_index: u32,
         remote_device_index: u32,
-        peer_memory_features: &mut PeerMemoryFeatureFlags,
-    ) {
+    ) -> PeerMemoryFeatureFlags {
         unsafe {
+            let mut peer_memory_features = ::core::mem::MaybeUninit::uninit();
             (self.fp_v11.get_device_group_peer_memory_features)(
                 self.handle,
                 heap_index,
                 local_device_index,
                 remote_device_index,
-                peer_memory_features,
-            )
+                peer_memory_features.as_mut_ptr(),
+            );
+            peer_memory_features.assume_init()
         }
     }
     #[doc = "Requires Vulkan version 1.1, otherwise provided by VK_KHR_bind_memory2.\n"]
@@ -7007,14 +7160,17 @@ impl crate::Device {
         &self,
         bind_infos: &[BindBufferMemoryInfo<'_>],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v11.bind_buffer_memory2)(
                 self.handle,
                 bind_infos.len() as _,
-                bind_infos.as_ptr(),
+                if !bind_infos.is_empty() {
+                    bind_infos.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "Requires Vulkan version 1.1, otherwise provided by VK_KHR_bind_memory2.\n"]
@@ -7031,14 +7187,17 @@ impl crate::Device {
         &self,
         bind_infos: &[BindImageMemoryInfo<'_>],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v11.bind_image_memory2)(
                 self.handle,
                 bind_infos.len() as _,
-                bind_infos.as_ptr(),
+                if !bind_infos.is_empty() {
+                    bind_infos.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "Requires Vulkan version 1.1, otherwise provided by VK_KHR_device_group.\n"]
@@ -7096,7 +7255,6 @@ impl crate::Device {
         create_info: &DescriptorUpdateTemplateCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<DescriptorUpdateTemplate> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut descriptor_update_template = ::core::mem::MaybeUninit::uninit();
             (self.fp_v11.create_descriptor_update_template)(
@@ -7105,7 +7263,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 descriptor_update_template.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, descriptor_update_template)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], descriptor_update_template)
         }
     }
     #[doc = "Requires Vulkan version 1.1, otherwise provided by VK_KHR_descriptor_update_template.\n"]
@@ -7241,7 +7399,6 @@ impl crate::Device {
         create_info: &SamplerYcbcrConversionCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<SamplerYcbcrConversion> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut ycbcr_conversion = ::core::mem::MaybeUninit::uninit();
             (self.fp_v11.create_sampler_ycbcr_conversion)(
@@ -7250,7 +7407,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 ycbcr_conversion.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, ycbcr_conversion)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], ycbcr_conversion)
         }
     }
     #[doc = "Requires Vulkan version 1.1, otherwise provided by VK_KHR_sampler_ycbcr_conversion.\n"]
@@ -7280,8 +7437,12 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceQueue2.html>"]
     #[doc = r""]
-    pub unsafe fn get_device_queue2(&self, queue_info: &DeviceQueueInfo2<'_>, queue: &mut Queue) {
-        unsafe { (self.fp_v11.get_device_queue2)(self.handle, queue_info, queue) }
+    pub unsafe fn get_device_queue2(&self, queue_info: &DeviceQueueInfo2<'_>) -> Queue {
+        unsafe {
+            let mut queue = ::core::mem::MaybeUninit::uninit();
+            (self.fp_v11.get_device_queue2)(self.handle, queue_info, queue.as_mut_ptr());
+            queue.assume_init()
+        }
     }
     #[doc = "Requires Vulkan version 1.1, otherwise provided by VK_KHR_maintenance3.\n"]
     #[doc = r""]
@@ -7803,7 +7964,7 @@ impl DeviceFpV12 {
         }
     }
 }
-impl crate::Device {
+impl<Ext> crate::Device<Ext> {
     #[doc = "Requires Vulkan version 1.2, otherwise provided by VK_EXT_host_query_reset.\n"]
     #[doc = r""]
     #[doc = r" # Safety"]
@@ -7829,12 +7990,12 @@ impl crate::Device {
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateRenderPass2.html>"]
     #[doc = r""]
     #[doc = "[0]: Result::SUCCESS"]
+    #[deprecated]
     pub unsafe fn create_render_pass2(
         &self,
         create_info: &RenderPassCreateInfo2<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<RenderPass> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut render_pass = ::core::mem::MaybeUninit::uninit();
             (self.fp_v12.create_render_pass2)(
@@ -7843,7 +8004,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 render_pass.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, render_pass)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], render_pass)
         }
     }
     #[doc = "Requires Vulkan version 1.2, otherwise provided by VK_KHR_create_renderpass2.\n"]
@@ -7853,6 +8014,7 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginRenderPass2.html>"]
     #[doc = r""]
+    #[deprecated]
     pub unsafe fn cmd_begin_render_pass2(
         &self,
         command_buffer: CommandBuffer,
@@ -7874,6 +8036,7 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdNextSubpass2.html>"]
     #[doc = r""]
+    #[deprecated]
     pub unsafe fn cmd_next_subpass2(
         &self,
         command_buffer: CommandBuffer,
@@ -7891,6 +8054,7 @@ impl crate::Device {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEndRenderPass2.html>"]
     #[doc = r""]
+    #[deprecated]
     pub unsafe fn cmd_end_render_pass2(
         &self,
         command_buffer: CommandBuffer,
@@ -7909,11 +8073,10 @@ impl crate::Device {
     #[doc = r""]
     #[doc = "[0]: Result::SUCCESS"]
     pub unsafe fn get_semaphore_counter_value(&self, semaphore: Semaphore) -> crate::VkResult<u64> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut value = ::core::mem::MaybeUninit::uninit();
             (self.fp_v12.get_semaphore_counter_value)(self.handle, semaphore, value.as_mut_ptr())
-                .result_with_assume_init(SUCCESS_CODES, value)
+                .result_with_assume_init(&[crate::vk::Result::SUCCESS], value)
         }
     }
     #[doc = "Requires Vulkan version 1.2, otherwise provided by VK_KHR_timeline_semaphore.\n"]
@@ -7933,10 +8096,9 @@ impl crate::Device {
         wait_info: &SemaphoreWaitInfo<'_>,
         timeout: u64,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] =
-            &[crate::vk::Result::SUCCESS, crate::vk::Result::TIMEOUT];
         unsafe {
-            (self.fp_v12.wait_semaphores)(self.handle, wait_info, timeout).result(SUCCESS_CODES)
+            (self.fp_v12.wait_semaphores)(self.handle, wait_info, timeout)
+                .result(&[crate::vk::Result::SUCCESS, crate::vk::Result::TIMEOUT])
         }
     }
     #[doc = "Requires Vulkan version 1.2, otherwise provided by VK_KHR_timeline_semaphore.\n"]
@@ -7953,8 +8115,10 @@ impl crate::Device {
         &self,
         signal_info: &SemaphoreSignalInfo<'_>,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
-        unsafe { (self.fp_v12.signal_semaphore)(self.handle, signal_info).result(SUCCESS_CODES) }
+        unsafe {
+            (self.fp_v12.signal_semaphore)(self.handle, signal_info)
+                .result(&[crate::vk::Result::SUCCESS])
+        }
     }
     #[doc = "Requires Vulkan version 1.2, otherwise provided by VK_KHR_draw_indirect_count.\n"]
     #[doc = r""]
@@ -9371,7 +9535,7 @@ impl DeviceFpV13 {
         }
     }
 }
-impl crate::Device {
+impl<Ext> crate::Device<Ext> {
     #[doc = "Requires Vulkan version 1.3, otherwise provided by VK_KHR_maintenance4.\n"]
     #[doc = r""]
     #[doc = r" # Safety"]
@@ -9510,7 +9674,11 @@ impl crate::Device {
             (self.fp_v13.cmd_set_viewport_with_count)(
                 command_buffer,
                 viewports.len() as _,
-                viewports.as_ptr(),
+                if !viewports.is_empty() {
+                    viewports.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -9530,7 +9698,11 @@ impl crate::Device {
             (self.fp_v13.cmd_set_scissor_with_count)(
                 command_buffer,
                 scissors.len() as _,
-                scissors.as_ptr(),
+                if !scissors.is_empty() {
+                    scissors.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -9556,10 +9728,22 @@ impl crate::Device {
                 command_buffer,
                 first_binding,
                 buffers.len() as _,
-                buffers.as_ptr(),
-                offsets.as_ptr(),
-                sizes.map(|s| s.as_ptr()).unwrap_or_default(),
-                strides.map(|s| s.as_ptr()).unwrap_or_default(),
+                if !buffers.is_empty() {
+                    buffers.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                if !offsets.is_empty() {
+                    offsets.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                sizes
+                    .and_then(|s| (!s.is_empty()).then_some(s.as_ptr()))
+                    .unwrap_or_default(),
+                strides
+                    .and_then(|s| (!s.is_empty()).then_some(s.as_ptr()))
+                    .unwrap_or_default(),
             )
         }
     }
@@ -9573,9 +9757,11 @@ impl crate::Device {
     pub unsafe fn cmd_set_depth_test_enable(
         &self,
         command_buffer: CommandBuffer,
-        depth_test_enable: Bool32,
+        depth_test_enable: bool,
     ) {
-        unsafe { (self.fp_v13.cmd_set_depth_test_enable)(command_buffer, depth_test_enable) }
+        unsafe {
+            (self.fp_v13.cmd_set_depth_test_enable)(command_buffer, depth_test_enable as Bool32)
+        }
     }
     #[doc = "Requires Vulkan version 1.3, otherwise provided by VK_EXT_extended_dynamic_state.\n"]
     #[doc = r""]
@@ -9587,9 +9773,11 @@ impl crate::Device {
     pub unsafe fn cmd_set_depth_write_enable(
         &self,
         command_buffer: CommandBuffer,
-        depth_write_enable: Bool32,
+        depth_write_enable: bool,
     ) {
-        unsafe { (self.fp_v13.cmd_set_depth_write_enable)(command_buffer, depth_write_enable) }
+        unsafe {
+            (self.fp_v13.cmd_set_depth_write_enable)(command_buffer, depth_write_enable as Bool32)
+        }
     }
     #[doc = "Requires Vulkan version 1.3, otherwise provided by VK_EXT_extended_dynamic_state.\n"]
     #[doc = r""]
@@ -9615,10 +9803,13 @@ impl crate::Device {
     pub unsafe fn cmd_set_depth_bounds_test_enable(
         &self,
         command_buffer: CommandBuffer,
-        depth_bounds_test_enable: Bool32,
+        depth_bounds_test_enable: bool,
     ) {
         unsafe {
-            (self.fp_v13.cmd_set_depth_bounds_test_enable)(command_buffer, depth_bounds_test_enable)
+            (self.fp_v13.cmd_set_depth_bounds_test_enable)(
+                command_buffer,
+                depth_bounds_test_enable as Bool32,
+            )
         }
     }
     #[doc = "Requires Vulkan version 1.3, otherwise provided by VK_EXT_extended_dynamic_state.\n"]
@@ -9631,9 +9822,11 @@ impl crate::Device {
     pub unsafe fn cmd_set_stencil_test_enable(
         &self,
         command_buffer: CommandBuffer,
-        stencil_test_enable: Bool32,
+        stencil_test_enable: bool,
     ) {
-        unsafe { (self.fp_v13.cmd_set_stencil_test_enable)(command_buffer, stencil_test_enable) }
+        unsafe {
+            (self.fp_v13.cmd_set_stencil_test_enable)(command_buffer, stencil_test_enable as Bool32)
+        }
     }
     #[doc = "Requires Vulkan version 1.3, otherwise provided by VK_EXT_extended_dynamic_state.\n"]
     #[doc = r""]
@@ -9673,12 +9866,12 @@ impl crate::Device {
     pub unsafe fn cmd_set_rasterizer_discard_enable(
         &self,
         command_buffer: CommandBuffer,
-        rasterizer_discard_enable: Bool32,
+        rasterizer_discard_enable: bool,
     ) {
         unsafe {
             (self.fp_v13.cmd_set_rasterizer_discard_enable)(
                 command_buffer,
-                rasterizer_discard_enable,
+                rasterizer_discard_enable as Bool32,
             )
         }
     }
@@ -9692,9 +9885,11 @@ impl crate::Device {
     pub unsafe fn cmd_set_depth_bias_enable(
         &self,
         command_buffer: CommandBuffer,
-        depth_bias_enable: Bool32,
+        depth_bias_enable: bool,
     ) {
-        unsafe { (self.fp_v13.cmd_set_depth_bias_enable)(command_buffer, depth_bias_enable) }
+        unsafe {
+            (self.fp_v13.cmd_set_depth_bias_enable)(command_buffer, depth_bias_enable as Bool32)
+        }
     }
     #[doc = "Requires Vulkan version 1.3, otherwise provided by VK_EXT_extended_dynamic_state2.\n"]
     #[doc = r""]
@@ -9706,10 +9901,13 @@ impl crate::Device {
     pub unsafe fn cmd_set_primitive_restart_enable(
         &self,
         command_buffer: CommandBuffer,
-        primitive_restart_enable: Bool32,
+        primitive_restart_enable: bool,
     ) {
         unsafe {
-            (self.fp_v13.cmd_set_primitive_restart_enable)(command_buffer, primitive_restart_enable)
+            (self.fp_v13.cmd_set_primitive_restart_enable)(
+                command_buffer,
+                primitive_restart_enable as Bool32,
+            )
         }
     }
     #[doc = "Requires Vulkan version 1.3, otherwise provided by VK_EXT_private_data.\n"]
@@ -9727,7 +9925,6 @@ impl crate::Device {
         create_info: &PrivateDataSlotCreateInfo<'_>,
         allocator: Option<&AllocationCallbacks>,
     ) -> crate::VkResult<PrivateDataSlot> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut private_data_slot = ::core::mem::MaybeUninit::uninit();
             (self.fp_v13.create_private_data_slot)(
@@ -9736,7 +9933,7 @@ impl crate::Device {
                 allocator.as_ptr(),
                 private_data_slot.as_mut_ptr(),
             )
-            .result_with_assume_init(SUCCESS_CODES, private_data_slot)
+            .result_with_assume_init(&[crate::vk::Result::SUCCESS], private_data_slot)
         }
     }
     #[doc = "Requires Vulkan version 1.3, otherwise provided by VK_EXT_private_data.\n"]
@@ -9776,7 +9973,6 @@ impl crate::Device {
         private_data_slot: PrivateDataSlot,
         data: u64,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v13.set_private_data)(
                 self.handle,
@@ -9785,7 +9981,7 @@ impl crate::Device {
                 private_data_slot,
                 data,
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "Requires Vulkan version 1.3, otherwise provided by VK_EXT_private_data.\n"]
@@ -9800,16 +9996,17 @@ impl crate::Device {
         object_type: ObjectType,
         object_handle: u64,
         private_data_slot: PrivateDataSlot,
-        data: &mut u64,
-    ) {
+    ) -> u64 {
         unsafe {
+            let mut data = ::core::mem::MaybeUninit::uninit();
             (self.fp_v13.get_private_data)(
                 self.handle,
                 object_type,
                 object_handle,
                 private_data_slot,
-                data,
-            )
+                data.as_mut_ptr(),
+            );
+            data.assume_init()
         }
     }
     #[doc = "Requires Vulkan version 1.3, otherwise provided by VK_KHR_copy_commands2.\n"]
@@ -9947,8 +10144,16 @@ impl crate::Device {
             (self.fp_v13.cmd_wait_events2)(
                 command_buffer,
                 events.len() as _,
-                events.as_ptr(),
-                dependency_infos.as_ptr(),
+                if !events.is_empty() {
+                    events.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                if !dependency_infos.is_empty() {
+                    dependency_infos.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -9982,10 +10187,18 @@ impl crate::Device {
         submits: &[SubmitInfo2<'_>],
         fence: Fence,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
-            (self.fp_v13.queue_submit2)(queue, submits.len() as _, submits.as_ptr(), fence)
-                .result(SUCCESS_CODES)
+            (self.fp_v13.queue_submit2)(
+                queue,
+                submits.len() as _,
+                if !submits.is_empty() {
+                    submits.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
+                fence,
+            )
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "Requires Vulkan version 1.3, otherwise provided by VK_KHR_synchronization2.\n"]
@@ -10756,7 +10969,7 @@ impl DeviceFpV14 {
         }
     }
 }
-impl crate::Device {
+impl<Ext> crate::Device<Ext> {
     #[doc = "Requires Vulkan version 1.4, otherwise provided by VK_KHR_maintenance5.\n"]
     #[doc = r""]
     #[doc = r" # Safety"]
@@ -10767,14 +10980,15 @@ impl crate::Device {
     pub unsafe fn get_rendering_area_granularity(
         &self,
         rendering_area_info: &RenderingAreaInfo<'_>,
-        granularity: &mut Extent2D,
-    ) {
+    ) -> Extent2D {
         unsafe {
+            let mut granularity = ::core::mem::MaybeUninit::uninit();
             (self.fp_v14.get_rendering_area_granularity)(
                 self.handle,
                 rendering_area_info,
-                granularity,
-            )
+                granularity.as_mut_ptr(),
+            );
+            granularity.assume_init()
         }
     }
     #[doc = "Requires Vulkan version 1.4, otherwise provided by VK_KHR_push_descriptor.\n"]
@@ -10799,7 +11013,11 @@ impl crate::Device {
                 layout,
                 set,
                 descriptor_writes.len() as _,
-                descriptor_writes.as_ptr(),
+                if !descriptor_writes.is_empty() {
+                    descriptor_writes.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
         }
     }
@@ -10882,10 +11100,9 @@ impl crate::Device {
         &self,
         copy_memory_to_image_info: &CopyMemoryToImageInfo<'_>,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v14.copy_memory_to_image)(self.handle, copy_memory_to_image_info)
-                .result(SUCCESS_CODES)
+                .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "Requires Vulkan version 1.4, otherwise provided by VK_EXT_host_image_copy.\n"]
@@ -10902,10 +11119,9 @@ impl crate::Device {
         &self,
         copy_image_to_memory_info: &CopyImageToMemoryInfo<'_>,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v14.copy_image_to_memory)(self.handle, copy_image_to_memory_info)
-                .result(SUCCESS_CODES)
+                .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "Requires Vulkan version 1.4, otherwise provided by VK_EXT_host_image_copy.\n"]
@@ -10922,10 +11138,9 @@ impl crate::Device {
         &self,
         copy_image_to_image_info: &CopyImageToImageInfo<'_>,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v14.copy_image_to_image)(self.handle, copy_image_to_image_info)
-                .result(SUCCESS_CODES)
+                .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "Requires Vulkan version 1.4, otherwise provided by VK_EXT_host_image_copy.\n"]
@@ -10942,14 +11157,17 @@ impl crate::Device {
         &self,
         transitions: &[HostImageLayoutTransitionInfo<'_>],
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             (self.fp_v14.transition_image_layout)(
                 self.handle,
                 transitions.len() as _,
-                transitions.as_ptr(),
+                if !transitions.is_empty() {
+                    transitions.as_ptr()
+                } else {
+                    ::core::ptr::null()
+                },
             )
-            .result(SUCCESS_CODES)
+            .result(&[crate::vk::Result::SUCCESS])
         }
     }
     #[doc = "Requires Vulkan version 1.4, otherwise provided by VK_EXT_host_image_copy.\n"]
@@ -10997,11 +11215,10 @@ impl crate::Device {
         &self,
         memory_map_info: &MemoryMapInfo<'_>,
     ) -> crate::VkResult<*mut ffi::c_void> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
         unsafe {
             let mut pp_data = ::core::mem::MaybeUninit::uninit();
             (self.fp_v14.map_memory2)(self.handle, memory_map_info, pp_data.as_mut_ptr())
-                .result_with_assume_init(SUCCESS_CODES, pp_data)
+                .result_with_assume_init(&[crate::vk::Result::SUCCESS], pp_data)
         }
     }
     #[doc = "Requires Vulkan version 1.4, otherwise provided by VK_KHR_map_memory2.\n"]
@@ -11018,8 +11235,10 @@ impl crate::Device {
         &self,
         memory_unmap_info: &MemoryUnmapInfo<'_>,
     ) -> crate::VkResult<()> {
-        static SUCCESS_CODES: &[crate::vk::Result] = &[crate::vk::Result::SUCCESS];
-        unsafe { (self.fp_v14.unmap_memory2)(self.handle, memory_unmap_info).result(SUCCESS_CODES) }
+        unsafe {
+            (self.fp_v14.unmap_memory2)(self.handle, memory_unmap_info)
+                .result(&[crate::vk::Result::SUCCESS])
+        }
     }
     #[doc = "Requires Vulkan version 1.4, otherwise provided by VK_KHR_maintenance6.\n"]
     #[doc = r""]

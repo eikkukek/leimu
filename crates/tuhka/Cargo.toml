@@ -12,3 +12,9 @@ categories = ["graphics", "api-bindings", "external-ffi-bindings", "rendering::g
 
 [dependencies]
 libloading = "0.9.0"
+raw-window-handle = { version = "0.6.2", optional = true }
+raw-window-metal = { version = "1.1.0", optional = true }
+
+[features]
+window = ["dep:raw-window-handle", "dep:raw-window-metal"]
+ext-load-with = []

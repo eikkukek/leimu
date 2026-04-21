@@ -3,9 +3,9 @@ use super::*;
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub union ClearColorValue {
-    pub float32: f32,
-    pub int32: i32,
-    pub uint32: u32,
+    pub float32: [f32; 4usize],
+    pub int32: [i32; 4usize],
+    pub uint32: [u32; 4usize],
 }
 impl Default for ClearColorValue {
     #[inline]

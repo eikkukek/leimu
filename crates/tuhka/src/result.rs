@@ -41,6 +41,20 @@ impl vk::Result {
     }
 
     #[inline]
+    pub fn result_with<T>(
+        self,
+        success: &[vk::Result],
+        f: impl FnOnce() -> T
+    ) -> VkResult<T> {
+        if success.contains(&self) {
+            Ok(Success {
+                value: f(),
+                result: self,
+            })
+        } else { Err(self) }
+    }
+
+    #[inline]
     pub fn result_with_value<T>(
         self,
         success: &[vk::Result],

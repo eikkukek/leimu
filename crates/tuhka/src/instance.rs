@@ -1,25 +1,32 @@
 use core::ffi;
-use crate::vk;
-use crate::CoreFp;
 use crate::{
+    vk,
+    nop,
+    CoreFp,
     InstanceFpV10,
     InstanceFpV11,
     InstanceFpV13,
+    VkResult,
+    PtrOption,
+    LoadWith,
 };
-use crate::VkResult;
-use crate::PtrOption;
+
+#[cfg(feature = "ext-load-with")]
+use core::ops::Deref;
 
 /// # Vulkan docs
 /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkInstance.html>
 #[derive(Clone)]
-pub struct Instance {
+pub struct Instance<Ext = nop::Instance> 
+{
     pub(crate) handle: vk::Instance,
     pub(crate) fp_v10: InstanceFpV10,
     pub(crate) fp_v11: InstanceFpV11,
     pub(crate) fp_v13: InstanceFpV13,
+    pub(crate) _ext: Ext,
 }
 
-impl Instance {
+impl<Ext> Instance<Ext> {
 
     /// Loads the [`Instance`] from [`CoreFp`].
     ///
@@ -32,7 +39,9 @@ impl Instance {
         version: u32,
         core_fp: &CoreFp,
         handle: vk::Instance
-    ) -> Self {
+    ) -> Self
+        where Ext: LoadWith<Handle = vk::Instance>,
+    {
         unsafe {
             Self::load_with(
                 version,
@@ -56,12 +65,17 @@ impl Instance {
         version: u32,
         f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
         handle: vk::Instance,
-    ) -> Self {
+    ) -> Self
+        where Ext: LoadWith<Handle = vk::Instance>,
+    {
         Self {
             handle,
             fp_v10: InstanceFpV10::load(version, f),
             fp_v11: InstanceFpV11::load(version, f),
-            fp_v13: InstanceFpV13::load(version, f)
+            fp_v13: InstanceFpV13::load(version, f),
+            _ext: unsafe {
+                Ext::load_with(f, handle)
+            },
         }
     }
 
@@ -95,12 +109,14 @@ impl Instance {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceProperties.html>
     ///
     /// [1]: crate::Device
-    pub unsafe fn create_device(
+    pub unsafe fn create_device<E>(
         &self,
         physical_device: vk::PhysicalDevice,
         create_info: &vk::DeviceCreateInfo<'_>,
         allocator: Option<&vk::AllocationCallbacks>,
-    ) -> VkResult<crate::Device> {
+    ) -> VkResult<crate::Device<E>>
+        where E: LoadWith<Handle = vk::Device>
+    {
         unsafe {
             let mut handle = ::core::mem::MaybeUninit::uninit();
             let handle = (self.fp_v10.create_device)(
@@ -109,9 +125,9 @@ impl Instance {
                 allocator.as_ptr(),
                 handle.as_mut_ptr(),
             ).result_with_assume_init(&[vk::Result::SUCCESS], handle)?;
-            let mut properties = vk::PhysicalDeviceProperties::default();
-            self.get_physical_device_properties(
-                physical_device, &mut properties
+            #[allow(deprecated)]
+            let properties = self.get_physical_device_properties(
+                physical_device,
             );
             let version = properties.api_version;
             Ok(handle.with_value(crate::Device::load(
@@ -120,5 +136,36 @@ impl Instance {
                 handle.value
             )))
         }
+    }
+
+    /// Destroys a [`Device'][1].
+    ///
+    /// # Safety
+    /// All raw Vulkan calls are unsafe as there is no validation of input or usage.
+    ///
+    /// # Vulkan docs
+    /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyDevice.html>
+    ///
+    /// [1]: crate::Device
+    pub unsafe fn destroy_device<E>(
+        &self,
+        device: &crate::Device<E>,
+        allocator: Option<&vk::AllocationCallbacks>,
+    ) {
+        unsafe {
+            (device.fp_v10().destroy_device)(
+                device.handle(),
+                allocator.as_ptr(),
+            )
+        }
+    }
+}
+
+#[cfg(feature = "ext-load-with")]
+impl<Ext> Deref for Instance<Ext> {
+    type Target = Ext;
+    #[inline]
+    fn deref(&self) -> &Ext {
+        &self._ext
     }
 }

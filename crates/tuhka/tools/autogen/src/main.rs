@@ -308,7 +308,7 @@ enum FuncpointerParsing {
     Proto(FuncParsing),
     Param {
         optional: ParamOptional,
-        has_len: Option<u32>,
+        has_len: Option<Option<u32>>,
         parsing: FuncParsing,
         is_const: bool,
         ty: String,
@@ -320,7 +320,7 @@ enum FuncpointerParsing {
 #[derive(Default, Clone)]
 struct Funcparam {
     optional: ParamOptional,
-    has_len: Option<u32>,
+    has_len: Option<Option<u32>>,
     ty: String,
     ptr: FuncParamPtrType,
     name: String,
@@ -426,6 +426,7 @@ struct Command {
     success_codes: Vec<String>,
     version: Option<String>,
     unresolved: Option<UnresolvedCmd>,
+    deprecated: Option<Option<String>>,
     name_rs: Ident,
 }
 #[derive(Clone)]
@@ -444,7 +445,6 @@ struct Feature {
 enum ExtConstant {
     U32(u32),
     String(String),
-    Alias(String),
 }
 
 #[derive(Clone)]
@@ -460,7 +460,6 @@ struct Extension {
     commands: Vec<ExtCommand>,
     number: u32,
     promoted_to: Option<String>,
-    is_deprecated: bool,
 }
 
 struct ExtParsingRequires {
@@ -484,8 +483,9 @@ enum ReaderElement {
         version: String,
         feature: Feature,
         parsing_requires: Option<u32>,
-        is_sc: bool,
+        parsing_deprecated: Option<u32>,
         parsing_remove: bool,
+        is_sc: bool,
     },
     Extensions {
         parsing_extension: Option<ExtParsing>,
@@ -624,6 +624,7 @@ fn main() -> std::io::Result<()> {
                                 version,
                                 feature: Feature { commands: IndexMap::new() },
                                 parsing_requires: None,
+                                parsing_deprecated: None,
                                 parsing_remove: false,
                                 is_sc: depth.vulkan_sc.is_some(),
                             }
@@ -777,7 +778,7 @@ fn main() -> std::io::Result<()> {
                                                             (param.name == attr.value)
                                                             .then_some(idx as u32)
                                                         })
-                                                }).unwrap_or_default(),
+                                                }),
                                             is_const: false,
                                             ptr: Default::default(),
                                             ty: Default::default(),
@@ -942,6 +943,7 @@ fn main() -> std::io::Result<()> {
                                 commands.insert(name, Command {
                                     body: CommandBody::Alias(alias),
                                     success_codes,
+                                    deprecated: None,
                                     version: None,
                                     unresolved: None,
                                     name_rs,
@@ -1009,7 +1011,7 @@ fn main() -> std::io::Result<()> {
                                                             (param.name == attr.value)
                                                             .then_some(idx as u32)
                                                         })
-                                                }).unwrap_or_default(),
+                                                }),
                                     };
                                 } else if name.local_name == "implicitexternsyncparams" {
                                     funcpointer.parsing = FuncpointerParsing::ImplicitParams;
@@ -1020,7 +1022,7 @@ fn main() -> std::io::Result<()> {
                     DepthType::Feature => {
                         let ReaderElement::Feature {
                             version, feature, parsing_requires,
-                            parsing_remove,
+                            parsing_deprecated, parsing_remove,
                             ..
                         } = &mut reader.element else { unreachable!() };
                         if depth.vulkan_sc.is_none() {
@@ -1081,6 +1083,18 @@ fn main() -> std::io::Result<()> {
                                         doc
                                     );
                                 }
+                            } else if name.local_name == "deprecate" {
+                                *parsing_deprecated = Some(reader.depth);
+                            } else if parsing_deprecated.is_some() &&
+                                name.local_name == "command"
+                            {
+                                let name = &find_attribute("name")
+                                    .unwrap().value;
+                                let deprecated_by = find_attribute("supersededby")
+                                    .map(|attr| attr.value.clone());
+                                let command = commands.get_mut(name)
+                                    .unwrap();
+                                command.deprecated = Some(deprecated_by);
                             }
                         } else {
                             if name.local_name == "remove" {
@@ -1178,30 +1192,24 @@ fn main() -> std::io::Result<()> {
                                                 alias: None,
                                                 deprecated: None,
                                             });
-                                        } else if let Some(alias) = find_attribute("alias") 
+                                        } else if let Some(alias) = find_attribute("alias") &&
+                                            let Some(extends) = find_attribute("extends")
+                                                .map(|attr| &attr.value)
                                         {
-                                            if let Some(extends) = find_attribute("extends")
-                                                .map(|attr| &attr.value) {
-                                                let deprecated = find_attribute("deprecated")
-                                                    .map(|attr| attr.value.clone());
-                                                if let Some(variants) = enum_variants.get_mut(extends) {
-                                                    variants.add_alias(name, alias.value.clone(), deprecated);
-                                                } else if let Some(bits) = bitmask_bits.get_mut(extends)
-                                                {
-                                                    bits.bits.insert(Bit {
-                                                        name,
-                                                        bit: 0,
-                                                        doc: None,
-                                                        alias: Some(alias.value.clone()),
-                                                        deprecated: find_attribute("deprecated")
-                                                            .map(|attr| attr.value.clone()),
-                                                    });
-                                                }
-                                            } else {
-                                                ext.ext.new_constants.push((
+                                            let deprecated = find_attribute("deprecated")
+                                                .map(|attr| attr.value.clone());
+                                            if let Some(variants) = enum_variants.get_mut(extends) {
+                                                variants.add_alias(name, alias.value.clone(), deprecated);
+                                            } else if let Some(bits) = bitmask_bits.get_mut(extends)
+                                            {
+                                                bits.bits.insert(Bit {
                                                     name,
-                                                    ExtConstant::Alias(alias.value.clone()),
-                                                ));
+                                                    bit: 0,
+                                                    doc: None,
+                                                    alias: Some(alias.value.clone()),
+                                                    deprecated: find_attribute("deprecated")
+                                                        .map(|attr| attr.value.clone()),
+                                                });
                                             }
                                         }
                                     }
@@ -1249,8 +1257,6 @@ fn main() -> std::io::Result<()> {
                                     ).unwrap(),
                                     promoted_to: find_attribute("promotedto")
                                         .map(|attr| attr.value.clone()),
-                                    is_deprecated: find_attribute("deprecatedby")
-                                        .is_some(),
                                     new_constants: vec![],
                                     commands: vec![],
                                 },
@@ -1319,10 +1325,21 @@ fn main() -> std::io::Result<()> {
                                     },
                                     StructParsing::ArrayLen => {
                                         if string.contains("[") {
+                                            let split = string.split_at(1).1;
+                                            if split.starts_with(char::is_numeric) {
+                                                let idx = split.find("]").unwrap();
+                                                let split = split.split_at(idx).0;
+                                                parsing_member.array_len = Some(split.to_string());
+                                                parsing_member.parsing = StructParsing::None;
+                                            }
                                             continue
                                         } else if string.contains(":24") {
                                             structure.packed_u24_u8 = Some(parsing_member.name.clone());
-                                        } else if string.contains(":8") {
+                                        } else if string.contains(":5") {
+                                            let packed_u24_u8 = structure.packed_u24_u8.as_mut().unwrap();
+                                            *packed_u24_u8 = format!("{packed_u24_u8}_and_{}", parsing_member.name);
+                                        } else if string.contains(":8") || string.contains(":3")
+                                        {
                                             let packed_u24_u8 = structure.packed_u24_u8.take().unwrap();
                                             parsing_member.name = format!("{packed_u24_u8}_and_{}", parsing_member.name);
                                             parsing_member.ty = Some(Ident::new("packed_u24_u8", Span::call_site()));
@@ -1629,6 +1646,7 @@ fn main() -> std::io::Result<()> {
                                     }),
                                     name_rs,
                                     success_codes: funcpointer.success_codes.clone(),
+                                    deprecated: None,
                                     version: None,
                                     unresolved: None,
                                 }
@@ -1661,6 +1679,12 @@ fn main() -> std::io::Result<()> {
                             } = &mut reader.element
                         {
                             *parsing_requires = None;
+                        } else if name.local_name == "deprecate" &&
+                            let ReaderElement::Feature {
+                                parsing_deprecated, ..
+                            } = &mut reader.element
+                        {
+                            *parsing_deprecated = None;
                         } else if name.local_name == "feature" &&
                             depth.depth == reader.depth
                         {
@@ -2113,6 +2137,7 @@ fn main() -> std::io::Result<()> {
         let mut field_defs = vec![];
         let mut field_defaults = vec![];
         let mut field_setters = vec![];
+        let mut field_getters = vec![];
         let mut prev_field = None;
         let mut has_pointer = false;
         let mut p_next_mutability = None;
@@ -2153,10 +2178,11 @@ fn main() -> std::io::Result<()> {
                 if let Some(len) = &member.array_len {
                     let len =
                         if len.starts_with(char::is_numeric) {
+                            let len: usize = str::parse(len).unwrap();
                             quote! { #len }
                         } else {
                             let len = Ident::new(len, Span::call_site());
-                            quote! { #len as usize }
+                            quote! { #len as _ }
                         };
                     let q = quote! {
                         [#pointer #resolved_ty #lifetime; #len]
@@ -2214,6 +2240,35 @@ fn main() -> std::io::Result<()> {
                                     self
                                 }
                             }
+                        } else if resolved_ty.iter().any(|ty| ty == "c_char") &&
+                            member.array_len.is_some()
+                        {
+                            let getter_name = Ident::new(
+                                &format!("{name}_as_cstr"),
+                                Span::call_site(),
+                            );
+                            field_getters.push(quote! {
+                                #[inline]
+                                pub fn #getter_name(
+                                    &self
+                                ) -> ::core::result::Result<&ffi::CStr, ffi::FromBytesUntilNulError>
+                                {
+                                    c_char_slice_until_nul(&self.#name)
+                                }
+                            });
+                            quote! {
+                                #[inline]
+                                pub fn #name(
+                                    mut self,
+                                    value: &ffi::CStr
+                                ) -> ::core::result::Result<Self, WriteCStrToArrayError> {
+                                    write_c_str_to_c_char_slice(
+                                        value,
+                                        &mut self.#name,
+                                    )?;
+                                    Ok(self)
+                                }
+                            }
                         } else {
                             quote! {
                                 #[inline]
@@ -2247,11 +2302,13 @@ fn main() -> std::io::Result<()> {
                                 }
                             },
                             PtrType::MutPtr | PtrType::MutPtrMutPtr => {
+                                has_pointer = true;
                                 quote! {
                                     #name: ::core::ptr::null_mut(),
                                 }
                             },
                             PtrType::ConstPtr | PtrType::ConstPtrConstPtr => {
+                                has_pointer = true;
                                 quote! {
                                     #name: ::core::ptr::null(),
                                 }
@@ -2288,7 +2345,7 @@ fn main() -> std::io::Result<()> {
                     };
                     extends_trait = Some(quote! {
                         #doc
-                        pub unsafe trait #trait_name<'a>: Chainable<'a> {}
+                        pub unsafe trait #trait_name: Chainable {}
                     });
                     quote! {
 
@@ -2297,10 +2354,10 @@ fn main() -> std::io::Result<()> {
                         /// [1]: Self::p_next
                         #[inline]
                         pub fn push_next<T>(mut self, next: &'a mut T) -> Self
-                            where T: ?Sized + #trait_name<'a>,
+                            where T: ?Sized + #trait_name,
                         {
                             let p_next: *#p_next_mutability ffi::c_void = <*mut T>::cast(next);
-                            let last = chain_iter(next).last().unwrap();
+                            let last = chain_out_iter(next).last().unwrap();
                             last.p_next = self.p_next as *mut BaseOutStructure<'a>;
                             self.p_next = p_next;
                             self
@@ -2322,12 +2379,12 @@ fn main() -> std::io::Result<()> {
             });
             let impl_chainable = (s_type.is_some() && p_next_mutability.is_some()).then(||
                 quote! {
-                    unsafe impl<'a> Chainable<'a> for #name<'a> {
+                    unsafe impl<'a> Chainable for #name<'a> {
 
                         #[inline]
-                        fn base_out(&mut self) -> &'a mut BaseOutStructure<'a> {
+                        fn base_in(&self) -> &BaseInStructure<'_> {
                             unsafe {
-                                &mut *<*mut Self>::cast::<BaseOutStructure>(self)
+                                &*<*const Self>::cast::<BaseInStructure>(self)
                             }
                         }
                     }
@@ -2355,7 +2412,7 @@ fn main() -> std::io::Result<()> {
             let impl_extends = def.extends
                 .iter()
                 .map(|extends| quote! {
-                    unsafe impl<'a> #extends<'a> for #name<'a> {}
+                    unsafe impl<'a> #extends for #name<'a> {}
                 });
             let derive_partial_eq = derive_partial_eq.then(|| quote! {
                 PartialEq,
@@ -2376,6 +2433,7 @@ fn main() -> std::io::Result<()> {
                 impl #lifetime #name #lifetime {
                     #s_type
                     #(#field_setters)*
+                    #(#field_getters)*
                     #push_next
                 }
 
@@ -2559,9 +2617,9 @@ fn main() -> std::io::Result<()> {
                         Ident::new(code.trim_start_matches("VK_"), Span::call_site())
                     );
                 quote! {
-                    static SUCCESS_CODES: &[crate::vk::Result] = &[
+                    &[
                         #(crate::vk::Result::#filter),*
-                    ];
+                    ]
                 }
             });
         let mut param_names_and_tys = vec![];
@@ -2615,10 +2673,10 @@ fn main() -> std::io::Result<()> {
                                             RsTy::MutRef(ty, has_lifetime)
                                         }
                                     } else if param.name == "pMetricValues" {
-                                        param.has_len = Some(3);
+                                        param.has_len = Some(Some(3));
                                         RsTy::QueryLen(ty, has_lifetime)
                                     } else if has_lifetime ||
-                                        (success_filter.is_none() && param.optional == ParamOptional::False) ||
+                                        (success_filter.is_none() && param.optional == ParamOptional::True) ||
                                         param.has_len.is_some()
                                     {
                                         RsTy::MutRef(ty, has_lifetime)
@@ -2690,7 +2748,7 @@ fn main() -> std::io::Result<()> {
         };
         let mut fn_params = vec![Some(quote! { &self, })];
         let mut fn_maps = vec![];
-        let mut get_len = None;
+        let mut get_lens = vec![];
         let mut rs_def_get_data = None;
         let mut ret =
             if success_filter.is_none() {
@@ -2704,7 +2762,8 @@ fn main() -> std::io::Result<()> {
             let (name, ty) = &param_names_and_tys[idx];
             match ty {
                 RsTy::Value(ty) => {
-                    if (name == "instance" && (extension_type == "instance" || extension_type.is_empty())) || 
+                    if (name == "instance" &&
+                        (extension_type == "instance" || extension_type.is_empty())) || 
                         (name == "device" && (extension_type == "device" || extension_type.is_empty()))
                     {
                         fn_params.push(None);
@@ -2712,12 +2771,21 @@ fn main() -> std::io::Result<()> {
                             self.handle,
                         });
                     } else {
-                        fn_params.push(Some(quote! {
-                            #name: #ty,
-                        }));
-                        fn_maps.push(quote! {
-                            #name,
-                        });
+                        if ty.iter().next().unwrap() == "Bool32" {
+                            fn_params.push(Some(quote! {
+                                #name: bool,
+                            }));
+                            fn_maps.push(quote! {
+                                #name as Bool32,
+                            });
+                        } else {
+                            fn_params.push(Some(quote! {
+                                #name: #ty,
+                            }));
+                            fn_maps.push(quote! {
+                                #name,
+                            });
+                        }
                     }
                 },
                 RsTy::ConstRef(ty, has_lifetime) => {
@@ -2725,22 +2793,40 @@ fn main() -> std::io::Result<()> {
                     match param.optional {
                         ParamOptional::False | ParamOptional::FalseTrue => {
                             if let Some(len) = param.has_len {
-                                if get_len.is_some() {
-                                    fn_params.push(Some(quote! {
-                                        #name: &[#ty #lifetime],
-                                    }));
-                                    fn_maps.push(quote! {
-                                        #name.as_ptr(),
-                                    });
-                                } else {
-                                    fn_params[len as usize + 1] = None;
-                                    get_len = Some(idx);
-                                    fn_params.push(Some(quote! {
-                                        #name: &[#ty #lifetime],
-                                    }));
-                                    fn_maps[len as usize] = quote! {
-                                        #name.len() as _,
+                                if let Some(len) = len {
+                                    let (ty, cast_ptr) = if ty.iter().any(|ident| ident == "c_void") {
+                                        (quote! { u8 }, Some(quote! { .cast() }))
+                                    } else {
+                                        (quote! { #ty }, None)
                                     };
+                                    if get_lens.contains(&len) {
+                                        fn_params.push(Some(quote! {
+                                            #name: &[#ty #lifetime],
+                                        }));
+                                        fn_maps.push(quote! {
+                                            if !#name.is_empty() {
+                                                #name.as_ptr()#cast_ptr
+                                            } else { ::core::ptr::null() },
+                                        });
+                                    } else {
+                                        get_lens.push(len);
+                                        fn_params[len as usize + 1] = None;
+                                        fn_params.push(Some(quote! {
+                                            #name: &[#ty #lifetime],
+                                        }));
+                                        fn_maps[len as usize] = quote! {
+                                            #name.len() as _,
+                                        };
+                                        fn_maps.push(quote! {
+                                            if !#name.is_empty() {
+                                                #name.as_ptr()#cast_ptr
+                                            } else { ::core::ptr::null() },
+                                        });
+                                    }
+                                } else {
+                                    fn_params.push(Some(quote! {
+                                        #name: &[#ty #lifetime],
+                                    }));
                                     fn_maps.push(quote! {
                                         #name.as_ptr(),
                                     });
@@ -2760,7 +2846,9 @@ fn main() -> std::io::Result<()> {
                                     #name: Option<&[#ty #lifetime]>,
                                 }));
                                 fn_maps.push(quote! {
-                                    #name.map(|s| s.as_ptr()).unwrap_or_default(),
+                                    #name.and_then(|s|
+                                        (!s.is_empty()).then_some(s.as_ptr())
+                                    ).unwrap_or_default(),
                                 });
                             } else {
                                 fn_params.push(Some(quote! {
@@ -2780,7 +2868,7 @@ fn main() -> std::io::Result<()> {
                         query_len = Some(idx);
                     } else {
                         let lifetime = has_lifetime.then(|| quote! { <'_> });
-                        let len = param.has_len.unwrap();
+                        let len = param.has_len.unwrap().unwrap();
                         let mut fn_params2 = fn_params.clone();
                         let mut fn_maps2 = fn_maps.clone();
                         let mut out_name = Ident::new("out", Span::call_site());
@@ -2808,26 +2896,30 @@ fn main() -> std::io::Result<()> {
                                 #out_name.as_mut_ptr(),
                             });
                         } else {
+                            let (ty, cast) = if ty.iter().any(|ident| ident == "c_void") {
+                                (quote! { u8 }, Some(quote! { .cast() }))
+                            } else {
+                                (quote! { #ty }, None)
+                            };
                             fn_params2[len as usize + 1] = Some(quote! {
                                 out: &mut [#ty #lifetime],
                             });
                             fn_maps2[len as usize] = quote! { &mut len, };
                             fn_maps2.push(quote! {
-                                out.as_mut_ptr(),
+                                out.as_mut_ptr()#cast,
                             });
                         }
                         let mut ret = pfn_ret.clone();
-                        let with_result = if success_filter.is_some() {
+                        let with_result = if let Some(filter) = &success_filter {
                             ret = Some(quote! {
                                 -> crate::VkResult<()>
                             });
                             Some(quote! {
-                                .result(SUCCESS_CODES)
+                                .result(#filter)
                             })
                         } else { None };
                         rs_def_get_data = Some(quote! {
                             (#(#fn_params2)*) #ret {
-                                #success_filter
                                 unsafe {
                                     let mut len = #get_len_name.len() as _;
                                     (self.#fp.#name_rs)(
@@ -2844,32 +2936,58 @@ fn main() -> std::io::Result<()> {
                 RsTy::MutRef(ty, has_lifetime) => {
                     assert!(param.optional != ParamOptional::FalseTrue);
                     let lifetime = has_lifetime.then(|| quote! { <'_> });
-                    if param.optional == ParamOptional::False {
-                        fn_params.push(Some(quote! {
-                            #name: &mut #ty #lifetime,
-                        }));
-                        fn_maps.push(quote! {
-                            #name,
-                        });
+                    if param.has_len.is_some() {
+                        if param.optional == ParamOptional::False {
+                            fn_params.push(Some(quote! {
+                                #name: &mut [#ty #lifetime],
+                            }));
+                            fn_maps.push(quote! {
+                                #name.as_mut_ptr(),
+                            });
+                        } else {
+                            unreachable!()
+                        }
                     } else {
-                        fn_params.push(Some(quote! {
-                            #name: Option<&mut #ty #lifetime>,
-                        }));
-                        fn_maps.push(quote! {
-                            #name.as_ptr(),
-                        });
-                    }
+                        if param.optional == ParamOptional::False {
+                            fn_params.push(Some(quote! {
+                                #name: &mut #ty #lifetime,
+                            }));
+                            fn_maps.push(quote! {
+                                #name,
+                            });
+                        } else {
+                            fn_params.push(Some(quote! {
+                                #name: Option<&mut #ty #lifetime>,
+                            }));
+                            fn_maps.push(quote! {
+                                #name.as_ptr(),
+                            });
+                        }
+                    } 
                 },
                 RsTy::ReturnType(ptr, ty) => {
                     assert!(ret.is_none());
-                    (ret, with_result) = if success_filter.is_some() {
-                        let ret = quote! {
-                            -> crate::VkResult<#ptr #ty>
-                        };
-                        let with_result = (name.clone(), quote! {
-                            .result_with_assume_init(SUCCESS_CODES, #name)
-                        });
-                        (Some(ret), Some(with_result))
+                    (ret, with_result) = if let Some(filter) = &success_filter {
+                        if ty.iter().next().unwrap() == "Bool32" {
+                            assert!(matches!(ptr, PtrType::None));
+                            let ret = quote! {
+                                -> crate::VkResult<bool>
+                            };
+                            let with_result = (name.clone(), quote! {
+                                .result_with(#filter, || {
+                                    #name.assume_init() != 0
+                                })
+                            });
+                            (Some(ret), Some(with_result))
+                        } else {
+                            let ret = quote! {
+                                -> crate::VkResult<#ptr #ty>
+                            };
+                            let with_result = (name.clone(), quote! {
+                                .result_with_assume_init(#filter, #name)
+                            });
+                            (Some(ret), Some(with_result))
+                        }
                     } else {
                         let ret = quote! {
                             -> #ptr #ty
@@ -2886,12 +3004,12 @@ fn main() -> std::io::Result<()> {
                     let lifetime = has_lifetime.then(|| quote! {
                         <'_>
                     });
-                    let len = param.has_len.unwrap();
+                    let len = param.has_len.unwrap().unwrap();
                     let name = Ident::new(
                         name.to_string().trim_start_matches("pp_"),
                         Span::call_site(),
                     );
-                    if get_len.is_some() {
+                    if get_lens.contains(&len) {
                         fn_params.push(Some(quote! {
                             #name: &[&#ty #lifetime],
                         }));
@@ -2899,8 +3017,8 @@ fn main() -> std::io::Result<()> {
                             #name.as_ptr().cast(),
                         });
                     } else {
+                        get_lens.push(len);
                         fn_params[len as usize + 1] = None;
-                        get_len = Some(idx);
                         fn_params.push(Some(quote! {
                             #name: &[&#ty #lifetime],
                         }));
@@ -2968,17 +3086,16 @@ fn main() -> std::io::Result<()> {
             } else {
                 (None, None)
             };
-        if ret.is_none() && success_filter.is_some() {
+        if ret.is_none() && let Some(filter) = &success_filter {
             ret = Some(quote! {
                 -> crate::VkResult<()>
             });
             with_result = Some(quote! {
-                .result(SUCCESS_CODES)
+                .result(#filter)
             });
         }
         let rs_def = quote! {
             (#(#fn_params)*) #ret {
-                #success_filter
                 unsafe {
                     #uninit
                     (self.#fp.#name_rs)(
@@ -2989,7 +3106,6 @@ fn main() -> std::io::Result<()> {
         };
         let rs_def_ext = is_aliased.then(|| quote! {
             (#(#fn_params)*) #ret {
-                #success_filter
                 unsafe {
                     #uninit
                     (self.fp.#name_rs)(
@@ -3056,6 +3172,15 @@ fn main() -> std::io::Result<()> {
     let mut found_core_tables = HashSet::new(); 
     let mut ext_fns = HashSet::new();
     let mut extensions_by_prefix: IndexMap<&str, String> = IndexMap::new();
+    extensions.get_mut("VK_KHR_swapchain").unwrap()
+        .commands
+        .retain(|cmd| cmd.name != "vkGetPhysicalDevicePresentRectanglesKHR");
+    extensions.get_mut("VK_KHR_surface").unwrap()
+        .commands
+        .push(ExtCommand {
+            name: "vkGetPhysicalDevicePresentRectanglesKHR".to_string(),
+            depends_on: vec!["VK_KHR_swapchain".to_string()],
+        });
     for (name, ext) in &extensions {
         let prefix = name.trim_start_matches("VK_");
         let idx = prefix.find("_").unwrap();
@@ -3129,7 +3254,8 @@ fn main() -> std::io::Result<()> {
             for (name, constant) in &ext.new_constants {
                 let name = name
                     .replace(&replace1, "")
-                    .replace(&replace2, "");
+                    .replace(&replace2, "")
+                    .replace("EXTENSION_NAME", "NAME");
                 let name = Ident::new(name.trim_start_matches("VK_"), Span::call_site());
                 let def = match constant {
                     ExtConstant::U32(value) => quote!{
@@ -3142,9 +3268,6 @@ fn main() -> std::io::Result<()> {
                         quote! {
                             pub const #name: &ffi::CStr = #literal;
                         }
-                    },
-                    ExtConstant::Alias(_) => {
-                        quote! {}
                     },
                 };
                 buffer.push_str(&format!("{def}"));
@@ -3183,6 +3306,22 @@ fn main() -> std::io::Result<()> {
                                 /// # Vulkan docs
                                 #[doc = #link]
                             });
+                        let cmd = commands
+                            .get(&command.name)
+                            .unwrap();
+                        let mut success_doc = vec![];
+                        let mut success_doc_links = vec![];
+                        for (i, code) in cmd.success_codes.iter().enumerate() {
+                            let code = code.trim_start_matches("VK_");
+                            success_doc.push(format!("* [`{code}`][{i}]"));
+                            success_doc_links.push(format!("[{i}]: Result::{code}"));
+                        }
+                        let success_doc = if !success_doc.is_empty() {
+                            Some(quote! {
+                                #[doc = "# Success codes"]
+                                #(#[doc = #success_doc])*
+                            })
+                        } else { None };
                         let doc = if !command.depends_on.is_empty() {
                             let dep = command.depends_on
                                 .iter()
@@ -3197,18 +3336,18 @@ fn main() -> std::io::Result<()> {
                             quote! {
                                 /// # Depends on
                                 #(#[doc = #dep])*
+                                #success_doc
                                 #fn_safety
                                 #link
                             }
                         } else {
                             quote! {
+                                #success_doc
                                 #fn_safety
                                 #link
                             }
                         };
-                        let command = commands
-                            .get(&command.name)
-                            .unwrap();
+                        let command = cmd;
                         let command = match &command.body {
                             CommandBody::Func(_) => command,
                             CommandBody::Alias(name) => {
@@ -3277,13 +3416,14 @@ fn main() -> std::io::Result<()> {
                                 }
                             }
                             #[derive(Clone)]
-                            pub struct Instance {
+                            pub struct Instance<Ext = nop::Instance> {
                                 handle: crate::vk::Instance,
                                 fp: InstanceFp,
+                                _ext: Ext,
                             }
                             impl Instance {
                                 #[inline]
-                                pub fn new(instance: &crate::Instance) -> Self {
+                                pub fn new<Ext>(instance: &crate::Instance<Ext>) -> Self {
                                     Self {
                                         handle: instance.handle(),
                                         fp: InstanceFp::load(
@@ -3292,8 +3432,11 @@ fn main() -> std::io::Result<()> {
                                                     as *const ffi::c_void
                                             },
                                         ),
+                                        _ext: nop::Instance,
                                     }
                                 }
+                            }
+                            impl<Ext> Instance<Ext> { 
                                 #[inline]
                                 pub fn handle(&self) -> crate::vk::Instance {
                                     self.handle
@@ -3303,6 +3446,31 @@ fn main() -> std::io::Result<()> {
                                     &self.fp
                                 }
                                 #(#rs_defs)*
+                            }
+                            #[cfg(feature = "ext-load-with")]
+                            impl<Ext> LoadWith for Instance<Ext>
+                                where Ext: LoadWith<Handle = crate::vk::Instance>
+                            {
+                                type Handle = crate::vk::Instance;
+                                unsafe fn load_with(
+                                    f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                                    handle: Self::Handle
+                                ) -> Self {
+                                    Self {
+                                        handle,
+                                        fp: InstanceFp::load(f),
+                                        _ext: unsafe {
+                                            Ext::load_with(f, handle)
+                                        },
+                                    }
+                                }
+                            }
+                            #[cfg(feature = "ext-load-with")]
+                            impl<Ext> Deref for Instance<Ext> {
+                                type Target = Ext;
+                                fn deref(&self) -> &Ext {
+                                    &self._ext
+                                }
                             }
                         };
                         buffer.push_str(&def.to_string());
@@ -3338,6 +3506,22 @@ fn main() -> std::io::Result<()> {
                                 /// # Vulkan docs
                                 #[doc = #link]
                             });
+                        let cmd = commands
+                            .get(&command.name)
+                            .unwrap();
+                        let mut success_doc = vec![];
+                        let mut success_doc_links = vec![];
+                        for (i, code) in cmd.success_codes.iter().enumerate() {
+                            let code = code.trim_start_matches("VK_");
+                            success_doc.push(format!("* [`{code}`][{i}]"));
+                            success_doc_links.push(format!("[{i}]: Result::{code}"));
+                        }
+                        let success_doc = if !success_doc.is_empty() {
+                            Some(quote! {
+                                #[doc = "# Success codes"]
+                                #(#[doc = #success_doc])*
+                            })
+                        } else { None };
                         let doc = if !command.depends_on.is_empty() {
                             let dep = command.depends_on
                                 .iter()
@@ -3352,18 +3536,18 @@ fn main() -> std::io::Result<()> {
                             quote! {
                                 /// # Depends on
                                 #(#[doc = #dep])*
+                                #success_doc
                                 #fn_safety
                                 #link
                             }
                         } else {
                             quote! {
+                                #success_doc
                                 #fn_safety
                                 #link
                             }
                         };
-                        let command = commands
-                            .get(&command.name)
-                            .unwrap();
+                        let command = cmd;
                         let command = match &command.body {
                             CommandBody::Func(_) => command,
                             CommandBody::Alias(name) => {
@@ -3432,13 +3616,14 @@ fn main() -> std::io::Result<()> {
                                 }
                             }
                             #[derive(Clone)]
-                            pub struct Device {
+                            pub struct Device<Ext = nop::Device> {
                                 handle: crate::vk::Device,
                                 fp: DeviceFp,
+                                _ext: Ext,
                             }
                             impl Device {
                                 #[inline]
-                                pub fn new(device: &crate::Device) -> Self {
+                                pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
                                     Self {
                                         handle: device.handle(),
                                         fp: DeviceFp::load(
@@ -3447,8 +3632,11 @@ fn main() -> std::io::Result<()> {
                                                     as *const ffi::c_void
                                             },
                                         ),
+                                        _ext: nop::Device,
                                     }
                                 }
+                            }
+                            impl<Ext> Device<Ext> {
                                 #[inline]
                                 pub fn handle(&self) -> crate::vk::Device {
                                     self.handle
@@ -3458,6 +3646,31 @@ fn main() -> std::io::Result<()> {
                                     &self.fp
                                 }
                                 #(#rs_defs)*
+                            }
+                            #[cfg(feature = "ext-load-with")]
+                            impl<Ext> LoadWith for Device<Ext>
+                                where Ext: LoadWith<Handle = crate::vk::Device>
+                            {
+                                type Handle = crate::vk::Device;
+                                unsafe fn load_with(
+                                    f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                                    handle: Self::Handle
+                                ) -> Self {
+                                    Self {
+                                        handle,
+                                        fp: DeviceFp::load(f),
+                                        _ext: unsafe {
+                                            Ext::load_with(f, handle)
+                                        },
+                                    }
+                                }
+                            }
+                            #[cfg(feature = "ext-load-with")]
+                            impl<Ext> Deref for Device<Ext> {
+                                type Target = Ext;
+                                fn deref(&self) -> &Ext {
+                                    &self._ext
+                                }
                             }
                         };
                         buffer.push_str(&def.to_string());
@@ -3469,7 +3682,15 @@ fn main() -> std::io::Result<()> {
         buffer.push('}');
     }
     let mut extension_gen = File::create("../../src/extension_gen.rs")?;
-    write!(extension_gen, "use core::ffi; use crate::vk::*; use crate::PtrOption;")?;
+    write!(extension_gen,
+"use core::ffi; use crate::vk::*;
+use crate::{{nop, PtrOption}};
+#[cfg(feature = \"ext-load-with\")]
+use {{
+    core::ops::Deref,
+    crate::LoadWith,
+}};
+")?;
     for buffer in extensions_by_prefix.values() {
         write!(extension_gen, "{buffer} }}")?;
     }
@@ -3489,16 +3710,22 @@ fn main() -> std::io::Result<()> {
         ext_counter_part: Option<TokenStream>,
     }
     instance_commands.insert("vkGetDeviceProcAddr".to_string());
-    for (cmd, table, handle, filter, filter_rs) in [
+    for (cmd, table, handle, filter, filter_rs, has_ext) in [
         (core_commands, "LibraryFp", quote!{ Library },
             ["vkGetInstanceProcAddr"].as_slice(),
             ["create_instance", "destroy_instance", "enumerate_instance_version"].as_slice(),
+            false,
         ),
         (instance_commands, "InstanceFp", quote!{ Instance },
             [].as_slice(),
-            ["create_device", "get_device_proc_addr"].as_slice(),
+            ["create_device", "destroy_instance", "get_device_proc_addr"].as_slice(),
+            true,
         ),
-        (device_commands, "DeviceFp", quote!{ Device }, [].as_slice(), [].as_slice()),
+        (device_commands, "DeviceFp", quote!{ Device },
+            [].as_slice(),
+            ["destroy_device"].as_slice(),
+            true,
+        ),
     ] {
         let mut version_tables: Vec<(u32, Vec<CoreFn>)> = vec![];
         for name in &cmd {
@@ -3577,13 +3804,28 @@ fn main() -> std::io::Result<()> {
                         #(#[doc = #success_doc_links])*
                     }
                 };
+                let deprecated =
+                    if let Some(dep) = &command.deprecated {
+                        if let Some(by) = dep {
+                            let by = format!("superseded by {by}");
+                            Some(quote! {
+                                #[deprecated = #by]
+                            })
+                        } else {
+                            Some(quote! {
+                                #[deprecated]
+                            })
+                        }
+                    } else { None };
                 rs_def = quote! {
                     #doc
+                    #deprecated
                     #rs_def
                 };
                 rs_def_get_data = rs_def_get_data.map(|def| {
                     quote! {
                         #doc
+                        #deprecated
                         #def
                     }
                 });
@@ -3687,6 +3929,7 @@ fn main() -> std::io::Result<()> {
                     }
                 }
             };
+            let ext = has_ext.then(|| quote! { <Ext> });
             let def = quote! {
                 #[derive(Clone, Copy)]
                 pub struct #name {
@@ -3704,7 +3947,7 @@ fn main() -> std::io::Result<()> {
                     }
                 }
 
-                impl crate::#handle {
+                impl #ext crate::#handle #ext {
                     #(#rs_defs)*
                 }
             };

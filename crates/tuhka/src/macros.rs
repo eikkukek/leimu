@@ -36,7 +36,7 @@ macro_rules! define_non_dispatchable_handle {
 macro_rules! define_handle {
     ($name:ident, $ty:ident, $doc_link:literal $(,)?) => {
         #[repr(transparent)]
-        #[derive(Clone, Copy, PartialEq, Eq)]
+        #[derive(Clone, Copy, PartialEq, Eq, Hash)]
         #[doc = $doc_link]
         pub struct $name(*mut u8);
         impl $name {
@@ -54,6 +54,8 @@ macro_rules! define_handle {
                 Self(x as *mut u8)
             }
         }
+        unsafe impl Send for $name {}
+        unsafe impl Sync for $name {}
         impl Default for $name {
 
             #[inline]
@@ -100,6 +102,12 @@ macro_rules! bitflags {
             #[inline]
             pub const fn contains(self, other: Self) -> bool {
                 self.0 & other.0 == other.0
+            }
+        }
+        impl ::core::fmt::Debug for $name {
+
+            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                write!(f, "0x{:x}", self.0)
             }
         }
         impl ::core::ops::BitOr for $name {
