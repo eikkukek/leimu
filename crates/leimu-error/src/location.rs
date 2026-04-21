@@ -1,13 +1,18 @@
-use core::fmt::{self, Debug, Formatter};
+use core::fmt::{self, Debug, Display};
 
-use crate::Display;
-
-#[derive(Display, Clone, Copy, PartialEq, Eq, Hash)] #[display("{0}")]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Location(&'static core::panic::Location<'static>);
+
+impl Display for Location {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 impl Debug for Location {
 
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         <core::panic::Location<'_> as Debug>::fmt(self.0, f)
     }
 }

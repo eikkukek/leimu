@@ -1,17 +1,18 @@
-use core::ops::Deref;
+use core::{
+    ops::Deref,
+    fmt::{self, Display},
+};
 
-use nox_ash::vk;
-
-use nox_threads::{
+use tuhka::vk;
+use leimu_mem::{
+    vec::{Vec32, FixedVec32},
+    vec32,
+    slot_map::SlotIndex,
+};
+use leimu_threads::{
     futures::future::RemoteHandle,
     executor::SpawnExt,
     sync::{FutureLock, SwapLock},
-};
-use nox_mem::{
-    vec::{Vec32, FixedVec32},
-    Display,
-    vec32,
-    slot_map::SlotIndex,
 };
 
 use crate::{
@@ -20,6 +21,17 @@ use crate::{
     sync::*,
     log,
 };
+
+macro_rules! impl_id_display {
+    ($name:ident) => {
+        impl Display for $name {
+
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "{}", self.0)
+            }
+        }
+    };
+}
 
 /// An identifier for a pipeline batch.
 ///
@@ -30,9 +42,10 @@ use crate::{
 /// [1]: Gpu::destroy_pipeline_batch
 /// [2]: PipelineBatchBuilder::id
 #[must_use]
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, Display)]
-#[display("{0}")]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct PipelineBatchId(SlotIndex<OnceLock<PipelineBatch>>);
+
+impl_id_display!(PipelineBatchId);
 
 impl PipelineBatchId {
 
@@ -51,9 +64,15 @@ impl PipelineBatchId {
 ///
 /// [1]: GraphicsPipeline
 #[must_use]
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, Display)]
-#[display("(batch id: {0}, pipeline index: {1})")]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct GraphicsPipelineId(PipelineBatchId, u32);
+
+impl Display for GraphicsPipelineId {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}::{}", self.0, self.1)
+    }
+}
 
 impl GraphicsPipelineId {
    
@@ -73,9 +92,15 @@ impl GraphicsPipelineId {
 /// An identifier for a [`compute pipeline`][1].
 ///
 /// [1]: ComputePipeline
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, Display)]
-#[display("(batch id: {0}, pipeline index: {1})")]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct ComputePipelineId(PipelineBatchId, u32);
+
+impl Display for ComputePipelineId {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}::{}", self.0, self.1)
+    }
+}
 
 impl ComputePipelineId {
    

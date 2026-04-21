@@ -1,8 +1,8 @@
 use core::ffi::CStr;
 
-use nox_ash::vk;
-use nox_proc::Display;
-use nox_mem::{
+use tuhka::vk;
+use leimu_core::TryExtend;
+use leimu_mem::{
     vec::Vec32,
     vec32,
 };
@@ -33,14 +33,20 @@ impl PhysicalDevice {
     ) -> Self
     {
         let queue_families = QueueFamilies::new(handle, instance);
-        let properties = unsafe { instance.ash().get_physical_device_properties(handle) };
+        let mut properties = vk::PhysicalDeviceProperties2::default();
+        unsafe { instance.get_physical_device_properties2(handle, &mut properties) };
+        let properties = properties.properties;
         let mut device_name = ([0u8; 256], 0);
         for ch in properties.device_name {
             if ch <= 0 || device_name.1 == 256 { break }
             device_name.0[device_name.1] = ch as u8;
             device_name.1 += 1;
         }
-        let memory_properties = unsafe { instance.ash().get_physical_device_memory_properties(handle) };
+        let mut memory_properties = vk::PhysicalDeviceMemoryProperties2::default();
+        unsafe { instance
+            .get_physical_device_memory_properties2(handle, &mut memory_properties)
+        };
+        let memory_properties = memory_properties.memory_properties;
         Self {
             handle,
             api_version: Version::from_u32(properties.api_version),
@@ -95,14 +101,14 @@ impl PhysicalDevice {
     }
 }
 
-#[derive(Display)]
+#[derive(Error, Debug)]
 pub(super) enum DeviceSuitability<'a> {
     Ok,
     #[display("of missing features: {0}")]
     MissingFeatures(ext::MissingDeviceFeatureError),
     #[display("of missing extensions: {0:?}")]
     MissingExtensions(Vec32<&'a CStr>),
-    #[display("Nox requires at least Vulkan version 1.1 (device version was {0})")]
+    #[display("Leimu requires at least Vulkan version 1.1 (device version was {0})")]
     OldVersion(Version),
 }
 
@@ -115,10 +121,12 @@ pub(super) fn is_device_suitable<'a>(
 {
     let mut vulkan12_features = None;
     let mut vulkan14_features = None;
-    let features = unsafe {
-        instance.ash().get_physical_device_features(physical_device.handle())
+    let mut features = vk::PhysicalDeviceFeatures2::default();
+    unsafe {
+        instance.get_physical_device_features2(physical_device.handle(), &mut features)
     };
-    if let Some(err) = attributes.required_features.missing_features(&features) {
+    let features = features.features;
+    if let Some(err) = attributes.required_features.find_missing_features(&features) {
         return Ok(DeviceSuitability::MissingFeatures(err))
     }
     let context = ext::PhysicalDeviceContext::new(
@@ -146,15 +154,21 @@ pub(super) fn is_device_suitable<'a>(
         }
     }
     let available_extensions = unsafe {
-        instance
-            .ash()
-            .enumerate_device_extension_properties(physical_device.handle())
-            .context("failed to enumerate vulkan device extensions")?
+        let mut av = vec![Default::default(); instance
+            .enumerate_device_extension_properties_len(physical_device.handle(), None)
+            .context("failed to enumerate vulkan device extensions")?.value as usize
+        ];
+        instance.enumerate_device_extension_properties(
+            physical_device.handle(),
+            None,
+            &mut av,
+        ).context("failed to enumerate vulkan device extensions")?;
+        av
     };
 
     let missing_extensions: Vec32<_> = check_ext.iter().filter_map(|&ext| {
         (!available_extensions.iter().any(|a| {
-            a.extension_name_as_c_str().unwrap_or_default() == ext
+            a.extension_name_as_cstr().unwrap_or_default() == ext
         })).then_some(ext)
     }).collect();
 
@@ -172,10 +186,13 @@ pub(crate) fn find_suitable_physical_devices(
 ) -> Result<Vec32<PhysicalDevice>>
 {
     let physical_devices = unsafe {
-        instance
-            .ash()
-            .enumerate_physical_devices()
-            .context("failed to enumerate vulkan devices")?
+        let mut res = vec![Default::default(); instance
+            .enumerate_physical_devices_len()
+            .context("failed to enumerate vulkan devices")?.value as usize
+        ];
+        instance.enumerate_physical_devices(&mut res)
+            .context("failed to enumerate vulkan devices")?;
+        res
     };
     let mut suitable = vec32![];
     suitable.try_extend(physical_devices
@@ -192,7 +209,7 @@ pub(crate) fn find_suitable_physical_devices(
                     DeviceSuitability::Ok => Some(Ok(physical_device)),
                     reason => {
                         log::warn!("Physical device {} was unsuitable because {}",
-                            physical_device.device_name, reason,
+                            physical_device.device_name(), reason,
                         );
                         None
                     }

@@ -1,4 +1,4 @@
-use nox_ash::vk;
+use tuhka::vk;
 
 use crate::gpu::prelude::*;
 
@@ -8,7 +8,7 @@ use MemoryBinderError::*;
 
 #[derive(Clone)]
 pub struct GlobalBinder {
-    device: LogicalDevice,
+    device: Device,
     optimal_memory_type_bits: u32,
     suboptimal_memory_type_bits: u32,
     optimal_host_coherency: HostCoherency,
@@ -23,7 +23,7 @@ impl GlobalBinder {
     /// - `optimal`: optimal memory properties
     /// - `suboptimal`: suboptimal memory properties
     pub fn new(
-        device: LogicalDevice,
+        device: Device,
         optimal_properties: MemoryProperties,
         suboptimal_properties: MemoryProperties,
     ) -> Self
@@ -74,7 +74,7 @@ impl GlobalBinder {
 }
 
 pub struct Memory {
-    device: LogicalDevice,
+    device: Device,
     memory: vk::DeviceMemory,
     size: DeviceSize,
     map: *mut u8,
@@ -88,7 +88,7 @@ unsafe impl Sync for Memory {}
 unsafe impl DeviceMemory for Memory {
 
     fn handle(&self) -> u64 {
-        <_ as vk::Handle>::as_raw(self.memory)
+        self.memory.as_raw()
     }
 
     fn memory_size(&self) -> u64 {
@@ -121,7 +121,7 @@ unsafe impl DeviceMemory for Memory {
                 vk::WHOLE_SIZE,
                 vk::MemoryMapFlags::from_raw(0)
             )
-        }.context("failed to map memory")?;
+        }.context("failed to map memory")?.value;
         self.map = ptr as *mut u8;
         Ok(MemoryMap {
             map: self.map,
@@ -205,7 +205,7 @@ unsafe impl MemoryBinder for GlobalBinder {
         };
         let memory = unsafe {
             self.device.allocate_memory(&allocate_info, None)
-        }.context("failed to allocate device memory")?;
+        }.context("failed to allocate device memory")?.value;
         Ok(DeviceMemoryObj::new(Memory {
             device: self.device.clone(),
             memory,

@@ -6,5 +6,3 @@ pub mod khr;
 mod macros;
 
 pub use ash::*;
-
-pub use nox_mem as mem;

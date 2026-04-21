@@ -3,8 +3,8 @@ use core::{
     fmt::{self, Debug},
 };
 
-use nox_proc::{Display, BuildStructure};
-use nox_ash::vk;
+use leimu_proc::{Display, BuildStructure};
+use tuhka::vk;
 
 use crate::{
     gpu::prelude::*,
@@ -13,7 +13,7 @@ use crate::{
 };
 
 struct Inner {
-    device: LogicalDevice,
+    device: Device,
     handle: vk::Sampler,
     create_info: SamplerCreateInfo,
 }
@@ -41,7 +41,7 @@ impl Sampler {
 
     #[inline(always)]
     fn new(
-        device: LogicalDevice,
+        device: Device,
         create_info: SamplerCreateInfo,
     ) -> Result<Self> {
         let info = vk::SamplerCreateInfo {
@@ -56,16 +56,16 @@ impl Sampler {
             anisotropy_enable: create_info.max_anisotropy.is_some() as u32,
             max_anisotropy: create_info.max_anisotropy.unwrap_or_default(),
             compare_enable: create_info.compare_op.is_some() as u32,
-            compare_op: create_info.compare_op.unwrap_or(CompareOp::Never).into(),
+            compare_op: create_info.compare_op.unwrap_or(CompareOp::NEVER).into(),
             min_lod: create_info.min_lod,
             max_lod: create_info.max_lod,
             border_color: create_info.border_color.into(),
             ..Default::default()
         };
-        let handle =unsafe {
+        let handle = unsafe {
             device.create_sampler(&info, None)
             .context("failed to create sampler")?
-        };
+        }.value;
         Ok(Self {
             inner: Arc::new(Inner { device, handle, create_info })
         })
@@ -155,7 +155,7 @@ impl SamplerCreateInfo {
 
     /// Builds the sampler, returning an error on failure.
     #[inline]
-    pub fn build(self, device: LogicalDevice) -> Result<Sampler> {
+    pub fn build(self, device: Device) -> Result<Sampler> {
         Sampler::new(device, self)
     }
 }
@@ -164,7 +164,7 @@ impl PartialEq for Sampler {
 
     #[inline(always)]
     fn eq(&self, other: &Self) -> bool {
-        self.inner.handle == other.inner.handle
+        Arc::ptr_eq(&self.inner, &other.inner)
     }
 }
 
@@ -173,7 +173,7 @@ impl Eq for Sampler {}
 impl Hash for Sampler {
 
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        self.inner.handle.hash(state);
+        Arc::as_ptr(&self.inner).hash(state);
     }
 }
 

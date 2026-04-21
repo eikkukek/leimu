@@ -1,6 +1,6 @@
 use core::hash::{self, Hash};
 
-use nox_ash::vk;
+use tuhka::vk;
 
 use crate::{
     gpu::prelude::*,
@@ -8,7 +8,7 @@ use crate::{
 };
 
 pub(super) struct Inner {
-    pub device: LogicalDevice,
+    pub device: Device,
     pub handle: vk::Pipeline,
     pub shader_set: ShaderSet,
 }
@@ -29,9 +29,13 @@ pub struct PipelineHandle {
 
 impl PipelineHandle {
 
+    /// Creates a [`PipelineHandle`] from raw parts.
+    ///
+    /// # Safety
+    /// `handle` *must* be a valid pipeline handle.
     #[inline(always)]
-    pub(super) unsafe fn new(
-        device: LogicalDevice,
+    pub unsafe fn new(
+        device: Device,
         handle: vk::Pipeline,
         shader_set: ShaderSet,
     ) -> Self {
@@ -59,7 +63,7 @@ impl PartialEq for PipelineHandle {
 
     #[inline(always)]
     fn eq(&self, other: &Self) -> bool {
-        self.handle() == other.handle()
+        Arc::ptr_eq(&self.inner, &other.inner)
     }
 }
 
@@ -69,6 +73,6 @@ impl Hash for PipelineHandle {
 
     #[inline(always)]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        self.handle().hash(state);
+        Arc::as_ptr(&self.inner).hash(state);
     }
 }

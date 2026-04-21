@@ -1,4 +1,3 @@
-mod platform;
 pub mod win;
 pub mod event_loop;
 mod attributes;
@@ -16,10 +15,9 @@ use winit::{
 use ahash::AHashSet;
 
 pub use event::Event;
-pub use platform::Platform;
 pub use globals::*;
 pub use attributes::*;
-use event::RunEvent;
+pub(crate) use event::RunEvent;
 use event_loop::{EventLoop, ActiveEventLoop, WinitActiveEventLoop};
 
 use crate::{
@@ -28,9 +26,10 @@ use crate::{
     log,
     gpu,
     win::WindowId,
+    Library,
 };
 
-pub struct Nox;
+pub struct Leimu;
 
 pub fn default_attributes() -> Attributes
 {
@@ -41,25 +40,25 @@ pub fn create_globals<'a>() -> Globals<'a> {
     Globals::new()
 }
 
-impl Nox {
+impl Leimu {
 
     #[allow(clippy::new_ret_no_self)]
     pub fn new<'a, 'b, F>(
-        platform: Platform,
-        logical_device: gpu::LogicalDevice,
+        library: Library,
+        device: gpu::Device,
         attributes: Attributes,
         globals: &'a Globals<'b>,
         event_handler: F,
-    ) -> Result<NoxRun<'a, 'b, F>>
+    ) -> Result<LeimuRun<'a, 'b, F>>
         where F: FnMut(&ActiveEventLoop, Event) -> EventResult<()>,
     {
         let event_loop = EventLoop
-            ::new(platform)
+            ::new(library)
             .context("failed to create event loop")?; 
         let (gpu, gpu_cache) = gpu::Gpu
-            ::new(&event_loop, logical_device, attributes)
+            ::new(&event_loop, device, attributes)
             .context("failed to create Gpu")?;
-        Ok(NoxRun {
+        Ok(LeimuRun {
             event_handler,
             event_loop,
             redraws_requested: AHashSet::default(),
@@ -70,7 +69,7 @@ impl Nox {
     }
 }
 
-pub struct NoxRun<'a, 'b, F>
+pub struct LeimuRun<'a, 'b, F>
     where
         F: FnMut(&ActiveEventLoop, Event) -> EventResult<()>,
 {
@@ -82,7 +81,7 @@ pub struct NoxRun<'a, 'b, F>
     gpu_cache: gpu::Cache,
 }
 
-impl<'a, 'b, F> NoxRun<'a, 'b, F>
+impl<'a, 'b, F> LeimuRun<'a, 'b, F>
     where
         F: FnMut(&ActiveEventLoop, Event) -> EventResult<()>,
 {
@@ -96,7 +95,7 @@ impl<'a, 'b, F> NoxRun<'a, 'b, F>
     }
 }
 
-impl<'a, 'b, F> ApplicationHandler<RunEvent> for NoxRun<'a, 'b, F> 
+impl<'a, 'b, F> ApplicationHandler<RunEvent> for LeimuRun<'a, 'b, F> 
     where F: FnMut(&ActiveEventLoop, Event) -> EventResult<()>,
 {
 

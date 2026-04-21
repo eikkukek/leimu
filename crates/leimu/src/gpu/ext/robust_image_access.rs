@@ -2,7 +2,7 @@
 
 use super::*;
 
-use nox_ash::ext;
+use tuhka::ext;
 
 pub struct Attributes;
 
@@ -47,7 +47,7 @@ unsafe impl DeviceExtension for Extension {
     fn register(
         &self,
         context: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
         let mut features = vk::PhysicalDeviceImageRobustnessFeatures::default();
         context.get_features(&mut features);
         if features.robust_image_access != 0 {
@@ -59,7 +59,7 @@ unsafe impl DeviceExtension for Extension {
             context.register_attribute(DeviceAttribute::new_bool(
                 Attributes::IS_ENABLED, true
             ));
-            create_extends_device_create_info_obj(vk::PhysicalDeviceImageRobustnessFeatures
+            ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceImageRobustnessFeatures
                 ::default()
                 .robust_image_access(true)
             )

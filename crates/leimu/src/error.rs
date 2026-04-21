@@ -1,4 +1,4 @@
-//! The error prelude of Nox.
+//! The error prelude of LeimLeimuu.
 //!
 //! # Includes 
 //! - [`Error`] and [`EventError`] error types.
@@ -7,10 +7,10 @@
 
 use core::{
     error,
-    fmt::{self, Debug, Formatter},
+    fmt::{self, Display, Debug, Formatter},
 };
 
-pub use nox_error::*;
+pub use leimu_error::*;
 
 use crate::{
     sync::OnceLock,
@@ -79,7 +79,7 @@ pub mod expand {
     }
 }
 
-/// The event error type of Nox.
+/// The event error type of Leimu.
 #[derive(Error)]
 #[display("{0}")]
 pub struct EventError(

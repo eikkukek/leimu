@@ -6,16 +6,15 @@ use core::{
 
 use ahash::{AHashMap, AHashSet};
 
-use nox_proc::BuildStructure;
-use nox_mem::{
+use leimu_core::{slice, TryExtend};
+use leimu_proc::{BuildStructure, Display};
+use leimu_mem::{
     vec::{Vec32, NonNullVec32, FixedVec32},
     arena::{self, Arena},
     slot_map::*,
-    slice, slice_mut,
     alloc::{Layout, dealloc, LocalAlloc},
-    Display,
 };
-use nox_ash::vk;
+use tuhka::vk;
 
 use crate::{
     gpu::prelude::*,
@@ -658,7 +657,7 @@ mod inner {
     use super::*;
 
     pub(crate) struct Inner {
-        pub device: LogicalDevice,
+        pub device: Device,
         pub handle: vk::DescriptorPool,
         pub max_sets: u32,
         pub allocated_sets: SlotMap<DescriptorSet>,
@@ -701,7 +700,7 @@ pub(crate) struct DescriptorPoolWriteGuard<'a> {
 impl DescriptorPool {
 
     pub fn new(
-        device: LogicalDevice,
+        device: Device,
         pool_sizes: impl IntoIterator<Item = (DescriptorType, u32)>,
         max_sets: u32,
         max_inline_uniform_block_bindings: u32,
@@ -756,7 +755,7 @@ impl DescriptorPool {
             device
                 .create_descriptor_pool(&info, None)
                 .context("failed to create descriptor pool")?
-        };
+        }.value;
         Ok(Self {
             inner: Arc::new(RwLock::new(inner::Inner {
                 device,

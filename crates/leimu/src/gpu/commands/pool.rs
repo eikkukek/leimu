@@ -1,8 +1,8 @@
-use nox_mem::{
+use leimu_mem::{
     vec::Vec32,
     vec32,
 };
-use nox_ash::vk;
+use tuhka::vk;
 
 use crate::{
     gpu::prelude::*,
@@ -11,7 +11,7 @@ use crate::{
 };
 
 struct Inner {
-    device: LogicalDevice,
+    device: Device,
     handle: vk::CommandPool,
 }
 
@@ -33,7 +33,7 @@ impl CommandPool {
 
     /// Creates a new command pool.
     pub fn new(
-        device: LogicalDevice,
+        device: Device,
         queue: DeviceQueue,
         is_transient: bool,
     ) -> Result<Self>
@@ -48,7 +48,7 @@ impl CommandPool {
         };
         let handle = unsafe {
             device.create_command_pool(&create_info, None)
-        }.context("failed to create command pool")?;
+        }.context("failed to create command pool")?.value;
         Ok(Self {
             handle: CommandPoolHandle {
                 inner: Arc::new(Inner {
@@ -142,7 +142,7 @@ impl CommandPool {
     /// # Safety
     /// - All allocated command buffers are reset and they *can* be overwritten by future
     ///   allocations.
-    pub unsafe fn reset(&mut self, device: &LogicalDevice) -> Result<()> {
+    pub unsafe fn reset(&mut self, device: &Device) -> Result<()> {
         unsafe {
             device.reset_command_pool(
                 self.handle.inner.handle, vk::CommandPoolResetFlags::empty(),

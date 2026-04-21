@@ -1,13 +1,13 @@
 [package]
-name = "nox-gui"
+name = "leimu-gui"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-nox-proc = { path = "../nox-proc" }
-nox = { path = "../nox" }
-nox-font = { path = "../nox-font" }
-nox-geom = { path = "../nox-geom" }
+leimu-proc = { path = "../leimu-proc" }
+leimu = { path = "../leimu" }
+leimu-font = { path = "../leimu-font" }
+leimu-geom = { path = "../leimu-geom" }
 ahash = "0.8.12"
 compact_str = { version = "0.9.0" }
 image = { version = "0.25.8" }

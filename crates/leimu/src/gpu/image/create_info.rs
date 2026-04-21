@@ -14,7 +14,6 @@ pub struct ImageCreateInfo<'a> {
     pub(super) cube_map: bool,
     pub(super) mutable_format: bool,
     pub(super) resolve_modes: FormatResolveModes,
-    pub(super) texel_block_size: DeviceSize,
 }
 
 impl<'a> ImageCreateInfo<'a> {
@@ -44,7 +43,6 @@ impl<'a> ImageCreateInfo<'a> {
             cube_map: false,
             mutable_format: false,
             resolve_modes: Default::default(),
-            texel_block_size: 0,
         }
     }
 
@@ -68,7 +66,6 @@ impl<'a> ImageCreateInfo<'a> {
         self.format = format;
         self.aspects = format.aspects();
         self.resolve_modes = format.resolve_modes();
-        self.texel_block_size = format.texel_block_size();
         self.mutable_format = mutable;
         self
     }
@@ -123,7 +120,7 @@ impl<'a> ImageCreateInfo<'a> {
     #[inline(always)]
     pub(crate) fn build(
         &self,
-        device: LogicalDevice,
+        device: Device,
         bind_memory_info: &mut vk::BindImageMemoryInfo<'static>,
     ) -> Result<ImageMeta>
     {

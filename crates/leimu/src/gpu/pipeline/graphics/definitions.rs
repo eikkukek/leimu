@@ -1,5 +1,5 @@
-use nox_proc::BuildStructure;
-use nox_ash::vk;
+use tuhka::vk;
+use leimu_proc::BuildStructure;
 
 use crate::gpu::prelude::*;
 
@@ -46,10 +46,10 @@ impl Default for StencilOpState {
 
     fn default() -> Self {
         Self {
-            fail_op: StencilOp::Keep,
-            pass_op: StencilOp::Keep,
-            depth_fail_op: StencilOp::Keep,
-            compare_op: CompareOp::Always,
+            fail_op: StencilOp::KEEP,
+            pass_op: StencilOp::KEEP,
+            depth_fail_op: StencilOp::KEEP,
+            compare_op: CompareOp::ALWAYS,
             compare_mask: 0,
             write_mask: 0,
             reference: 0,
@@ -90,7 +90,7 @@ impl Default for DepthStencilInfo {
 
     fn default() -> Self {
         Self {
-            compare_op: CompareOp::Never,
+            compare_op: CompareOp::NEVER,
             depth_bounds: None,
             stencil_test_info: None,
             write_enable: false,

@@ -2,7 +2,7 @@ mod definitions;
 mod global;
 mod linear;
 
-use nox_ash::vk;
+use tuhka::vk;
 
 use crate::{
     error::*,
@@ -99,7 +99,7 @@ mod device_obj {
 
     use super::DeviceMemory;
 
-    nox_mem::smallbox!(
+    leimu_mem::smallbox!(
         pub Obj: DeviceMemory
     );
 
@@ -109,10 +109,12 @@ mod device_obj {
 
 /// A [`DeviceMemory`] trait object.
 ///
-/// Doesn't allocate extra memory with [`std::alloc`], if the underlying memory object is less than
+/// Doesn't allocate extra memory with [`alloc`][1], if the underlying memory object is less than
 /// or equal to 46 bytes.
 ///
-/// Created with [`nox_mem::smallbox`].
+/// Created with [`leimu_mem::smallbox`].
+///
+/// [1]: core::alloc
 pub type DeviceMemoryObj = device_obj::Obj<46>;
 
 impl DeviceMemoryObj {

@@ -6,8 +6,8 @@ pub trait ImplTry {}
 ///
 /// # Example
 /// ```rust
-/// use nox_error::Context;
-/// use nox_error::Tracked;
+/// use leimu_error::Context;
+/// use leimu_error::Tracked;
 ///
 /// fallible().context_from_tracked(|orig| {
 ///     format!("error at {}", orig.or_this())

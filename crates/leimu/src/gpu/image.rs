@@ -6,18 +6,17 @@ mod view;
 
 use core::{
     ptr::NonNull,
+    fmt::{self, Display},
     marker::PhantomData,
 };
 
-use nox_ash::vk;
-
-use nox_mem::{
+use tuhka::vk;
+use leimu_mem::{
     vec::{Vec32, NonNullVec32},
     alloc::{LocalAlloc, StdAlloc, Layout},
     arena::{self, Arena},
     slot_map::SlotIndex,
-    num::Integer,
-    option::OptionExt,
+    int::Integer,
 };
 
 use {
@@ -40,7 +39,7 @@ enum MemorySource {
 }
 
 pub struct ImageMeta {
-    device: LogicalDevice,
+    device: Device,
     handle: vk::Image,
     image_views: Vec32<ImageView>,
     properties: ImageProperties,
@@ -59,7 +58,7 @@ unsafe impl Sync for ImageMeta {}
 impl ImageMeta {
 
     fn new(
-        device: LogicalDevice,
+        device: Device,
         create_info: &ImageCreateInfo<'_>,
         bind_memory_info: &mut vk::BindImageMemoryInfo<'static>,
     ) -> Result<Self>
@@ -117,7 +116,7 @@ impl ImageMeta {
         }
         let mut image_format_properties = vk::ImageFormatProperties2::default();
         unsafe {
-            device.instance().ash().get_physical_device_image_format_properties2(
+            device.instance().get_physical_device_image_format_properties2(
                 device.physical_device().handle(),
                 &vk::PhysicalDeviceImageFormatInfo2 {
                     format: create_info.format.into(),
@@ -211,10 +210,10 @@ impl ImageMeta {
         let handle = unsafe {
             device.create_image(&vk_create_info, None)
             .context("failed to create Vulkan image")?
-        };
+        }.value;
         *bind_memory_info = vk::BindImageMemoryInfo {
             image: handle,
-            memory: <_ as vk::Handle>::from_raw(memory.handle()),
+            memory: vk::DeviceMemory::from_raw(memory.handle()),
             memory_offset: memory.offset(),
             ..Default::default()
         };
@@ -223,7 +222,7 @@ impl ImageMeta {
             ::default()
             .push_next(&mut format_properties3);
         unsafe {
-            device.instance().ash().get_physical_device_format_properties2(
+            device.instance().get_physical_device_format_properties2(
                 device.physical_device().handle(),
                 create_info.format.into(),
                 &mut format_properties,
@@ -278,7 +277,7 @@ impl ImageMeta {
     }
 
     pub(crate) unsafe fn from_swapchain_image(
-        device: LogicalDevice,
+        device: Device,
         handle: vk::Image,
         dimensions: Dimensions,
         format: vk::Format,
@@ -290,14 +289,17 @@ impl ImageMeta {
             ::default()
             .push_next(&mut format_properties3);
         unsafe {
-            device.instance().ash().get_physical_device_format_properties2(
+            device.instance().get_physical_device_format_properties2(
                 device.physical_device().handle(),
                 format,
                 &mut format_properties,
             );
         }
         let format = unsafe {
-            Format::from_raw(format.as_raw())
+            ::core::mem::transmute::<
+                vk::Format,
+                Format
+            >(format)
         };
         let properties = ImageProperties {
             dimensions,
@@ -476,7 +478,7 @@ impl ImageMeta {
         let handle = unsafe {
             self.device.create_image_view(&create_info, None)
             .context("failed to create image view")?
-        };
+        }.value;
         let id = self.image_views.len();
         self.image_views.push(ImageView {
             handle,
@@ -531,7 +533,7 @@ impl ImageMeta {
     /// The range *must* be either be checked manually or the [`checked`][6] or [`image view`][7]
     /// version of this function *must* be used.
     ///
-    /// [1]: LogicalDevice::cmd_pipeline_barrier2
+    /// [1]: Device::cmd_pipeline_barrier2
     /// [2]: ImageMemoryBarrierCache
     /// [3]: ImageMemoryBarrierRange
     /// [4]: ImageMemoryBarrierCache::flush
@@ -663,7 +665,7 @@ impl ImageMeta {
     /// # Valid usage
     /// - `subresource_range` *must* be a valid [`subresource range`][5] for this image.
     ///
-    /// [1]: LogicalDevice::cmd_pipeline_barrier2
+    /// [1]: Device::cmd_pipeline_barrier2
     /// [2]: ImageMemoryBarrierCache
     /// [3]: ImageMemoryBarrierRange
     /// [4]: ImageMemoryBarrierCache::flush
@@ -693,7 +695,7 @@ impl ImageMeta {
     ///
     /// The returned [`range`][3] *must* be [`flushed`][4] and recorded, if the range is not empty.
     ///
-    /// [1]: LogicalDevice::cmd_pipeline_barrier2
+    /// [1]: Device::cmd_pipeline_barrier2
     /// [2]: ImageMemoryBarrierCache
     /// [3]: ImageMemoryBarrierRange
     /// [4]: ImageMemoryBarrierCache::flush
@@ -751,10 +753,9 @@ mod image_id_base {
     use super::*;
 
     #[must_use]
-    #[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, Display)]
-    #[display("{0}")]
+    #[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
     pub struct Id<Marker>(SlotIndex<ImageMeta>, PhantomData<Marker>)
-        where Marker: Copy;
+        where Marker:  Copy;
 
     impl<Marker> Id<Marker>
         where Marker: Copy
@@ -762,6 +763,13 @@ mod image_id_base {
 
         pub(crate) fn new(slot_index: SlotIndex<ImageMeta>) -> Self {
             Self(slot_index, PhantomData)
+        }
+    }
+
+    impl<Marker: Copy> Display for Id<Marker> {
+
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{}", self.0)
         }
     }
 

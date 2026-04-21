@@ -1,26 +1,26 @@
 use core::{
     ops::{Deref, DerefMut},
+    fmt::{self, Display},
     marker::PhantomData,
     num::NonZeroU64,
 };
 
-use nox_proc::BuildStructure;
-use nox_mem::{
+use tuhka::vk;
+use leimu_proc::BuildStructure;
+use leimu_core::slice;
+use leimu_mem::{
     alloc::LocalAlloc,
     arena::{self, Arena},
     conditional::True,
-    option::OptionExt,
-    slice,
     slot_map::SlotIndex,
     vec::{FixedVec32, NonNullVec32, Vec32},
+    int::NonZeroOption,
 };
-use nox_ash::vk;
 
 use crate::{
     gpu::{
         prelude::*,
         command_cache::PipelineCommandCache,
-        ext::push_descriptor,
     },
     error::*,
     threads::executor::block_on,
@@ -106,6 +106,7 @@ pub(super) struct DrawCall {
     pub vertex_buffers: NonNullVec32<'static, DrawBufferRange>,
 }
 
+#[derive(Default)]
 pub(crate) struct DrawCommandStorage {
     pub(super) pipelines: Vec32<PipelineHandle>,
     pub(super) pipeline_cache: PipelineCommandCache,
@@ -127,23 +128,6 @@ pub struct DrawCommandInfo<'a> {
 }
 
 impl DrawCommandStorage {
-
-    #[inline(always)]
-    pub fn new(
-        push_descriptor_device: Option<push_descriptor::Device>,
-    ) -> Self {
-        Self {
-            pipelines: Default::default(),
-            pipeline_cache: PipelineCommandCache::new(push_descriptor_device),
-            draw_calls: Default::default(),
-            command_buffer: Default::default(),
-            wait_scope: Default::default(),
-            color_formats: NonNullVec32::default(),
-            depth_format: Format::Undefined,
-            stencil_format: Format::Undefined,
-            sample_count: MsaaSamples::X1,
-        }
-    }
 
     #[inline(always)]
     pub fn reinit<Alloc>(
@@ -203,9 +187,15 @@ impl Drop for DrawCommandResource {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Display)]
-#[display("{0}")]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct DrawCommandId(pub(crate) SlotIndex<DrawCommandResource>);
+
+impl Display for DrawCommandId {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 mod state {
 
@@ -409,14 +399,14 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetLineWidth.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::LineWidth
+    /// [2]: DynamicState::LINE_WIDTH
     /// [3]: BaseDeviceFeatures::wide_lines
     /// [4]: Gpu::enabled_base_features
     pub fn set_line_width(
         &mut self,
         line_width: f32,
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::LineWidth)?;
+        self.check_dynamic_state(DynamicState::LINE_WIDTH)?;
         if !self.gpu.enabled_base_features().wide_lines && line_width != 1.0 {
             return Err(Error::just_context(format!(
                 "line width must be 1.0 if the wide lines base device feature is not enabled, given line width is {line_width}"
@@ -447,7 +437,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthBias.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::DepthBias
+    /// [2]: DynamicState::DEPTH_BIAS
     /// [3]: BaseDeviceFeatures::depth_bias_clamp
     /// [4]: Gpu::enabled_base_features
     pub fn set_depth_bias(
@@ -456,7 +446,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
         depth_bias_clamp: f32,
         depth_bias_slope_factor: f32,
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::DepthBias)?;
+        self.check_dynamic_state(DynamicState::DEPTH_BIAS)?;
         if !self.gpu.enabled_base_features().depth_bias_clamp && depth_bias_clamp != 0.0 {
             return Err(Error::just_context(format!(
                 "depth bias clamp must be 0.0 if depth bias clamp base device feature is not enabled, given depth bias clamp was {}",
@@ -486,14 +476,14 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     ///
     /// [1]: BlendFactor
     /// [2]: GraphicsPipeline
-    /// [3]: DynamicState::BlendConstants
+    /// [3]: DynamicState::BLEND_CONSTANTS
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetBlendConstants.html>
     pub fn set_blend_constants(
         &self,
         blend_constants: [f32; 4],
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::BlendConstants)?;
+        self.check_dynamic_state(DynamicState::BLEND_CONSTANTS)?;
         unsafe {
             self.gpu.device().cmd_set_blend_constants(
                 self.command_buffer,
@@ -516,13 +506,13 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthBounds.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::DepthBounds
+    /// [2]: DynamicState::DEPTH_BOUNDS
     pub fn set_depth_bounds(
         &mut self,
         min_depth_bounds: f32,
         max_depth_bounds: f32,
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::DepthBounds)?;
+        self.check_dynamic_state(DynamicState::DEPTH_BOUNDS)?;
         if min_depth_bounds > max_depth_bounds {
             return Err(Error::just_context(format!(
                 "min depth bounds {min_depth_bounds} must be less than or equal to max depth bounds {max_depth_bounds}"
@@ -562,14 +552,14 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetStencilCompareMask.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::StencilCompareMask
+    /// [2]: DynamicState::STENCIL_COMPARE_MASK
     /// [3]: StencilFaces
     pub fn set_stencil_compare_mask(
         &mut self,
         face_mask: StencilFaces,
         compare_mask: u32
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::StencilCompareMask)?;
+        self.check_dynamic_state(DynamicState::STENCIL_COMPARE_MASK)?;
         if face_mask.is_empty() {
             return Err(Error::just_context(
                 "stencil face mask must not be empty"
@@ -598,14 +588,14 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetStencilWriteMask.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::StencilWriteMask
+    /// [2]: DynamicState::STENCIL_WRITE_MASK
     /// [3]: StencilFaces
     pub fn set_stencil_write_mask(
         &mut self,
         face_mask: StencilFaces,
         write_mask: u32,
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::StencilWriteMask)?;
+        self.check_dynamic_state(DynamicState::STENCIL_WRITE_MASK)?;
         if face_mask.is_empty() {
             return Err(Error::just_context(
                 "stencil face mask must not be empty"
@@ -634,14 +624,14 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetStencilReference.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::StencilReference
+    /// [2]: DynamicState::STENCIL_REFERENCE
     /// [3]: StencilFaces
     pub fn set_stencil_reference(
         &mut self,
         face_mask: StencilFaces,
         reference: u32,
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::StencilReference)?;
+        self.check_dynamic_state(DynamicState::STENCIL_REFERENCE)?;
         if face_mask.is_empty() {
             return Err(Error::just_context(
                 "stencil face mask must not be empty"
@@ -668,13 +658,13 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCullMode.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::CullMode
+    /// [2]: DynamicState::CULL_MODE
     /// [3]: CullModes
     pub fn set_cull_mode(
         &mut self,
         cull_mode: CullModes,
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::CullMode)?;
+        self.check_dynamic_state(DynamicState::CULL_MODE)?;
         unsafe {
             self.gpu.device().cmd_set_cull_mode(
                 self.command_buffer,
@@ -694,12 +684,12 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetFrontFace.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::FrontFace
+    /// [2]: DynamicState::FRONT_FACE
     pub fn set_front_face(
         &mut self,
         front_face: FrontFace,
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::FrontFace)?;
+        self.check_dynamic_state(DynamicState::FRONT_FACE)?;
         unsafe {
             self.gpu.device().cmd_set_front_face(
                 self.command_buffer,
@@ -720,12 +710,12 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetPrimitiveTopology.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::PrimitiveTopology
+    /// [2]: DynamicState::PRIMITIVE_TOPOLOGY
     pub fn set_primitive_topology(
         &mut self,
         primitive_topology: PrimitiveTopology,
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::PrimitiveTopology)?;
+        self.check_dynamic_state(DynamicState::PRIMITIVE_TOPOLOGY)?;
         unsafe {
             self.gpu.device().cmd_set_primitive_topology(
                 self.command_buffer,
@@ -863,12 +853,12 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthTestEnable.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::DepthTestEnable
+    /// [2]: DynamicState::DEPTH_TEST_ENABLE
     pub fn set_depth_test_enable(
         &mut self,
         enabled: bool
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::DepthTestEnable)?;
+        self.check_dynamic_state(DynamicState::DEPTH_TEST_ENABLE)?;
         unsafe {
             self.gpu.device().cmd_set_depth_test_enable(
                 self.command_buffer,
@@ -888,12 +878,12 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthWriteEnable.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::DepthWriteEnable
+    /// [2]: DynamicState::DEPTH_WRITE_ENABLE
     pub fn set_depth_write_enable(
         &mut self,
         enabled: bool,
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::DepthWriteEnable)?;
+        self.check_dynamic_state(DynamicState::DEPTH_WRITE_ENABLE)?;
         unsafe {
             self.gpu.device().cmd_set_depth_write_enable(
                 self.command_buffer,
@@ -913,12 +903,12 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthCompareOp.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::DepthCompareOp
+    /// [2]: DynamicState::DEPTH_COMPARE_OP
     pub fn set_depth_compare_op(
         &mut self,
         compare_op: CompareOp,
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::DepthCompareOp)?;
+        self.check_dynamic_state(DynamicState::DEPTH_COMPARE_OP)?;
         unsafe {
             self.gpu.device().cmd_set_depth_compare_op(
                 self.command_buffer,
@@ -938,12 +928,12 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthBoundsTestEnable.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::DepthBoundsTestEnable
+    /// [2]: DynamicState::DEPTH_BOUNDS_TEST_ENABLE
     pub fn set_depth_bounds_test_enable(
         &mut self,
         enabled: bool,
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::DepthBoundsTestEnable)?;
+        self.check_dynamic_state(DynamicState::DEPTH_BOUNDS_TEST_ENABLE)?;
         unsafe {
             self.gpu.device().cmd_set_depth_bounds_test_enable(
                 self.command_buffer,
@@ -963,12 +953,12 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetStencilTestEnable.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::StencilTestEnable
+    /// [2]: DynamicState::STENCIL_TEST_ENABLE
     pub fn set_stencil_test_enable(
         &mut self,
         enabled: bool,
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::StencilTestEnable)?;
+        self.check_dynamic_state(DynamicState::STENCIL_TEST_ENABLE)?;
         unsafe {
             self.gpu.device().cmd_set_stencil_test_enable(
                 self.command_buffer,
@@ -990,7 +980,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetStencilOp.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::StencilOp
+    /// [2]: DynamicState::STENCIL_OP
     /// [3]: StencilFaces
     pub fn set_stencil_op(
         &mut self,
@@ -1000,7 +990,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
         depth_fail_op: StencilOp,
         compare_op: CompareOp,
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::StencilOp)?;
+        self.check_dynamic_state(DynamicState::STENCIL_OP)?;
         unsafe {
             self.gpu.device().cmd_set_stencil_op(
                 self.command_buffer,
@@ -1033,7 +1023,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindVertexBuffers2.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::VertexInputBindingStride
+    /// [2]: DynamicState::VERTEX_INPUT_BINDING_STRIDE
     /// [3]: BaseDeviceFeatures::robust_buffer_access
     /// [4]: ext::robustness2::Attributes::IS_ROBUST_BUFFER_ACCESS_2_ENABLED
     /// [5]: PipelineRobustnessInfo::vertex_input_behavior
@@ -1099,14 +1089,14 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
                 });
             }
             if let Some(strides) = vertex_strides {
-                self.check_dynamic_state(DynamicState::VertexInputBindingStride)?;
+                self.check_dynamic_state(DynamicState::VERTEX_INPUT_BINDING_STRIDE)?;
                 if strides.len() as u32 != n_bindings {
                     return Err(Error::just_context(format!(
                         "the number of vertex strides {} must match the number of vertex bindings {n_bindings}",
                         strides.len(),
                     )))
                 }
-            } else if self.check_dynamic_state(DynamicState::VertexInputBindingStride).is_ok() {
+            } else if self.check_dynamic_state(DynamicState::VERTEX_INPUT_BINDING_STRIDE).is_ok() {
                 return Err(Error::just_context(format!(
                     "{}{}",
                     "the dynamic state of currently bound pipeline includes vertex input binding stride, ",
@@ -1197,7 +1187,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// [4]: IndexType::index_size
     /// [5]: IndexedDrawInfo::first_index
     /// [6]: IndexedDrawInfo::index_count
-    /// [7]: DynamicState::VertexInputBindingStride
+    /// [7]: DynamicState::VERTEX_INPUT_BINDING_STRIDE
     /// [8]: BaseDeviceFeatures::robust_buffer_access
     /// [9]: ext::robustness2::Attributes::IS_ROBUST_BUFFER_ACCESS_2_ENABLED
     /// [10]: PipelineRobustnessInfo::vertex_input_behavior
@@ -1277,14 +1267,14 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
                 });
             }
             if let Some(strides) = vertex_strides {
-                self.check_dynamic_state(DynamicState::VertexInputBindingStride)?;
+                self.check_dynamic_state(DynamicState::VERTEX_INPUT_BINDING_STRIDE)?;
                 if strides.len() as u32 != n_bindings {
                     return Err(Error::just_context(format!(
                         "the number of vertex strides {} must match the number of vertex bindings {n_bindings}",
                         strides.len(),
                     )))
                 }
-            } else if self.check_dynamic_state(DynamicState::VertexInputBindingStride).is_ok() {
+            } else if self.check_dynamic_state(DynamicState::VERTEX_INPUT_BINDING_STRIDE).is_ok() {
                 return Err(Error::just_context(format!(
                     "{}{}",
                     "the dynamic state of currently bound pipeline includes vertex input binding stride, ",

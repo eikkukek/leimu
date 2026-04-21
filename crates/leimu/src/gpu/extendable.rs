@@ -5,7 +5,7 @@ use core::{
     marker::PhantomData,
 };
 
-use nox_mem::conditional::*;
+use leimu_mem::conditional::*;
 
 /// A trait for structures that extend other structures.
 ///

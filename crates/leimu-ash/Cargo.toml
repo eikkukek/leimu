@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 ash = "0.38.0"
+paste = "1.0"
 
-nox-mem = { path = "../nox-mem" }
-nox-proc = { path = "../nox-proc" }
+leimu-core = { path = "../leimu-core" }
+leimu-proc = { path = "../leimu-proc" }

@@ -1,12 +1,12 @@
 use core::{
     num::NonZeroU32,
     ops::Add,
+    fmt::{self, Display},
 };
 
-use nox_ash::vk;
-use nox_error::Display;
-use nox_proc::{BuildStructure};
-use nox_mem::option::OptionExt;
+use tuhka::vk;
+use leimu_proc::BuildStructure;
+use leimu_mem::int::NonZeroOption;
 
 use super::{
     ext::MissingDeviceFeatureError,
@@ -89,7 +89,7 @@ pub struct BaseDeviceFeatures {
 
 impl BaseDeviceFeatures {
 
-    pub(crate) fn missing_features(
+    pub(crate) fn find_missing_features(
         self,
         available: &vk::PhysicalDeviceFeatures,
     ) -> Option<MissingDeviceFeatureError>
@@ -239,8 +239,7 @@ impl From<BaseDeviceFeatures> for vk::PhysicalDeviceFeatures {
     }
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, Display, BuildStructure)]
-#[display("(x: {x}, y: {y})")]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Debug, BuildStructure)]
 pub struct Offset2D {
     pub x: i32,
     pub y: i32
@@ -268,8 +267,15 @@ impl From<Offset2D> for vk::Offset2D {
     }
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, Display)]
-#[display("(x: {x}, y: {y}, z: {z})")]
+impl Display for Offset2D {
+
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
+    }
+}
+
+#[derive(Default, Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Offset3D {
     pub x: i32,
     pub y: i32,
@@ -297,9 +303,15 @@ impl From<Offset3D> for vk::Offset3D {
     }
 }
 
+impl Display for Offset3D {
+   
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {}, {})", self.x, self.y, self.z)
+    }
+}
+
 /// Used for image dimensions and extents.
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, Display, BuildStructure)]
-#[display("({width}, {height}, {depth})")]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, BuildStructure)]
 pub struct Dimensions {
     /// The width of an image region.
     pub width: u32,
@@ -367,6 +379,17 @@ impl Dimensions {
             y: self.height,
             z: self.depth,
         }
+    }
+}
+
+impl Display for Dimensions {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {}, {})",
+            self.width,
+            self.height,
+            self.depth,
+        )
     }
 }
 
@@ -483,7 +506,7 @@ impl From<[u32; 3]> for Dimensions {
 }
 
 /// Specifies how colors are mapped.
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, BuildStructure)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, BuildStructure)]
 pub struct ComponentMapping {
     pub r: ComponentSwizzle,
     pub g: ComponentSwizzle,
@@ -506,7 +529,7 @@ impl From<ComponentMapping> for vk::ComponentMapping {
 
 /// # Vulkan docs
 /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkImageSubresourceRange.html>
-#[derive(Clone, Copy, PartialEq, Eq, Hash, BuildStructure)]
+#[derive(Clone, Copy, PartialEq, Eq, BuildStructure)]
 pub struct ImageSubresourceRange {
     /// Specifies the [aspect mask][1] of the range.
     ///
@@ -653,7 +676,7 @@ impl From<vk::ImageSubresourceRange> for ImageSubresourceRange {
     }
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, BuildStructure)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, BuildStructure)]
 pub struct ImageSubresourceLayers {
     /// Specifies the [`aspects`][1] to be copied.
     ///
@@ -742,7 +765,7 @@ impl From<ImageSubresourceLayers> for vk::ImageSubresourceLayers {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, BuildStructure)]
+#[derive(Clone, Copy, PartialEq, Eq, BuildStructure)]
 pub struct ComponentInfo {
     pub component_mapping: ComponentMapping,
     pub format: Format,
@@ -762,7 +785,7 @@ impl ComponentInfo {
     }
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, BuildStructure)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, BuildStructure)]
 pub struct ImageRange {
     pub subresource_range: ImageSubresourceRange,
     pub component_info: Option<ComponentInfo>,
@@ -836,7 +859,7 @@ impl From<Viewport> for vk::Viewport {
 /// Specifies a scissor.
 ///
 /// This is used instead of `VkRect2D`, to enforce that x >= 0 and y >= 0.
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, BuildStructure)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Debug, BuildStructure)]
 pub struct Scissor {
     pub x: u32,
     pub y: u32,
@@ -844,7 +867,7 @@ pub struct Scissor {
     pub height: u32,
 }
 
-#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Debug)]
 pub struct FormatResolveModes {
     pub color: ResolveModes,
     pub depth: ResolveModes,
@@ -872,12 +895,18 @@ pub struct ImageFormatProperties {
     pub format_features: FormatFeatures,
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, Display, BuildStructure)]
-#[display("({x}, {y}, {z})")]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Debug, BuildStructure)]
 pub struct ImageCopyOffset {
     pub x: u32,
     pub y: u32,
     pub z: u32,
+}
+
+impl Display for ImageCopyOffset {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {}, {})", self.x, self.y, self.z)
+    }
 }
 
 impl ImageCopyOffset {
@@ -929,7 +958,7 @@ impl From<ImageCopyOffset> for vk::Offset3D {
 
 pub type ImageBlitOffset = ImageCopyOffset;
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ImageBlitRegion {
     pub src_subresource: ImageSubresourceLayers,
     pub src_offsets: [ImageBlitOffset; 2],
@@ -956,14 +985,14 @@ impl From<PipelineRobustnessInfo> for vk::PipelineRobustnessCreateInfo<'_> {
         Self {
             storage_buffers: value.storage_buffer_behavior.into(),
             uniform_buffers: value.uniform_buffer_behavior.into(),
-            vertex_input: value.vertex_input_behavior.into(),
+            vertex_inputs: value.vertex_input_behavior.into(),
             images: value.image_behavior.into(),
             ..Default::default()
         }
     }
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, BuildStructure)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, BuildStructure)]
 pub struct BufferCopy {
     pub src_offset: DeviceSize,
     pub dst_offset: DeviceSize,
@@ -999,7 +1028,7 @@ impl From<BufferCopy> for vk::BufferCopy2<'_> {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, BuildStructure)]
+#[derive(Clone, Copy, PartialEq, Eq, BuildStructure)]
 pub struct ImageCopy {
     pub src_subresource: ImageSubresourceLayers,
     pub src_offset: ImageCopyOffset,
@@ -1071,7 +1100,7 @@ impl BufferImageCopy {
     /// <https://docs.vulkan.org/spec/latest/chapters/copies.html#copies-buffers-images-addressing>
     pub fn calculate_buffer_size(
         &self,
-        format_class: FormatCompatibilityClass,
+        compat: &FormatCompatibility,
         format: Format,
         aspect: ImageAspects,
         layer_count: u32,
@@ -1079,11 +1108,14 @@ impl BufferImageCopy {
     {
         let block_size =
             if let Some(plane) = aspect.plane() {
-                format.plane_formats()[plane as usize].texel_block_size()
+                format.plane_formats()[plane as usize]
+                    .compatibility()
+                    .texel_block_size()
             } else {
-                format_class.texel_block_size()
+                compat.texel_block_size()
             };
-        let block_extent = format_class.texel_block_extent();
+        let block_extent: Dimensions = compat
+            .texel_block_extent();
         let row_extent = self.buffer_row_length
             .unwrap_or_sentinel(self.image_extent.width)
             .div_ceil(block_extent.width) as DeviceSize * block_size;

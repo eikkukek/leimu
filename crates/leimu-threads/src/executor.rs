@@ -16,8 +16,8 @@ pub use futures::executor::*;
 
 use ahash::AHashMap;
 
-use nox_error::{Error, Result, Context};
-use nox_mem::collections::EntryExt;
+use leimu_error::{Error, Result, Context};
+use leimu_core::collections::EntryExt;
 
 type Fut = Pin<Box<dyn Future<Output = ()> + Send>>;
 
@@ -141,7 +141,7 @@ impl Drop for Inner {
 /// # Examples
 /// ``` rust
 ///
-/// use nox_async::{
+/// use leimu_threads::{
 ///     executor::{ThreadPool, SpawnExt, block_on},
 /// };
 ///
@@ -201,7 +201,7 @@ impl ThreadPool {
             let scheduler = sheduler.clone();
             let (tx, rx) = channel::bounded(0);
             let thread = thread::Builder::new()
-                .name(format!("nox_worker_{}", idx))
+                .name(format!("leimu_worker_{}", idx))
                 .spawn(move || {
                     block_on(worker(
                         rx,

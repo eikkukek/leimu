@@ -4,7 +4,7 @@
 
 use super::*;
 
-use nox_ash::khr;
+use tuhka::khr;
 
 
 pub struct Attributes;
@@ -37,12 +37,11 @@ unsafe impl DeviceExtension for DeviceExtensionIndexTypeUint8 {
     fn register(
         &self,
         ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
         ctx.register_attribute(DeviceAttribute::new_bool(Attributes::IS_ENABLED, true));
-        Some(create_extends_device_create_info_obj(
-            vk::PhysicalDeviceIndexTypeUint8Features
-                ::default()
-                .index_type_uint8(true)
+        Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceIndexTypeUint8Features
+            ::default()
+            .index_type_uint8(true)
         ))
     }
 

@@ -2,6 +2,7 @@ use std::time;
 
 use core::{
     ops::{Deref, DerefMut},
+    fmt::{self, Display},
     hash::{self, Hash},
     borrow::Borrow,
 };
@@ -9,7 +10,7 @@ use core::{
 use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 use winit::keyboard::{PhysicalKey, Key};
 use ahash::AHashMap;
-use nox_mem::vec::Vec32;
+use leimu_mem::vec::Vec32;
 
 use crate::{
     or_flag,
@@ -26,9 +27,15 @@ pub use winit::event::MouseButton;
 pub use winit::window::CursorIcon;
 pub use winit::monitor::MonitorHandle;
 
-#[derive(Clone, Copy, Display, Debug)]
-#[display("(window id: {0:?}, surface_id {1})")]
+#[derive(Clone, Copy, Debug)]
 pub struct WindowId(pub(super) winit::window::WindowId, pub(super) gpu::SurfaceId);
+
+impl Display for WindowId {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}+{}", self.0, self.1)
+    }
+}
 
 impl WindowId {
 
@@ -77,7 +84,7 @@ pub(super) struct WinitHandle {
 
 impl HasDisplayHandle for WinitHandle {
 
-    fn display_handle(&self) -> std::result::Result<
+    fn display_handle(&self) -> core::result::Result<
         raw_window_handle::DisplayHandle<'_>,
         raw_window_handle::HandleError
     > {

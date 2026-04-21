@@ -1,7 +1,7 @@
 use core::ptr;
 
-use nox_mem::vec::Vec32;
-use nox_ash::vk::{self, ptr_chain_iter_const, TaggedStructure};
+use leimu_mem::vec::Vec32;
+use tuhka::vk::{self, chain_in_iter};
 
 use crate::{
     sync::{*, atomic::{self, AtomicU64}},
@@ -12,8 +12,8 @@ use super::*;
 use MemoryBinderError::{self, *};
 
 struct Allocation {
-    device: LogicalDevice,
-    device_memory: nox_ash::prelude::VkResult<vk::DeviceMemory>,
+    device: Device,
+    device_memory: core::result::Result<vk::DeviceMemory, vk::Result>,
     mapped_pointer: Option<RwLock<*mut ()>>,
     used: AtomicU64,
 }
@@ -36,7 +36,7 @@ impl Allocation {
                     0, vk::WHOLE_SIZE,
                     vk::MemoryMapFlags::empty()
                 ) {
-                    Ok(p) => { *ptr = p; None },
+                    Ok(p) => { *ptr = p.value.cast(); None },
                     Err(err) => Some(err)
                 }
             })
@@ -102,7 +102,7 @@ impl Block {
     #[allow(clippy::too_many_arguments)]
     unsafe fn alloc(
         &self,
-        device: &LogicalDevice,
+        device: &Device,
         memory_requirements: &vk::MemoryRequirements2,
         block_size: DeviceSize,
         memory_type_index: u32,
@@ -123,6 +123,7 @@ impl Block {
                 mapped_pointer: (coherency != HostCoherency::None).then(|| RwLock::new(ptr::null_mut())),
                 device_memory: unsafe {
                     device.allocate_memory(&allocate_info, None)
+                    .map(|suc| suc.value)
                 },
                 used: AtomicU64::new(0),
             })
@@ -166,7 +167,7 @@ impl Block {
 }
 
 pub struct LinearBinder {
-    device: LogicalDevice,
+    device: Device,
     optimal_blocks: SwapLock<Vec32<(Vec32<Block>, u32, usize)>>,
     suboptimal_blocks: SwapLock<Vec32<(Vec32<Block>, u32, usize)>>,
     block_size: vk::DeviceSize,
@@ -176,7 +177,7 @@ pub struct LinearBinder {
 impl LinearBinder {
 
     pub fn new(
-        device: LogicalDevice,
+        device: Device,
         block_size: DeviceSize,
         optimal_properties: MemoryProperties,
         suboptimal_properties: MemoryProperties,
@@ -278,7 +279,9 @@ unsafe impl DeviceMemory for Memory {
 
     fn handle(&self) -> u64 {
         unsafe {
-            <_ as vk::Handle>::as_raw(self.allocation.device_memory.unwrap_unchecked())
+            self.allocation.device_memory
+                .unwrap_unchecked()
+                .as_raw()
         }
     }
 
@@ -348,9 +351,10 @@ unsafe impl MemoryBinder for LinearBinder {
             .physical_device()
             .limits().buffer_image_granularity;
         unsafe {
-            if let Some(dedicated_requirements) = ptr_chain_iter_const(memory_requirements)
-                .find(|ptr| (**ptr).s_type == vk::MemoryDedicatedRequirements::STRUCTURE_TYPE)
+            if let Some(dedicated_requirements) = chain_in_iter(memory_requirements)
+                .find(|_in| (**_in).s_type == vk::MemoryDedicatedRequirements::S_TYPE)
             {
+                let dedicated_requirements: *const _ = dedicated_requirements;
                 let dedicated_requirements = dedicated_requirements
                     .cast::<vk::MemoryDedicatedRequirements>()
                     .as_ref().unwrap();

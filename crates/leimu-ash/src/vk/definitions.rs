@@ -6,7 +6,7 @@ use core::{
     fmt,
 };
 
-use nox_proc::Structure;
+use leimu_proc::Structure;
 
 /// *Extracted from [`ash`] source code.*
 ///

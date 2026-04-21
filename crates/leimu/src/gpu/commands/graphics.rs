@@ -1,15 +1,15 @@
 mod structs;
 mod draw;
 
-use nox_proc::BuildStructure;
-use nox_mem::{
+use tuhka::vk;
+use leimu_proc::BuildStructure;
+use leimu_core::OptionExt;
+use leimu_mem::{
     alloc::LocalAlloc,
     vec::{NonNullVec32, FixedVec32, Vec32},
     arena::{self, ArenaGuard},
-    option::OptionExt,
     conditional::True,
 };
-use nox_ash::vk;
 
 use crate::{
     error::*,
@@ -542,9 +542,8 @@ impl<'a, 'b, 'c> ActiveRenderPass<'a, 'b, 'c>
         let cache = unsafe { &mut *self.cmd.recorder.cache().get() };
         let cache = &mut cache.graphics_command_cache;
         if cache.next_draw_command_storage >= cache.draw_storages.len() {
-            let push_descriptor_device = self.cmd.gpu.get_extension_device();
             cache.draw_storages.resize_with(cache.next_draw_command_storage + 1, || {
-                DrawCommandStorage::new(push_descriptor_device.clone())
+                Default::default()
             });
         }
         let draw_storage = &mut cache.draw_storages[cache.next_draw_command_storage as usize];

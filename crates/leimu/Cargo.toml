@@ -2,22 +2,22 @@
 name = "leimu"
 version = "0.1.0"
 edition = "2024"
-description = "Modern and faithful Vulkan interface"
+description = "Modern and faithful Vulkan interface."
 license = "MIT or Apache-2.0"
-repository = "https://github.com/eikkukek/nox"
+repository = "https://github.com/eikkukek/leimu"
 readme = "README.md"
 keywords = ["gpu", "graphics", "vulkan"]
 
 [dependencies]
-nox-spirv = { path = "../nox-spirv" }
-nox-mem = { path = "../nox-mem" }
-nox-proc = { path = "../nox-proc" }
-nox-error = { path = "../nox-error" }
-nox-log = { path = "../nox-log" }
-nox-threads = { path = "../nox-threads" }
-nox-ash = { path = "../nox-ash" }
+tuhka = { path = "../tuhka", features = ["window", "ext-load-with"] }
+leimu-core = { path = "../leimu-core" }
+leimu-spirv = { path = "../leimu-spirv" }
+leimu-mem = { path = "../leimu-mem" }
+leimu-proc = { path = "../leimu-proc" }
+leimu-error = { path = "../leimu-error" }
+leimu-log = { path = "../leimu-log" }
+leimu-threads = { path = "../leimu-threads" }
 
-ash-window = "0.13.0"
 raw-window-handle = "0.6.0"
 parking_lot = "0.12.5"
 shaderc = "0.9.1"

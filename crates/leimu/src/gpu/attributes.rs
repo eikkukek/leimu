@@ -3,7 +3,7 @@ use {
         time::Duration,
         num::NonZeroU32,
     },
-    nox_mem::{
+    leimu_mem::{
         vec::Vec32,
         vec32,
     },

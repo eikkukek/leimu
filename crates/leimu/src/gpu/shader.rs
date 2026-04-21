@@ -7,19 +7,19 @@ use core::{
     ptr::NonNull,
 };
 
-use nox_ash::vk;
+use tuhka::vk;
 
-use nox_spirv::{
+use leimu_spirv::{
     reflect::{self, Reflector, ResourceType},
     Module,
     op,
 };
-use nox_mem::{
+use leimu_mem::{
     alloc::{LocalAllocExt, StdAlloc},
     vec::Vec32,
     vec32,
 };
-use nox_threads::futures::{
+use leimu_threads::futures::{
     future::RemoteHandle,
 };
 
@@ -333,7 +333,7 @@ impl PartialEq for DescriptorSetLayoutBinding {
 
 impl Eq for DescriptorSetLayoutBinding {}
 
-impl From<DescriptorSetLayoutBinding> for vk::DescriptorSetLayoutBinding<'_> {
+impl From<DescriptorSetLayoutBinding> for vk::DescriptorSetLayoutBinding {
 
     #[inline(always)]
     fn from(value: DescriptorSetLayoutBinding) -> Self {

@@ -1,9 +1,9 @@
-use nox_mem::{
+use tuhka::vk;
+use leimu_mem::{
     vec::{FixedVec32, Vec32},
     alloc::LocalAlloc,
     arena,
 };
-use nox_ash::vk;
 
 use crate::{
     gpu::prelude::*,

@@ -2,14 +2,14 @@ use core::ffi::CStr;
 
 use ahash::{AHashSet, AHashMap};
 
-use nox_mem::{
+use leimu_core::OptionExt;
+use leimu_mem::{
     vec::{Vec32, FixedVec32, NonNullVec32},
     alloc::LocalAlloc,
     arena::{self, ArenaGuard},
-    option::OptionExt,
     conditional::True,
 };
-use nox_ash::vk;
+use tuhka::vk;
 
 use crate::{
     gpu::prelude::*,
@@ -340,11 +340,11 @@ impl PushDescriptorBindingsCache {
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdPushDescriptorSet2.html>
     ///
-    /// [1]: ext::push_descriptor::Device::cmd_push_descriptor_set2
+    /// [1]: tuhka::Device::cmd_push_descriptor_set2
     #[inline(always)]
     pub unsafe fn push_descriptor_sets(
         &mut self,
-        device: &ext::push_descriptor::Device,
+        device: &VkDevice,
         command_buffer: CommandBuffer,
         pipeline_layout: vk::PipelineLayout,
     ) {
@@ -385,24 +385,12 @@ pub struct PushDescriptorBindingCall {
 
 #[derive(Default)]
 pub struct PipelineCommandCache {
-    pub push_descriptor_device: Option<ext::push_descriptor::Device>,
     pub descriptor_set_binds: Vec32<DescriptorSetBindCall>,
     pub push_descriptor_binding_calls: Vec32<PushDescriptorBindingCall>,
     pub push_descriptor_binding_cache: PushDescriptorBindingsCache,
 }
 
 impl PipelineCommandCache {
-
-    pub fn new(push_descriptor_device: Option<ext::push_descriptor::Device>) -> Self {
-        Self {
-            push_descriptor_device,
-            ..Default::default()
-        }
-    }
-
-    pub(crate) fn init(&mut self, device: Option<ext::push_descriptor::Device>) {
-        self.push_descriptor_device = device;
-    }
 
     /// Resets the cache.
     ///

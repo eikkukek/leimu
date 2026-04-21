@@ -2,7 +2,7 @@ use core::{
     num::NonZeroU64,
 };
 
-use nox_ash::vk;
+use tuhka::vk;
 
 use crate::{
     gpu::prelude::*,
@@ -48,7 +48,7 @@ impl<'a> BufferCreateInfo<'a> {
 
     pub(crate) fn build(
         &self,
-        device: LogicalDevice,
+        device: Device,
         bind_memory_info: &mut vk::BindBufferMemoryInfo<'static>,
     ) -> error::Result<BufferMeta> {
         BufferMeta::new(device, self, bind_memory_info)

@@ -1,12 +1,11 @@
 [package]
-name = "nox-threads"
+name = "leimu-threads"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-nox-mem = { path = "../nox-mem" }
-nox-alloc = { path = "../nox-alloc" }
-nox-error = { path = "../nox-error" }
+leimu-core = { path = "../leimu-core" }
+leimu-error = { path = "../leimu-error" }
 
 futures = "0.3.0"
 crossbeam = "0.8.4"

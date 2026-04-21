@@ -1,31 +1,46 @@
-use nox_ash::vk;
+use core::fmt::{self, Display};
 
-use nox_proc::Display;
-use nox_spirv::op;
+use tuhka::vk;
 
+use leimu_spirv::op;
+
+use crate::bitflags;
 use crate::gpu::prelude::*;
 
-nox_ash::ash_style_enum!(
+bitflags! {
     /// A bitmask of [`shader stages`][1].
     ///
     /// [1]: ShaderStage
-    #[flags(Flags32)]
     #[default = Self::empty()]
-    pub enum ShaderStageFlags {
-        #[display("vertex")]
+    pub struct ShaderStageFlags: Flags32 {
         VERTEX = vk::ShaderStageFlags::VERTEX.as_raw(),
-        #[display("tessellation control")]
         TESSELLATION_CONTROL = vk::ShaderStageFlags::TESSELLATION_CONTROL.as_raw(),
-        #[display("tessellation evaluation")]
         TESSELLATION_EVALUATION = vk::ShaderStageFlags::TESSELLATION_EVALUATION.as_raw(),
-        #[display("geometry")]
         GEOMETRY = vk::ShaderStageFlags::GEOMETRY.as_raw(),
-        #[display("fragment")]
         FRAGMENT = vk::ShaderStageFlags::FRAGMENT.as_raw(),
-        #[display("compute")]
         COMPUTE = vk::ShaderStageFlags::COMPUTE.as_raw(),
+        /// Provided by VK_KHR_ray_tracing_pipeline.
+        RAYGEN_KHR = vk::ShaderStageFlags::RAYGEN_KHR.as_raw(),
+        /// Provided by VK_KHR_ray_tracing_pipeline.
+        ANY_HIT_KHR = vk::ShaderStageFlags::ANY_HIT_KHR.as_raw(),
+        /// Provided by VK_KHR_ray_tracing_pipeline.
+        CLOSEST_HIT_KHR = vk::ShaderStageFlags::CLOSEST_HIT_KHR.as_raw(),
+        /// Provided by VK_KHR_ray_tracing_pipeline.
+        MISS_KHR = vk::ShaderStageFlags::MISS_KHR.as_raw(),
+        /// Provided by VK_KHR_ray_tracing_pipeline.
+        INTERSECTION_KHR = vk::ShaderStageFlags::INTERSECTION_KHR.as_raw(),
+        /// Provided by VK_KHR_ray_tracing_pipeline.
+        CALLABLE_KHR = vk::ShaderStageFlags::CALLABLE_KHR.as_raw(),
+        /// Provided by VK_EXT_mesh_shader
+        TASK_EXT = vk::ShaderStageFlags::TASK_EXT.as_raw(),
+        /// Provided by VK_EXT_mesh_shader
+        MESH_EXT = vk::ShaderStageFlags::MESH_EXT.as_raw(),
+        /// Provided by VK_HUAWEI_subpass_shading
+        SUBPASS_SHADING_HUAWEI = vk::ShaderStageFlags::SUBPASS_SHADING_HUAWEI.as_raw(),
+        /// Provided by VK_HUAWEI_subpass_shading
+        CLUSTER_CULLING_HUAWEI = vk::ShaderStageFlags::CLUSTER_CULLING_HUAWEI.as_raw(),
     }
-);
+}
 
 impl ShaderStageFlags {
 
@@ -56,20 +71,52 @@ impl ShaderStageFlags {
 
 /// An enumeration of all supported shader stages.
 #[repr(u32)]
-#[derive(Display, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ShaderStage {
-    #[display("vertex")]
     Vertex = ShaderStageFlags::VERTEX.as_raw(),
-    #[display("tessellation control")]
-    TesellationControl = ShaderStageFlags::TESSELLATION_CONTROL.as_raw(),
-    #[display("tessellation evaluation")]
-    TesellationEvaluation = ShaderStageFlags::TESSELLATION_EVALUATION.as_raw(),
-    #[display("geometry")]
+    TessellationControl = ShaderStageFlags::TESSELLATION_CONTROL.as_raw(),
+    TessellationEvaluation = ShaderStageFlags::TESSELLATION_EVALUATION.as_raw(),
     Geometry = ShaderStageFlags::GEOMETRY.as_raw(),
-    #[display("fragment")]
     Fragment = ShaderStageFlags::FRAGMENT.as_raw(),
-    #[display("compute")]
     Compute = ShaderStageFlags::COMPUTE.as_raw(),
+    /// Provided by VK_KHR_ray_tracing_pipeline.
+    RaygenKHR = vk::ShaderStageFlags::RAYGEN_KHR.as_raw(),
+    /// Provided by VK_KHR_ray_tracing_pipeline.
+    AnyHitKHR = vk::ShaderStageFlags::ANY_HIT_KHR.as_raw(),
+    /// Provided by VK_KHR_ray_tracing_pipeline.
+    ClosestHitKHR = vk::ShaderStageFlags::CLOSEST_HIT_KHR.as_raw(),
+    /// Provided by VK_KHR_ray_tracing_pipeline.
+    MissKHR = vk::ShaderStageFlags::MISS_KHR.as_raw(),
+    /// Provided by VK_KHR_ray_tracing_pipeline.
+    IntersectionKHR = vk::ShaderStageFlags::INTERSECTION_KHR.as_raw(),
+    /// Provided by VK_KHR_ray_tracing_pipeline.
+    CallableKHR = vk::ShaderStageFlags::CALLABLE_KHR.as_raw(),
+    /// Provided by VK_EXT_mesh_shader
+    TaskEXT = vk::ShaderStageFlags::TASK_EXT.as_raw(),
+    /// Provided by VK_EXT_mesh_shader
+    MeshEXT = vk::ShaderStageFlags::MESH_EXT.as_raw(),
+}
+
+impl Display for ShaderStage {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Vertex => write!(f, "vertex"),
+            Self::TessellationControl => write!(f, "tessellation control"),
+            Self::TessellationEvaluation => write!(f, "tessellation evaluation"),
+            Self::Geometry => write!(f, "geometry"),
+            Self::Fragment => write!(f, "fragment"),
+            Self::Compute => write!(f, "compute"),
+            Self::RaygenKHR => write!(f, "raygen"),
+            Self::AnyHitKHR => write!(f, "any hit"),
+            Self::ClosestHitKHR => write!(f, "closest hit"),
+            Self::MissKHR => write!(f, "miss"),
+            Self::IntersectionKHR => write!(f, "intersection"),
+            Self::CallableKHR => write!(f, "callable"),
+            Self::TaskEXT => write!(f, "task"),
+            Self::MeshEXT => write!(f, "mesh"),
+        }
+    }
 }
 
 impl ShaderStage {
@@ -109,11 +156,19 @@ impl From<ShaderStage> for shaderc::ShaderKind {
     fn from(value: ShaderStage) -> Self {
         match value {
             ShaderStage::Vertex => Self::Vertex,
-            ShaderStage::TesellationControl => Self::TessControl,
-            ShaderStage::TesellationEvaluation => Self::TessEvaluation,
+            ShaderStage::TessellationControl => Self::TessControl,
+            ShaderStage::TessellationEvaluation => Self::TessEvaluation,
             ShaderStage::Geometry => Self::Geometry,
             ShaderStage::Fragment => Self::Fragment,
             ShaderStage::Compute => Self::Compute,
+            ShaderStage::RaygenKHR => Self::RayGeneration,
+            ShaderStage::AnyHitKHR => Self::AnyHit,
+            ShaderStage::MissKHR => Self::Miss,
+            ShaderStage::ClosestHitKHR => Self::ClosestHit,
+            ShaderStage::IntersectionKHR => Self::Intersection,
+            ShaderStage::CallableKHR => Self::Callable,
+            ShaderStage::TaskEXT => Self::Task,
+            ShaderStage::MeshEXT => Self::Mesh,
         }
     }
 }
@@ -123,20 +178,28 @@ impl From<ShaderStage> for op::ExecutionModel {
     #[inline]
     fn from(value: ShaderStage) -> Self {
         match value {
-            ShaderStage::Vertex => op::ExecutionModel::VERTEX,
-            ShaderStage::TesellationControl => op::ExecutionModel::TESSELLATION_CONTROL,
-            ShaderStage::TesellationEvaluation => op::ExecutionModel::TESSELLATION_EVALUATION,
-            ShaderStage::Geometry => op::ExecutionModel::GEOMETRY,
-            ShaderStage::Fragment => op::ExecutionModel::FRAGMENT,
-            ShaderStage::Compute => op::ExecutionModel::KERNEL,
+            ShaderStage::Vertex => Self::VERTEX,
+            ShaderStage::TessellationControl => Self::TESSELLATION_CONTROL,
+            ShaderStage::TessellationEvaluation => Self::TESSELLATION_EVALUATION,
+            ShaderStage::Geometry => Self::GEOMETRY,
+            ShaderStage::Fragment => Self::FRAGMENT,
+            ShaderStage::Compute => Self::KERNEL,
+            ShaderStage::RaygenKHR => Self::RAY_GENERATION_KHR,
+            ShaderStage::AnyHitKHR => Self::ANY_HIT_KHR,
+            ShaderStage::MissKHR => Self::MISS_KHR,
+            ShaderStage::ClosestHitKHR => Self::CLOSEST_HIT_KHR,
+            ShaderStage::IntersectionKHR => Self::INTERSECTION_KHR,
+            ShaderStage::CallableKHR => Self::CALLABLE_KHR,
+            ShaderStage::TaskEXT => Self::TASK_EXT,
+            ShaderStage::MeshEXT => Self::MESH_EXT,
         }
     }
 }
 
 #[repr(i32)]
-#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DescriptorType {
-    /// A type for situations where a supported desriptor type couldn't be determined
+    /// Indicates that a descriptor type is not enumerated in [`DescriptorType`].
     Unknown = -1,
     /// A type associated with a [`Sampler`].
     ///
@@ -147,7 +210,6 @@ pub enum DescriptorType {
     /// Glsl: `uniform sampler ...`
     ///
     /// [1]: DescriptorInfos::images
-    #[display("sampler")]
     Sampler = vk::DescriptorType::SAMPLER.as_raw(),
     /// A type associated with a sampled image.
     ///
@@ -159,7 +221,6 @@ pub enum DescriptorType {
     ///
     /// [1]: DescriptorInfos::images
     /// [2]: ImageUsages::SAMPLED
-    #[display("sampled image")]
     SampledImage = vk::DescriptorType::SAMPLED_IMAGE.as_raw(),
     /// A type that combines both a [`Sampler`] and a sampled image.
     ///
@@ -171,7 +232,6 @@ pub enum DescriptorType {
     ///
     /// [1]: DescriptorInfos::images
     /// [2]: ImageUsages::SAMPLED
-    #[display("combined image sampler")]
     CombinedImageSampler = vk::DescriptorType::COMBINED_IMAGE_SAMPLER.as_raw(),
     /// A type associated with an image that can be used for load, store and atomic operations.
     ///
@@ -183,7 +243,6 @@ pub enum DescriptorType {
     ///
     /// [1]: DescriptorInfos::images
     /// [2]: ImageUsages::STORAGE
-    #[display("storage image")]
     StorageImage = vk::DescriptorType::STORAGE_IMAGE.as_raw(),
     /// A type associated with a buffer that can be used for load operations.
     ///
@@ -195,7 +254,6 @@ pub enum DescriptorType {
     ///
     /// [1]: DescriptorInfos::buffers
     /// [2]: BufferUsages::UNIFORM_BUFFER
-    #[display("uniform buffer")]
     UniformBuffer = vk::DescriptorType::UNIFORM_BUFFER.as_raw(),
     /// A type associated with a buffer that can be used for load, store and atomic operations.
     ///
@@ -207,7 +265,6 @@ pub enum DescriptorType {
     ///
     /// [1]: DescriptorInfos::buffers
     /// [2]: BufferUsages::STORAGE_BUFFER
-    #[display("storage buffer")]
     StorageBuffer = vk::DescriptorType::STORAGE_BUFFER.as_raw(),
     /// A type associated with a buffer and a buffer view that can be used for image sampling
     /// operations.
@@ -220,7 +277,6 @@ pub enum DescriptorType {
     ///
     /// [1]: DescriptorInfos::buffers
     /// [2]: BufferUsages::UNIFORM_TEXEL_BUFFER
-    #[display("uniform texel buffer")]
     UniformTexelBuffer = vk::DescriptorType::UNIFORM_TEXEL_BUFFER.as_raw(),
     /// A type associated with a buffer and a buffer view that can be used for image load,
     /// store and atomic operations.
@@ -233,7 +289,6 @@ pub enum DescriptorType {
     ///
     /// [1]: DescriptorInfos::buffers
     /// [2]: BufferUsages::STORAGE_TEXEL_BUFFER
-    #[display("storage texel buffer")]
     StorageTexelBuffer = vk::DescriptorType::STORAGE_TEXEL_BUFFER.as_raw(),
     /// A type similar to [`DescriptorType::UniformBuffer`] where it's storage comes directly from
     /// the descriptor set rather than from a separate buffer.
@@ -245,7 +300,6 @@ pub enum DescriptorType {
     /// Glsl: `uniform struct UBO { ... } ubo`
     ///
     /// [1]: DescriptorInfos::inline_uniform_block
-    #[display("inline uniform block")]
     InlineUniformBlock = vk::DescriptorType::INLINE_UNIFORM_BLOCK.as_raw(),
     /// A type used for input attachments, which allows render passes to read earlier rendering
     /// results within the same pass.
@@ -261,7 +315,6 @@ pub enum DescriptorType {
     ///
     /// [1]: DescriptorInfos::images
     /// [2]: ImageUsages::INPUT_ATTACHMENT
-    #[display("input attachment")]
     InputAttachment = vk::DescriptorType::INPUT_ATTACHMENT.as_raw(),
 }
 
@@ -386,6 +439,25 @@ impl DescriptorType {
                 Some(ShaderImageLayout::Attachment(AttachmentImageLayout::RenderingLocalRead { is_color: true, }))
             },
             _ => None,
+        }
+    }
+}
+
+impl Display for DescriptorType {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Unknown => write!(f, "unknown"),
+            Self::Sampler => write!(f, "sampler"),
+            Self::SampledImage => write!(f, "sampled image"),
+            Self::CombinedImageSampler => write!(f, "combined image sampler"),
+            Self::StorageImage => write!(f, "storage image"),
+            Self::UniformBuffer => write!(f, "uniform buffer"),
+            Self::StorageBuffer => write!(f, "storage buffer"),
+            Self::UniformTexelBuffer => write!(f, "uniform texel buffer"),
+            Self::StorageTexelBuffer => write!(f, "storage texel buffer"),
+            Self::InlineUniformBlock => write!(f, "inline uniform block"),
+            Self::InputAttachment => write!(f, "input attachment"),
         }
     }
 }

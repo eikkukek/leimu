@@ -1,6 +1,6 @@
 use super::*;
 
-use nox_ash::{vk, khr, ext};
+use tuhka::{vk, khr, ext};
 
 #[derive(Clone, Copy)]
 struct TimelineSemaphoreExtension;
@@ -24,8 +24,8 @@ unsafe impl DeviceExtension for TimelineSemaphoreExtension {
     fn register(
         &self,
         _ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
-        Some(create_extends_device_create_info_obj(vk::PhysicalDeviceTimelineSemaphoreFeatures
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
+        Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceTimelineSemaphoreFeatures
             ::default()
             .timeline_semaphore(true)
         ))
@@ -68,7 +68,7 @@ unsafe impl DeviceExtension for ShaderViewportIndexLayerExtension {
     fn register(
         &self,
         ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
         if ctx.api_version() >= Version::VULKAN_API_VERSION_1_2 {
             let features = ctx.vulkan_12_features();
             features.shader_output_viewport_index = vk::TRUE;
@@ -98,7 +98,7 @@ unsafe impl DeviceExtension for CreateRenderPass2Extension {
     fn register(
         &self,
         _ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
         None
     }
 
@@ -123,7 +123,7 @@ unsafe impl DeviceExtension for DepthStencilResolveExtension {
     fn register(
         &self,
         _ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
         None
     }
 
@@ -154,8 +154,8 @@ unsafe impl DeviceExtension for DynamicRenderingExtension {
     fn register(
         &self,
         _ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
-        Some(create_extends_device_create_info_obj(vk::PhysicalDeviceDynamicRenderingFeatures
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
+        Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceDynamicRenderingFeatures
             ::default()
             .dynamic_rendering(true)
         ))
@@ -182,7 +182,7 @@ unsafe impl DeviceExtension for FormatFeatureFlags2Extension {
     fn register(
         &self,
         _ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
         None
     }
     
@@ -217,9 +217,9 @@ unsafe impl DeviceExtension for ExtendedDynamicStateExtension {
     fn register(
         &self,
         ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
         (ctx.api_version() < Version::VULKAN_API_VERSION_1_3).then(||
-            create_extends_device_create_info_obj(vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+            ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
                 ::default()
                 .extended_dynamic_state(true)
             )
@@ -247,7 +247,7 @@ unsafe impl DeviceExtension for CopyCommands2Extension {
     fn register(
         &self,
         _ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
         None
     }
 
@@ -278,8 +278,8 @@ unsafe impl DeviceExtension for Synchronization2Extension {
     fn register(
         &self,
         _ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
-        Some(create_extends_device_create_info_obj(vk::PhysicalDeviceSynchronization2Features
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
+        Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceSynchronization2Features
             ::default().synchronization2(true)
         ))
     }
@@ -311,8 +311,8 @@ unsafe impl DeviceExtension for Maintenance4Extension {
     fn register(
         &self,
         _ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
-        Some(create_extends_device_create_info_obj(vk::PhysicalDeviceMaintenance4Features
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
+        Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceMaintenance4Features
             ::default()
             .maintenance4(true)
         ))
@@ -345,8 +345,8 @@ unsafe impl DeviceExtension for DynamicRenderingLocalReadExtension {
     fn register(
         &self,
         _ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
-        Some(create_extends_device_create_info_obj(vk::PhysicalDeviceDynamicRenderingLocalReadFeatures
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
+        Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceDynamicRenderingLocalReadFeatures
             ::default().dynamic_rendering_local_read(true)
         ))
     }
@@ -378,8 +378,8 @@ unsafe impl DeviceExtension for Maintenance5Extension {
     fn register(
         &self,
         _ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
-        Some(create_extends_device_create_info_obj(vk::PhysicalDeviceMaintenance5Features
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
+        Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceMaintenance5Features
             ::default()
             .maintenance5(true)
         ))
@@ -412,8 +412,8 @@ unsafe impl DeviceExtension for Maintenance6Extension {
     fn register(
         &self,
         _ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
-        Some(create_extends_device_create_info_obj(vk::PhysicalDeviceMaintenance6Features
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
+        Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceMaintenance6Features
             ::default()
             .maintenance6(true)
         ))
@@ -440,7 +440,7 @@ unsafe impl DeviceExtension for SwapchainExtension {
     fn register(
         &self,
         _ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
         None
     }
 
@@ -471,8 +471,8 @@ unsafe impl DeviceExtension for PresentId2Extension {
     fn register(
         &self,
         _ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
-        Some(create_extends_device_create_info_obj(vk::PhysicalDevicePresentId2FeaturesKHR
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
+        Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDevicePresentId2FeaturesKHR
             ::default()
             .present_id2(true)
         ))
@@ -505,8 +505,8 @@ unsafe impl DeviceExtension for PresentWait2Extension {
     fn register(
         &self,
         _ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
-        Some(create_extends_device_create_info_obj(vk::PhysicalDevicePresentWait2FeaturesKHR
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
+        Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDevicePresentWait2FeaturesKHR
             ::default()
             .present_wait2(true)
         ))

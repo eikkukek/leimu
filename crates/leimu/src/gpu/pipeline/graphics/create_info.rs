@@ -1,4 +1,4 @@
-use nox_mem::{
+use leimu_mem::{
     vec::NonNullVec32,
     arena,
 };
@@ -585,7 +585,7 @@ impl<Meta: Send + Sync> base::Template<Meta> {
         }
 
         match self.robustness_info.image_behavior {
-            PipelineRobustnessImageBehavior::RobustImageAccess => {
+            PipelineRobustnessImageBehavior::ROBUST_IMAGE_ACCESS => {
                 if !gpu
                     .get_device_attribute(ext::robust_image_access::Attributes::IS_SUPPORTED)
                     .bool().unwrap_or_default()
@@ -595,7 +595,7 @@ impl<Meta: Send + Sync> base::Template<Meta> {
                     ))
                 }
             },
-            PipelineRobustnessImageBehavior::RobustImageAccess2 => {
+            PipelineRobustnessImageBehavior::ROBUST_IMAGE_ACCESS2 => {
                 if !gpu
                     .get_device_attribute(ext::robustness2::Attributes::IS_ROBUST_IMAGE_ACCESS_2_SUPPORTED)
                     .bool().unwrap_or_default()
@@ -614,7 +614,7 @@ impl<Meta: Send + Sync> base::Template<Meta> {
                 self.robustness_info.vertex_input_behavior,
             ]
         {
-            if behavior == PipelineRobustnessBufferBehavior::RobustBufferAccess2 &&
+            if behavior == PipelineRobustnessBufferBehavior::ROBUST_BUFFER_ACCESS2 &&
                 !gpu.get_device_attribute(ext::robustness2::Attributes::IS_ROBUST_BUFFER_ACCESS_2_SUPPORTED)
                     .bool().unwrap_or_default()
             {

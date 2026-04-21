@@ -1,5 +1,5 @@
-use nox_proc::BuildStructure;
-use nox_ash::vk;
+use leimu_proc::BuildStructure;
+use tuhka::vk;
 
 use crate::gpu::prelude::*;
 

@@ -171,7 +171,7 @@ impl<T, IndexType> Display for SlotIndex<T, IndexType>
 
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "(version: {}, index {})", self.version, self.index)
+        write!(f, "({}, {})", self.version, self.index)
     }
 }
 

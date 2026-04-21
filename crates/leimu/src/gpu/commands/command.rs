@@ -1,19 +1,22 @@
-use core::ptr::NonNull;
+use core::{
+    ptr::NonNull,
+    fmt::{self, Display},
+};
 
 use ahash::{AHashMap, AHashSet};
 
-use nox_mem::{
+use leimu_mem::{
     alloc::LocalAlloc,
     arena,
     vec::{Vec32, NonNullVec32, FixedVec32},
     slot_map::*,
-    Display,
     conditional::True,
     vec32,
 };
-use nox_ash::{vk, ash_style_enum};
+use tuhka::vk;
 
 use crate::{
+    bitflags,
     error::*,
     gpu::prelude::*
 };
@@ -54,13 +57,13 @@ pub trait NewCommands {
 /// There are a multitude of safety considerations when implementing this trait yourself.
 ///
 /// Resources need to be handled with proper [`pipeline barriers`][4], command buffers need to be
-/// recorded with proper validation and the implementation needs to fit in the Nox [`command recording`][1]
+/// recorded with proper validation and the implementation needs to fit in the Leimu [`command recording`][1]
 /// scheme.
 ///
 /// [1]: CommandRecorder
 /// [2]: https://docs.vulkan.org/refpages/latest/refpages/source/VkCommandBuffer.html
 /// [3]: https://docs.vulkan.org/refpages/latest/refpages/source/vkQueueSubmit2.html
-/// [4]: LogicalDevice::cmd_pipeline_barrier2
+/// [4]: Device::cmd_pipeline_barrier2
 pub unsafe trait Commands<'a, 'b>: Sized
 {
     fn add_signal_semaphore(
@@ -124,34 +127,35 @@ pub enum CommandOrdering {
     Strict,
 }
 
-ash_style_enum!(
+bitflags!(
     /// Specifies what kind of accesses to a resource will be made when recording commands.
-    #[flags(Flags64)]
-    pub enum ExplicitAccess {
+    pub struct ExplicitAccess: Flags64 {
         /// Specifies no accesses to a resource.
-        #[display("none")]
         NONE = 0x0,
         /// Specifies that a resource will be read from in a shader.
-        #[display("shader read")]
         SHADER_READ = vk::AccessFlags2::SHADER_READ.as_raw(),
         /// Specifies that a resource will be written to in a shader.
-        #[display("shader write")]
         SHADER_WRITE = vk::AccessFlags2::SHADER_WRITE.as_raw(),
         /// Specifies that the resource will be read from and writen to in a shader.
-        #[display("shader read and write")]
         SHADER_READ_AND_WRITE =
             Self::SHADER_READ.as_raw() |
             Self::SHADER_WRITE.as_raw(),
+        /// Specifies that the resource will be used for color attachment read operations.
+        COLOR_ATTACHMENT_READ = vk::AccessFlags2::COLOR_ATTACHMENT_READ.as_raw(),
+        /// Specifies that the resource will be used for color attachment write operations.
+        COLOR_ATTACHMENT_WRITE = vk::AccessFlags2::COLOR_ATTACHMENT_WRITE.as_raw(),
         /// Specifies that the resource will be used as a color attachment.
-        #[display("color attachment")]
         COLOR_ATTACHMENT =
-            vk::AccessFlags2::COLOR_ATTACHMENT_READ.as_raw() |
-            vk::AccessFlags2::COLOR_ATTACHMENT_WRITE.as_raw(),
+            Self::COLOR_ATTACHMENT_READ.as_raw() |
+            Self::COLOR_ATTACHMENT_WRITE.as_raw(),
+        /// Specifies that resource will be used for depth stencil attachment read operations.
+        DEPTH_STENCIL_ATTACHMENT_READ = vk::AccessFlags2::DEPTH_STENCIL_ATTACHMENT_READ.as_raw(),
+        /// Specifies that resource will be used for depth stencil attachment write operations.
+        DEPTH_STENCIL_ATTACHMENT_WRITE = vk::AccessFlags2::DEPTH_STENCIL_ATTACHMENT_WRITE.as_raw(),
         /// Specifies that the resource will be used as a depth/stencil attachment.
-        #[display("depth stencil attachment")]
         DEPTH_STENCIL_ATTACHMENT =
-            vk::AccessFlags2::DEPTH_STENCIL_ATTACHMENT_READ.as_raw() |
-            vk::AccessFlags2::DEPTH_STENCIL_ATTACHMENT_WRITE.as_raw(),
+            Self::DEPTH_STENCIL_ATTACHMENT_READ.as_raw() |
+            Self::DEPTH_STENCIL_ATTACHMENT_WRITE.as_raw(),
     }
 );
 
@@ -216,8 +220,15 @@ impl BindingBarrierInfo {
 ///
 /// [1]: Commands
 /// [2]: Gpu::tick
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, Display)] #[display("{0}")]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct CommandId(pub(crate) SlotIndex<CommandFrameResources>);
+
+impl Display for CommandId {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 impl CommandId {
 
@@ -260,7 +271,7 @@ impl SchedulerCommandPool {
 
     #[inline]
     pub fn new(
-        device: &LogicalDevice,
+        device: &Device,
         queue_family_index: u32,
     ) -> Result<Self>
     {
@@ -274,6 +285,7 @@ impl SchedulerCommandPool {
             device
                 .create_command_pool(&create_info, None)
                 .context("failed to create command pool")?
+                .value
         };
         Ok(Self {
             pool,
@@ -286,7 +298,7 @@ impl SchedulerCommandPool {
 
     pub fn allocate_primaries(
         &mut self,
-        device: &LogicalDevice,
+        device: &Device,
         count: u32,
     ) -> Result<&[CommandBuffer]> {
         let new_next_primary = self.next_primary + count;
@@ -317,7 +329,7 @@ impl SchedulerCommandPool {
 
     pub fn allocate_secondaries(
         &mut self,
-        device: &LogicalDevice,
+        device: &Device,
         count: u32,
     ) -> Result<&[CommandBuffer]> {
         let new_next_secondary = self.next_secondary + count;
@@ -347,7 +359,7 @@ impl SchedulerCommandPool {
     }
 
     #[inline]
-    pub unsafe fn reset(&mut self, device: &LogicalDevice) -> Result<()> {
+    pub unsafe fn reset(&mut self, device: &Device) -> Result<()> {
         unsafe {
             device.reset_command_pool(
                 self.pool, vk::CommandPoolResetFlags::empty(),
@@ -359,7 +371,7 @@ impl SchedulerCommandPool {
     }
 
     #[inline]
-    pub unsafe fn destroy(&mut self, device: &LogicalDevice) {
+    pub unsafe fn destroy(&mut self, device: &Device) {
         unsafe {
             device.destroy_command_pool(self.pool, None);
         }

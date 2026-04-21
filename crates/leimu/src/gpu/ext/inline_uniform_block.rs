@@ -1,7 +1,7 @@
 //! Provided by VK_EXT_inline_uniform_block or Vulkan 1.3.
 
 use {
-    nox_ash::{
+    tuhka::{
         vk,
         ext,
     },
@@ -48,7 +48,7 @@ unsafe impl DeviceExtension for Extension {
     fn register(
         &self,
         ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
         let mut properties = vk::PhysicalDeviceInlineUniformBlockProperties::default();
         ctx.get_properties(&mut properties);
         ctx.register_attribute(DeviceAttribute::new_u32(
@@ -66,7 +66,7 @@ unsafe impl DeviceExtension for Extension {
         ctx.register_attribute(DeviceAttribute::new_bool(
             Attributes::IS_ENABLED, true,
         ));
-        Some(create_extends_device_create_info_obj(
+        Some(ExtendsDeviceCreateInfoObj::new(
             vk::PhysicalDeviceInlineUniformBlockFeatures
                 ::default()
                 .inline_uniform_block(true)

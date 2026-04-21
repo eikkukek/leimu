@@ -1,9 +1,9 @@
-use nox_ash::vk;
-use nox_mem::{
+use tuhka::vk;
+use leimu_core::{slice, OptionExt};
+use leimu_mem::{
     vec::{FixedVec32},
-    option::OptionExt,
+    alloc,
     arena,
-    slice,
 };
 
 use crate::{
@@ -78,7 +78,7 @@ unsafe impl<'a, 'b> Commands<'a, 'b> for CopyCommands<'a, 'b> {
     }
 
     fn finish<'c, Alloc>(self, alloc: &'c Alloc) -> Result<CommandResult<'c, Alloc>>
-        where Alloc: ?Sized + nox_mem::alloc::LocalAlloc<Error = arena::Error>
+        where Alloc: ?Sized + alloc::LocalAlloc<Error = arena::Error>
     {
         unsafe {
             self.gpu.device()
@@ -587,8 +587,8 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
             }
             let src_format_class = src_properties.format.compatibility();
             let src_planes = src_properties.format.plane_formats();
-            let src_multi_planar = src_properties.format.is_multi_planar();
-            let src_texel_block_extent = src_format_class.texel_block_extent();
+            let src_multi_planar = src_properties.format.plane_count() > 1;
+            let src_texel_block_extent: Dimensions = src_format_class.texel_block_extent();
             if let Some(err) = src_image.validate_usage(ImageUsages::TRANSFER_SRC) {
                 return Err(Error::new(err, "source image usage mismatch"))
             }
@@ -601,8 +601,8 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
             }
             let dst_format_class = dst_properties.format.compatibility();
             let dst_planes = src_properties.format.plane_formats();
-            let dst_multi_planar = src_properties.format.is_multi_planar();
-            let dst_texel_block_extent = dst_format_class.texel_block_extent();
+            let dst_multi_planar = src_properties.format.plane_count() > 1;
+            let dst_texel_block_extent: Dimensions = dst_format_class.texel_block_extent();
             if let Some(err) = dst_image.validate_usage(ImageUsages::TRANSFER_DST) {
                 return Err(Error::new(err, "destination image usage mismatch"))
             }
@@ -615,7 +615,7 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
                 )))
             }
             if src_texel_block_extent != dst_texel_block_extent &&
-                src_format_class.is_compressed() && dst_format_class.is_compressed()
+                src_properties.format.is_compressed() && dst_properties.format.is_compressed()
             {
                 return Err(Error::just_context(format!(
                     "source image format {} doesn't have the same texel block extent as desctination format {}",
@@ -938,11 +938,11 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
             let tmp_alloc = tmp_alloc.guard();
             let format_class = img_properties.format.compatibility();
             let texel_block_size = format_class.texel_block_size();
-            let texel_block_extent = format_class.texel_block_extent();
+            let texel_block_extent: Dimensions = format_class.texel_block_extent();
             let planes = img_properties.format
                 .plane_formats()
-                .map(|format| format.texel_block_size());
-            let is_multiplanar = img_properties.format.is_multi_planar();
+                .map(|format| format.compatibility().texel_block_size());
+            let is_multiplanar = img_properties.format.plane_count() > 1;
             let is_depth_stencil = img_properties.format.is_depth_stencil();
             let n_regions = regions.len() as u32;
             let mut buffer_memory_barrier_ranges = FixedVec32::with_capacity(
@@ -1010,7 +1010,7 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
                 if !region.image_offset.is_multiple_of(texel_block_extent) {
                     return Err(Error::just_context(format!(
                         "region destination image offset {} is not a multiple of format {} texel block extent {}",
-                        region.image_offset, img_properties.format, format_class.texel_block_extent(),
+                        region.image_offset, img_properties.format, format_class.texel_block_extent::<Dimensions>(),
                     )))
                 }
                 if !region.image_offset.is_in_range(
@@ -1223,11 +1223,11 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
             let tmp_alloc = tmp_alloc.guard();
             let format_class = img_properties.format.compatibility();
             let texel_block_size = format_class.texel_block_size();
-            let texel_block_extent = format_class.texel_block_extent();
+            let texel_block_extent: Dimensions = format_class.texel_block_extent();
             let planes = img_properties.format
                 .plane_formats()
-                .map(|format| format.texel_block_size());
-            let is_multiplanar = img_properties.format.is_multi_planar();
+                .map(|format| format.compatibility().texel_block_size());
+            let is_multiplanar = img_properties.format.plane_count() > 1;
             let is_depth_stencil = img_properties.format.is_depth_stencil();
             let n_regions = regions.len() as u32;
             let mut image_memory_barrier_ranges = FixedVec32::with_capacity(
@@ -1643,8 +1643,8 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
     /// - Format features of the destination image *must* contain [`FormatFeatures::BLIT_DST`]
     ///   bit.
     /// - If the source image format is a depth/stencil format, `filter` *must* be
-    ///   [`Filter::Nearest`].
-    /// - If `filter` is [`Filter::Linear`], the format features of the source image *must*
+    ///   [`Filter::NEAREST`].
+    /// - If `filter` is [`Filter::LINEAR`], the format features of the source image *must*
     ///   contain [`FormatFeatures::SAMPLED_IMAGE_FILTER_LINEAR`].
     /// - Both [`source offsets`][2] and [`destination offsets`][3] *must* not be outside the range
     ///   of the dimensions of the image at the mip level defined in [`source subresources`][4] and
@@ -1728,7 +1728,7 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
                     "source image format features must contain blit destination feature"
                 ))
             }
-            if filter == Filter::Linear {
+            if filter == Filter::LINEAR {
                 if src_properties.aspect_mask.intersects(ImageAspects::DEPTH | ImageAspects::STENCIL) {
                     return Err(Error::just_context(format!(
                         "depth/stencil images only support nearest filtering for blitting, found filter was {}",
@@ -1851,8 +1851,8 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
     /// - Format features of the image *must* contain [`FormatFeatures::BLIT_SRC`] and
     ///   [`FormatFeatures::BIT_DST`] bits.
     /// - The image *must* have [`msaa sample count`][1] of 1.
-    /// - If the image format has a depth/stencil [`aspect`][2], `filter` *must* be [`Filter::Nearest`].
-    /// - If `filter` is [`Filter::Linear`], the format features of the image *must* contain
+    /// - If the image format has a depth/stencil [`aspect`][2], `filter` *must* be [`Filter::NEAREST`].
+    /// - If `filter` is [`Filter::LINEAR`], the format features of the image *must* contain
     ///   [`FormatFeatures::SAMPLED_IMAGE_FILTER_LINEAR`].
     ///
     /// # Vulkan docs
@@ -1887,7 +1887,7 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
             }
             let handle = image.handle();
             let properties = image.properties();
-            if filter == Filter::Linear {
+            if filter == Filter::LINEAR {
                 if properties.aspect_mask.intersects(ImageAspects::DEPTH | ImageAspects::STENCIL) {
                     return Err(Error::just_context(format!(
                         "depth/stencil images only support nearest filtering for blitting, found filter was {}",

@@ -3,12 +3,12 @@ use core::{
     mem,
 };
 
-use nox_mem::{
+use leimu_mem::{
     align_up,
     alloc::{LocalAlloc, StdAlloc, Layout},
 };
 
-use nox_error::{Context, Tracked};
+use leimu_error::{Context, Tracked};
 
 use crate::event_loop;
 

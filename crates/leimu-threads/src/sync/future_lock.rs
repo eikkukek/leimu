@@ -33,9 +33,9 @@ struct Inner<T, F, E = Error>
 /// use std::thread::sleep;
 /// use std::time::Duration;
 ///
-/// use nox_threads::{ThreadPool, SpawnExt};
-/// use nox_threads::sync::FutureLock;
-/// use nox_threads::error::Error;
+/// use leimu_threads::{ThreadPool, SpawnExt};
+/// use leimu_threads::sync::FutureLock;
+/// use leimu_threads::error::Error;
 ///
 /// let pool = ThreadPool::new().unwrap();
 /// let lock: FutureLock<_, ()> = FutureLock::new(pool.spawn_with_handle(async {

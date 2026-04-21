@@ -1,6 +1,8 @@
+use leimu_mem::int::NonZeroOption;
+
 use super::*;
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ImageProperties {
     pub dimensions: Dimensions,
     pub aspect_mask: ImageAspects,

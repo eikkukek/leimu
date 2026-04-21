@@ -2,9 +2,9 @@ mod create_info;
 mod properties;
 mod state;
 
-use nox_ash::vk;
+use tuhka::vk;
 
-use nox_mem::{
+use leimu_mem::{
     vec::Vec32,
     vec32,
 };
@@ -26,7 +26,7 @@ impl Flags for BufferUsages {
 }
 
 pub struct BufferMeta {
-    device: LogicalDevice,
+    device: Device,
     handle: vk::Buffer,
     memory: DeviceMemoryObj,
     properties: BufferProperties,
@@ -41,7 +41,7 @@ impl ResourceMeta for BufferMeta {
 impl BufferMeta {
 
     fn new(
-        device: LogicalDevice,
+        device: Device,
         create_info: &BufferCreateInfo<'_>,
         bind_memory_info: &mut vk::BindBufferMemoryInfo<'static>,
     ) -> Result<Self>
@@ -75,10 +75,10 @@ impl BufferMeta {
         let handle = unsafe {
             device.create_buffer(&vk_create_info, None)
             .context("failed to create Vulkan buffer")?
-        };
+        }.value;
         *bind_memory_info = vk::BindBufferMemoryInfo {
              buffer: handle,
-             memory: <_ as vk::Handle>::from_raw(memory.handle()),
+             memory: vk::DeviceMemory::from_raw(memory.handle()),
              memory_offset: memory.offset(),
              ..Default::default()
         };
@@ -132,7 +132,7 @@ impl BufferMeta {
     /// The range *must* be either checked manually or the [`checked version`][5] of this function
     /// *must* be used.
     ///
-    /// [1]: LogicalDevice::cmd_pipeline_barrier2
+    /// [1]: Device::cmd_pipeline_barrier2
     /// [2]: BufferMemoryBarrierCache
     /// [3]: BufferMemoryBarrierRange
     /// [4]: BufferMemoryBarrierCache::flush
@@ -244,7 +244,7 @@ impl BufferMeta {
     /// # Valid usage
     /// - `offset` + `size` *must* be less than or equal to the size of the buffer.
     ///
-    /// [1]: LogicalDevice::cmd_pipeline_barrier2
+    /// [1]: Device::cmd_pipeline_barrier2
     /// [2]: BufferMemoryBarrierCache
     /// [3]: BufferMemoryBarrierRange
     /// [4]: BufferMemoryBarrierCache::flush

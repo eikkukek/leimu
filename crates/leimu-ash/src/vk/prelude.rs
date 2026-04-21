@@ -3,7 +3,7 @@ pub use super::definitions::*;
 
 use core::ops::{Deref, DerefMut};
 
-use nox_mem::paste;
+use paste::paste;
 
 /// Trait for creating Vulkan `p_next` chains.
 ///

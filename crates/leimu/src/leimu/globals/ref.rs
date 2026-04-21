@@ -14,7 +14,7 @@ impl<'a, T> Deref for Ref<'a, T> {
     #[inline]
     fn deref(&self) -> &Self::Target {
         if !self.initialized {
-            panic!("value not initialized, OnInit needs to be passed to Nox before using Ref")
+            panic!("value not initialized, OnInit needs to be passed to Leimu before using Ref")
         }
         unsafe {
             &*self.t
@@ -27,7 +27,7 @@ impl<'a, T> DerefMut for Ref<'a, T> {
     #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         if !self.initialized {
-            panic!("value not initialized, OnInit needs to be passed to Nox before using Ref")
+            panic!("value not initialized, OnInit needs to be passed to Leimu before using Ref")
         }
         unsafe {
             &mut *self.t

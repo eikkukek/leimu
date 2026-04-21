@@ -1,6 +1,6 @@
 use core::fmt::{self, Display};
 
-use nox_ash::vk;
+use tuhka::vk;
 
 #[repr(transparent)]
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]

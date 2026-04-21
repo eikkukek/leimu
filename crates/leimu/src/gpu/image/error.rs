@@ -1,11 +1,8 @@
-use core::error;
-
-use nox_proc::Display;
+use core::{error, fmt::{self, Display}};
 
 use super::*;
 
-#[derive(Display, Debug)]
-#[display("subresource (base level {base_level}, level count {level_count}, base layer {base_layer}, layer count {layer_count}) was out of range with image mip levels {image_mip_levels} and array layers {image_array_layers}")]
+#[derive(Debug)]
 pub struct ImageSubresourceOutOfRangeError {
     pub image_mip_levels: u32, 
     pub base_level: u32,
@@ -13,6 +10,22 @@ pub struct ImageSubresourceOutOfRangeError {
     pub image_array_layers: u32,
     pub base_layer: u32,
     pub layer_count: u32,
+}
+
+impl Display for ImageSubresourceOutOfRangeError {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,
+            "{}{}",
+            format_args!("subresource (base level {}, level count {}, base layer {}, layer count {}) ",
+                self.base_level, self.level_count, self.base_layer, self.layer_count,
+            ),
+            format_args!("was out of range with image mip levels {} and array layers {}",
+                self.image_mip_levels, self.image_array_layers,
+            ),
+            
+        )
+    }
 }
 
 impl error::Error for ImageSubresourceOutOfRangeError {}

@@ -1,4 +1,4 @@
-use nox_ash::vk;
+use tuhka::vk;
 
 use crate::gpu::prelude::*;
 use crate::error::*;
@@ -13,7 +13,7 @@ impl ComputePipeline {
 
     #[inline(always)]
     pub(crate) unsafe fn new(
-        device: LogicalDevice,
+        device: Device,
         handle: vk::Pipeline,
         shader_set: ShaderSet,
     ) -> Self {
@@ -89,7 +89,7 @@ mod base {
             for behavior in [
                     self.robustness_info.storage_buffers,
                     self.robustness_info.uniform_buffers,
-                    self.robustness_info.vertex_input,
+                    self.robustness_info.vertex_inputs,
                 ]
             {
                 if behavior == vk::PipelineRobustnessBufferBehavior::ROBUST_BUFFER_ACCESS_2 &&

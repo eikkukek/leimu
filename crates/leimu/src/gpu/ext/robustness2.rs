@@ -58,7 +58,7 @@ unsafe impl DeviceExtension for Extension {
     fn register(
         &self,
         context: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj> {
+    ) -> Option<ExtendsDeviceCreateInfoObj> {
         let mut supported = vk::PhysicalDeviceRobustness2FeaturesEXT::default();
         context.get_features(&mut supported);
         if supported.robust_buffer_access2 != 0 {
@@ -90,7 +90,7 @@ unsafe impl DeviceExtension for Extension {
             ));
             features.null_descriptor = vk::TRUE;
         }
-        Some(create_extends_device_create_info_obj(features))
+        Some(ExtendsDeviceCreateInfoObj::new(features))
     }
 
     fn boxed(&self) -> Box<dyn DeviceExtension> {

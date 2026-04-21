@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
-use nox_ash::vk;
+use tuhka::vk;
 
-use nox_error::Context;
+use leimu_error::Context;
 
 use crate::error::Result;
 
 use crate::gpu::prelude::*;
 
 struct Inner {
-    device: LogicalDevice,
+    device: Device,
     handle: vk::PipelineCache,
 }
 
@@ -21,7 +21,7 @@ pub struct PipelineCache {
 impl PipelineCache {
 
     pub fn new(
-        device: LogicalDevice,
+        device: Device,
         initial_data: Option<&[u8]>,
     ) -> Result<Self> {
         let initial_data = initial_data.unwrap_or(&[]);
@@ -34,7 +34,7 @@ impl PipelineCache {
         let handle = unsafe {
             device.create_pipeline_cache(&info, None)
                 .context("failed to create pipeline cache")?
-        };
+        }.value;
         Ok(Self {
             inner: Arc::new(Inner { device, handle })
         })
@@ -46,7 +46,7 @@ impl PipelineCache {
     }
 
     #[inline]
-    pub fn logical_device_id(&self) -> LogicalDeviceId {
+    pub fn device_id(&self) -> DeviceId {
         self.inner.device.id()
     }
 
@@ -56,8 +56,16 @@ impl PipelineCache {
     ) -> Result<Box<[u8]>>
     {
         unsafe {
-            self.inner.device.get_pipeline_cache_data(self.inner.handle)
-            .context("failed to get pipeline cache data")
+            let mut data: Box<[u8]> = (0..self.inner.device
+                .get_pipeline_cache_data_len(self.inner.handle)
+                .context("failed to get pipeline cache data")?
+                .value
+            ).map(|_| 0).collect();
+            self.inner.device.get_pipeline_cache_data(
+                self.inner.handle,
+                &mut data,
+            ).context("failed to get pipeline cache data")?;
+            Ok(data)
         }
     }
 }

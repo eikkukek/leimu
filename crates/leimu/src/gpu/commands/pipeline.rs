@@ -1,10 +1,10 @@
-use nox_mem::{
+use tuhka::vk;
+use leimu_core::{OptionExt, TryExtend};
+use leimu_mem::{
     vec::{FixedVec32, NonNullVec32},
     alloc::LocalAlloc,
     arena,
-    option::OptionExt,
 };
-use nox_ash::vk;
 
 use crate::{
     gpu::prelude::{
@@ -194,11 +194,6 @@ impl<'a, 'b> PipelineCommands<'a, 'b> {
         &mut self,
         bindings: &[PushDescriptorBinding<'_>],
     ) -> Result<&mut Self> {
-        let Some(device) = &self.cache.push_descriptor_device else {
-            return Err(Error::just_context(
-                "push descriptor device extension not enabled"
-            ))
-        };
         if bindings.is_empty() {
             return Ok(self)
         }
@@ -393,7 +388,7 @@ impl<'a, 'b> PipelineCommands<'a, 'b> {
         }
         unsafe {
             self.cache.push_descriptor_binding_cache.push_descriptor_sets(
-                device,
+                self.gpu.device(),
                 command_buffer,
                 shader_set.pipeline_layout(),
             );

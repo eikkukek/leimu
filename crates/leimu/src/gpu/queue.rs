@@ -1,12 +1,13 @@
 use core::{
     hash::{self, Hash},
-    fmt::{self, Debug},
+    fmt::{self, Display, Debug},
 };
 
-use nox_mem::{
+use tuhka::vk;
+
+use leimu_mem::{
     vec::Vec32,
     vec32,
-    Display,
 };
 
 use crate::{
@@ -14,8 +15,6 @@ use crate::{
     sync::{atomic::AtomicU64, *},
     error::*,
 };
-
-use nox_ash::vk;
 
 #[derive(Clone, Copy)]
 pub struct QueueFamilyProperties {
@@ -52,26 +51,34 @@ pub struct DeviceQueueInfo {
 
 struct DeviceQueueInner {
     handle: vk::Queue,
-    device_id: LogicalDeviceId,
+    device_id: DeviceId,
     device_queue_index: u32,
     family_index: u32,
     family_properties: QueueFamilyProperties,
     queue_index: u32,
 }
 
-#[derive(Clone, Display)]
-#[display("{name}")]
+#[derive(Clone)]
 pub struct DeviceQueue {
     id: u64,
     name: Arc<str>,
     inner: Arc<DeviceQueueInner>,
-
 }
 
 impl Debug for DeviceQueue {
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.name)
+        f.debug_struct("DeviceQueue")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .finish()
+    }
+}
+
+impl Display for DeviceQueue {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {})", self.id, self.name)
     }
 }
 
@@ -80,8 +87,8 @@ static DEVICE_QUEUE_ID: AtomicU64 = AtomicU64::new(0);
 impl DeviceQueue {
 
     pub(super) unsafe fn new(
-        device_id: LogicalDeviceId,
-        device: &nox_ash::Device,
+        device_id: DeviceId,
+        device: &VkDevice,
         device_queue_index: u32,
         create_info: &DeviceQueueCreateInfo,
         family_properties: QueueFamilyProperties,
@@ -112,7 +119,7 @@ impl DeviceQueue {
     }
 
     #[inline]
-    pub fn device_id(&self) -> LogicalDeviceId {
+    pub fn device_id(&self) -> DeviceId {
         self.inner.device_id
     }
 
@@ -173,12 +180,10 @@ impl QueueFamilies {
     ) -> Self
     {
         let n_properties = unsafe { instance
-            .ash()
             .get_physical_device_queue_family_properties2_len(physical_device)
         } as u32;
         let mut properties = vec32![Default::default(); n_properties];
         unsafe { instance
-            .ash()
             .get_physical_device_queue_family_properties2(physical_device, &mut properties)
         }
         let properties: Arc<[_]> = properties

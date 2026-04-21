@@ -1,4 +1,4 @@
-//! The sync prelude of [`nox`].
+//! The sync prelude of Leimu.
 
 pub use std::sync::{
     Arc, OnceLock, LazyLock, atomic,
@@ -13,4 +13,4 @@ pub use parking_lot::{
     Condvar,
 };
 
-pub use nox_threads::sync::{FutureLock, SwapLock};
+pub use leimu_threads::sync::{FutureLock, SwapLock};

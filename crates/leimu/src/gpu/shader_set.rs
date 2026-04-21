@@ -1,24 +1,22 @@
-use std::{
-    ffi::CStr,
-};
 use core::{
+    ffi::CStr,
     slice,
+    fmt::{self, Display},
     hash::{Hasher, Hash},
 };
 
 use ahash::{AHashMap, AHashSet};
 
-use nox_ash::vk;
-use nox_proc::Display;
-use nox_mem::{
-    alloc::{self, Layout}, num::Integer,
-    option::OptionExt,
+use tuhka::vk;
+use leimu_core::{OptionExt, TryExtend};
+use leimu_mem::{
+    alloc::{self, Layout}, int::Integer,
     pack_alloc,
     slot_map::{SlotIndex, SlotMap},
     vec::{ArrayVec, FixedVec32, Pointer, Vec32},
     vec32,
 };
-use nox_threads::{
+use leimu_threads::{
     futures::{
         future::RemoteHandle,
     },
@@ -26,6 +24,7 @@ use nox_threads::{
 };
 
 use crate::{
+    bitflags,
     gpu::{
         prelude::*,
         TmpAllocs,
@@ -35,11 +34,10 @@ use crate::{
     error::*,
 };
 
-nox_ash::ash_style_enum!(
+bitflags!(
     /// Specifies how a descriptor set *can* be used.
-    #[flags(Flags32)]
     #[default = Self::empty()]
-    pub enum DescriptorSetLayoutFlags {
+    pub struct DescriptorSetLayoutFlags: Flags32 {
         /// Specifies that the descriptor set *must* not be allocated from a
         /// [`DescriptorPool`], but instead should be pushed by `push descriptor set`
         /// commands provided by [`DrawCommands`] and [`ComputeCommands`].
@@ -48,7 +46,6 @@ nox_ash::ash_style_enum!(
         /// - The [`push_descriptor`][1] device extension *must* be enabled.
         ///
         /// [1]: ext::push_descriptor
-        #[display("push descriptor")]
         PUSH_DESCRIPTOR = 0x1,
     }
 );
@@ -131,7 +128,7 @@ impl ShaderModule {
 }
 
 pub(crate) struct ShaderSetInner {
-    device: LogicalDevice,
+    device: Device,
     pipeline_layout: vk::PipelineLayout,
     n_descriptor_set_layouts: u32,
     descriptor_set_layouts: Pointer<DescriptorSetLayout>,
@@ -151,7 +148,7 @@ impl ShaderSetInner {
 
     #[inline(always)]
     pub(crate) fn new(
-        device: LogicalDevice,
+        device: Device,
         descriptor_set_layouts: &[DescriptorSetLayout],
         push_constant_ranges: &[PushConstantRange],
         shaders: impl ExactSizeIterator<Item = ShaderModule>,
@@ -321,8 +318,21 @@ impl Drop for ShaderSetInner {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Display)] #[display("{0}")]
+macro_rules! impl_id_display {
+    ($name:ident) => {
+        impl Display for $name {
+
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "{}", self.0)
+            }
+        }
+    };
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct ShaderSetId(SlotIndex<ShaderSetHandle>);
+
+impl_id_display!(ShaderSetId);
 
 #[derive(Clone)]
 pub struct ShaderSetAttributes {
@@ -434,7 +444,7 @@ impl Hash for DescriptorSetLayoutKey {
 }
 
 pub(crate) struct ShaderCache {
-    device: LogicalDevice,
+    device: Device,
     shader_sets: SlotMap<ShaderSetHandle>,
     descriptor_set_layouts: Arc<RwLock<AHashMap<
         DescriptorSetLayoutKey,
@@ -445,7 +455,7 @@ pub(crate) struct ShaderCache {
 impl ShaderCache {
 
     #[inline(always)]
-    pub(crate) fn new(device: LogicalDevice) -> Self {
+    pub(crate) fn new(device: Device) -> Self {
         Self {
             device,
             shader_sets: Default::default(),
@@ -605,7 +615,7 @@ impl ShaderCache {
                     let mut layout_flags = vk::DescriptorSetLayoutCreateFlags::empty();
                     if flags.contains(DescriptorSetLayoutFlags::PUSH_DESCRIPTOR)
                     {
-                        layout_flags |= vk::DescriptorSetLayoutCreateFlags::PUSH_DESCRIPTOR_KHR;
+                        layout_flags |= vk::DescriptorSetLayoutCreateFlags::PUSH_DESCRIPTOR;
                         let binding_count: u32 = bindings
                             .iter()
                             .map(|binding| binding.descriptor_count)
@@ -653,7 +663,8 @@ impl ShaderCache {
                             let handle = unsafe {
                                 device
                                     .create_descriptor_set_layout(&create_info, None)
-                            }.context("failed to create descriptor set layout")?;
+                            }.context("failed to create descriptor set layout")?
+                            .value;
                             cache.insert(key.clone(), handle);
                             Ok(handle)
                         })?;
@@ -689,7 +700,7 @@ impl ShaderCache {
                 let pipeline_layout = unsafe {
                     device
                         .create_pipeline_layout(&create_info, None)
-                }.context("failed to create pipeline layout")?;
+                }.context("failed to create pipeline layout")?.value;
                 let mut shader_modules = ArrayVec::<_, N_SHADERS>::new();
                 shader_modules.try_extend(
                     shaders_inner.iter_mut().map(|shader| {
@@ -702,7 +713,8 @@ impl ShaderCache {
                         Ok(unsafe { RaiiHandle::new(
                             device
                                 .create_shader_module(&info, None)
-                                .context("failed to create shader module")?,
+                                .context("failed to create shader module")?
+                                .value,
                             |module| {
                                 device.destroy_shader_module(module, None);
                             }

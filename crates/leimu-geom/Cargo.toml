@@ -1,8 +1,8 @@
 [package]
-name = "nox-geom"
+name = "leimu-geom"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-nox-mem = { path = "../nox-mem" }
+leimu-mem = { path = "../leimu-mem" }
 ahash = "0.8.12"

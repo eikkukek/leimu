@@ -7,8 +7,8 @@ use raw_window_handle::{
     HasWindowHandle,
 };
 
-use nox_ash::vk;
-use nox_mem::{
+use tuhka::{vk, window};
+use leimu_mem::{
     vec::NonNullVec32,
     arena::Arena,
 };
@@ -77,15 +77,19 @@ impl Surface {
     {
         let alloc = Arena::new(1 << 10).context("alloc failed")?;
         let handle = unsafe {
-            ash_window
-            ::create_surface(
-                gpu.device().instance().entry(),
-                gpu.device().instance().ash(),
-                window.display_handle().unwrap().as_raw(),
-                window.window_handle().unwrap().as_raw(),
+            window::create_surface(
+                gpu.device().instance(),
+                window.display_handle()
+                    .map_err(|err|
+                        Error::just_context(format!("failed to get display handle: {err}"))
+                    )?.as_raw(),
+                window
+                    .window_handle()
+                    .map_err(|err|
+                        Error::just_context(format!("failed to get window handle: {err}"))
+                    )?.as_raw(),
                 None
-            )
-            .context("failed to create vulkan surface")?
+            ).context("failed to create vulkan surface")?
         };
         let present_queue = gpu
             .device()
@@ -184,6 +188,7 @@ impl Surface {
                     self.gpu.device().create_semaphore(
                         &Default::default(), None
                     ).context("failed to create semaphore")
+                    .map(|res| res.value)
                 })?;
                 recreated = NonZeroU32::new(n_images);
                 swapchain
@@ -293,7 +298,7 @@ impl Drop for Surface {
             .iter().map(|id| id.image_id())
         ).unwrap();
         unsafe {
-            self.gpu.device().instance().surface_instance()
+            self.gpu.device().instance()
                 .destroy_surface(self.handle, None);
         }
     }

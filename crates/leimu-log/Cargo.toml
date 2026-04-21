@@ -1,11 +1,10 @@
 [package]
-name = "nox-log"
+name = "leimu-log"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-nox-mem = { path = "../nox-mem" }
+leimu-mem = { path = "../leimu-mem" }
 
 termcolor = "1.4.1"
 ahash = "0.8.12"
-compact_str = { version = "0.9.0" }

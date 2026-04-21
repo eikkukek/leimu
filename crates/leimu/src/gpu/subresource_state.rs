@@ -1,4 +1,4 @@
-use nox_mem::num::UInteger;
+use leimu_mem::int::UInteger;
 
 #[derive(Clone, Copy)]
 pub(super) enum StateOverwrite<Range: StateRange> {

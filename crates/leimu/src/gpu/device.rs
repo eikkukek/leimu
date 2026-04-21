@@ -1,14 +1,12 @@
-mod r#fn;
+use core::ops::Deref;
 
-use core::ffi;
-
-use nox_mem::{
+use leimu_mem::{
     vec::Vec32, vec32,
 };
 
-use nox_log::info;
+use leimu_log::info;
 
-use nox_ash::vk;
+use tuhka::{vk, khr};
 
 use super::prelude::*;
 
@@ -17,13 +15,18 @@ use crate::{
     sync::*,
 };
 
-pub use r#fn::*;
+/// Alias for chained [`tuhka::Device`].
+///
+/// The chain includes [`swapchain`][1] and [`present_wait2`][2].
+///
+/// [1]: khr::swapchain
+/// [2]: khr::present_wait2
+pub type VkDevice = tuhka::Device<khr::swapchain::Device<khr::present_wait2::Device>>;
 
 struct Inner {
-    id: LogicalDeviceId,
+    id: DeviceId,
     physical_device: PhysicalDevice,
-    handle: vk::Device,
-    fns: DeviceFunctions,
+    device: VkDevice,
     device_queues: Box<[DeviceQueue]>,
     max_memory_allocation_size: DeviceSize,
     frame_timeout: u64,
@@ -35,18 +38,33 @@ struct Inner {
     command_workers: u32,
 }
 
+/// Represents [`Vulkan device`][1].
+///
+/// The backbone of [`Gpu`].
+///
+/// [1]: https://docs.vulkan.org/refpages/latest/refpages/source/VkDevice.html
 #[derive(Clone)]
-pub struct LogicalDevice {
+pub struct Device {
     inner: Arc<Inner>,
 }
 
-impl LogicalDevice {
+impl Deref for Device {
+
+    type Target = VkDevice;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.inner.device
+    }
+}
+
+impl Device {
 
     pub(crate) fn new(
         suitable: &SuitablePhysicalDevices,
         index: u32,
         queue_create_infos: &[DeviceQueueCreateInfo],
-    ) -> Result<LogicalDevice> {
+    ) -> Result<Device> {
         if queue_create_infos.is_empty() {
             return Err(Error::just_context(
                 "at least one device queue needs to be specified"
@@ -69,7 +87,7 @@ impl LogicalDevice {
             &mut vulkan_14_features,
             Some(&mut enabled_device_extensions),
         );
-        let mut enable_features = Vec32::<vk::ExtendsDeviceCreateInfoObj>::with_capacity(
+        let mut enable_features = Vec32::<ext::ExtendsDeviceCreateInfoObj>::with_capacity(
             suitable.device_extensions.len()
         );
         for ext in &suitable.device_extensions {
@@ -101,21 +119,19 @@ impl LogicalDevice {
         for enable_feature in &mut enable_features {
             device_create_info = device_create_info.push_next(enable_feature.as_mut());
         }
-        let device = unsafe {
+        let device: VkDevice = unsafe {
             instance
-                .ash()
                 .create_device(physical_device.handle(), &device_create_info, None)
                 .context_with(|| {
                     "failed to create logical device"
-                })?
+                })?.value
         };
         let mut properties_11 = vk::PhysicalDeviceVulkan11Properties::default();
         physical_device_context.get_properties(&mut properties_11);
         let mut depth_stencil_resolve_properties = vk::PhysicalDeviceDepthStencilResolveProperties::default();
         physical_device_context.get_properties(&mut depth_stencil_resolve_properties);
         let max_memory_allocation_size = properties_11.max_memory_allocation_size;
-        let fns = DeviceFunctions::new(instance.ash(), &device, physical_device);
-        let id = LogicalDeviceId(super::DEVICE_ID.fetch_add(1, atomic::Ordering::AcqRel));
+        let id = DeviceId(super::DEVICE_ID.fetch_add(1, atomic::Ordering::AcqRel));
         let device_queues: Box<[_]> = queue_create_infos
             .iter()
             .enumerate()
@@ -140,8 +156,7 @@ impl LogicalDevice {
             inner: Arc::new(Inner {
                 id,
                 physical_device: physical_device.clone(),
-                handle: device.handle(),
-                fns,
+                device,
                 device_queues,
                 frame_timeout: suitable.attributes.frame_timeout.as_nanos() as u64,
                 max_memory_allocation_size,
@@ -156,7 +171,7 @@ impl LogicalDevice {
     }
 
     #[inline(always)]
-    pub fn id(&self) -> LogicalDeviceId {
+    pub fn id(&self) -> DeviceId {
         self.inner.id
     }
 
@@ -177,34 +192,7 @@ impl LogicalDevice {
 
     #[inline(always)]
     pub fn handle(&self) -> vk::Device {
-        self.inner.handle
-    }
-
-    #[inline(always)]
-    pub fn fns(&self) -> &DeviceFunctions {
-        &self.inner.fns
-    }
-
-    /// Load Vulkan function pointers usable with this device.
-    ///
-    /// # Valid usage
-    /// - The function pointer returned *must* only be used with this device's [`handle`][1] or
-    ///   objects originating from this device.
-    ///
-    /// # Vulkan docs
-    /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceProcAddr.html>
-    ///
-    /// [1]: Self::handle
-    #[inline(always)]
-    pub fn get_proc_addr(
-        &self,
-        name: &ffi::CStr,
-    ) -> nox_ash::vk::PFN_vkVoidFunction {
-        unsafe {
-            self.inner.instance
-                .ash()
-                .get_device_proc_addr(self.inner.handle, name.as_ptr())
-        }
+        self.inner.device.handle()
     }
 
     #[inline(always)]
@@ -254,16 +242,16 @@ impl LogicalDevice {
         for queue in &self.inner.device_queues {
             let index = queue.family_index();
             let supported = unsafe {
-                self.inner.instance.surface_instance().get_physical_device_surface_support(
+                self.inner.instance.get_physical_device_surface_support(
                     self.inner.physical_device.handle(),
                     index, surface
                 ).context("failed to get physical device surface support")?
-            };
+            }.value;
             if supported {
                 return Ok(queue.clone())
             }
         }
-        Err(Error::just_context("no queue for presentation"))
+        Err(Error::just_context("no queue with presentation support"))
     }
 
     #[inline(always)]
@@ -291,10 +279,10 @@ impl Drop for Inner {
 
     fn drop(&mut self) {
         unsafe {
-            (self.fns.fp_v1_0().destroy_device)(
-                self.handle,
-                core::ptr::null(),
-            )
+            self.instance.destroy_device(
+                &self.device,
+                None,
+            );
         }
     }
 }

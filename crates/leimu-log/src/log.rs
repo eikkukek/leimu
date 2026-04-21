@@ -11,9 +11,7 @@ pub use termcolor::{ColorSpec, Color};
 
 use ahash::AHashMap;
 
-use compact_str::CompactString;
-
-use nox_mem::slot_map::*;
+use leimu_mem::slot_map::*;
 
 use crate::*;
 
@@ -70,7 +68,7 @@ struct Logger {
     debug_fmt: LogFmt,
     trace_fmt: LogFmt,
     custom_fmt: SlotMap<LogFmt>,
-    target_levels: AHashMap<CompactString, Level>,
+    target_levels: AHashMap<String, Level>,
     base_level: Level,
 }
 
@@ -81,7 +79,9 @@ impl Logger {
         let mut target_levels = AHashMap::default();
         let mut base_level = Level::Error;
         if let Ok(env) = std::env::var("RUST_LOG") {
-            let parse_arg: for<'a> fn(&'a str) -> (Option<&'a str>, &'a str) = |arg: &str| -> (Option<&str>, &str) {
+            let parse_arg: for<'a> fn(&'a str) -> (Option<&'a str>, &'a str) =
+                |arg: &str| -> (Option<&str>, &str)
+            {
                 let mut module = None;
                 let mut level = arg.trim();
                 if let Some(j) = arg.find("=") {
@@ -94,7 +94,7 @@ impl Logger {
                 if let Ok(level) = Level::from_str(level) {
                     if let Some(module) = module {
                         let entry = target_levels
-                            .entry(CompactString::new(module))
+                            .entry(module.to_string())
                             .or_insert(level);
                         *entry = (*entry).min(level);
                     } else {
@@ -142,6 +142,7 @@ impl Logger {
         self.base_level
     }
 
+    #[inline]
     fn log(&mut self, target: &str, level: LevelFmt, msg: core::fmt::Arguments) -> Result<bool> {
         let target_level = self.target_level(target);
         let fmt = match level {
@@ -215,59 +216,59 @@ pub fn init() {
     if LOGGER.get().is_some() { return }
     LOGGER
         .set(Mutex::new(Logger::new()))
-        .unwrap_or_else(|_| panic!("nox logger initialized twice"));
+        .unwrap_or_else(|_| panic!("leimu logger initialized twice"));
 }
 
 #[inline(always)]
 pub fn error_fmt(mut f: impl FnMut(&mut LogFmtBuilder)) {
-    let mut logger = LOGGER.get().expect("nox logger not initialized").lock().unwrap();
+    let mut logger = LOGGER.get().expect("leimu logger not initialized").lock().unwrap();
     let mut builder = LogFmtBuilder::new(&mut logger.error_fmt);
     f(&mut builder);
 }
 
 #[inline(always)]
 pub fn warn_fmt(mut f: impl FnMut(&mut LogFmtBuilder)) {
-    let mut logger = LOGGER.get().expect("nox logger not initialized").lock().unwrap();
+    let mut logger = LOGGER.get().expect("leimu logger not initialized").lock().unwrap();
     let mut builder = LogFmtBuilder::new(&mut logger.warn_fmt);
     f(&mut builder);
 }
 
 #[inline(always)]
 pub fn info_fmt(mut f: impl FnMut(&mut LogFmtBuilder)) {
-    let mut logger = LOGGER.get().expect("nox logger not initialized").lock().unwrap();
+    let mut logger = LOGGER.get().expect("leimu logger not initialized").lock().unwrap();
     let mut builder = LogFmtBuilder::new(&mut logger.info_fmt);
     f(&mut builder);
 }
 
 #[inline(always)]
 pub fn debug_fmt(mut f: impl FnMut(&mut LogFmtBuilder)) {
-    let mut logger = LOGGER.get().expect("nox logger not initialized").lock().unwrap();
+    let mut logger = LOGGER.get().expect("leimu logger not initialized").lock().unwrap();
     let mut builder = LogFmtBuilder::new(&mut logger.debug_fmt);
     f(&mut builder);
 }
 
 #[inline(always)]
 pub fn trace_fmt(mut f: impl FnMut(&mut LogFmtBuilder)) {
-    let mut logger = LOGGER.get().expect("nox logger not initialized").lock().unwrap();
+    let mut logger = LOGGER.get().expect("leimu logger not initialized").lock().unwrap();
     let mut builder = LogFmtBuilder::new(&mut logger.trace_fmt);
     f(&mut builder);
 }
 
-#[inline(always)]
+#[inline]
 pub fn custom_fmt(fmt: LogFmt) -> CustomFmt {
     LOGGER
         .get()
-        .expect("nox logger not initialized")
+        .expect("leimu logger not initialized")
         .lock()
         .unwrap()
         .custom_fmt.insert(fmt)
 }
 
-#[inline(always)]
+#[inline]
 pub fn log(target: &str, level: LevelFmt, args: core::fmt::Arguments) -> Result<bool> {
     LOGGER
         .get()
-        .expect("nox logger not initialized")
+        .expect("leimu logger not initialized")
         .lock()
         .unwrap()
         .log(target, level, args)
@@ -301,7 +302,7 @@ macro_rules! info {
 macro_rules! debug {
     ($fmt:expr $(, $arg:expr)* $(,)?) => {
         $crate::log(module_path!(), $crate::LevelFmt::Debug, format_args!($fmt, $($arg),*))
-            .unwrap_or(false)
+            .unwrap_or(false);
     };
 }
 

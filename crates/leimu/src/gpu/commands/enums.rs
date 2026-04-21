@@ -1,6 +1,6 @@
-use nox_ash::vk;
+use core::fmt::{self, Display};
 
-use nox_proc::Display;
+use tuhka::vk;
 
 #[repr(i32)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, Hash)]
@@ -50,16 +50,24 @@ impl From<AttachmentStoreOp> for vk::AttachmentStoreOp {
 }
 
 #[repr(u32)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Display)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum ResolveMode {
-    #[display("SampleZero")]
     SampleZero = vk::ResolveModeFlags::SAMPLE_ZERO.as_raw(),
-    #[display("Average")]
     Average = vk::ResolveModeFlags::AVERAGE.as_raw(),
-    #[display("Min")]
     Min = vk::ResolveModeFlags::MIN.as_raw(),
-    #[display("Max")]
     Max = vk::ResolveModeFlags::MAX.as_raw(),
+}
+
+impl Display for ResolveMode {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::SampleZero => write!(f, "sample zero"),
+            Self::Average => write!(f, "average"),
+            Self::Min => write!(f, "min"),
+            Self::Max => write!(f, "max"),
+        }
+    }
 }
 
 impl ResolveMode {

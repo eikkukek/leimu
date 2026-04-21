@@ -10,6 +10,7 @@ mod interface;
 mod definitions;
 mod version;
 mod enums;
+mod format;
 mod memory_layout;
 mod handle;
 mod shader;
@@ -29,6 +30,7 @@ mod event;
 
 use core::{
     ops::Deref,
+    fmt::{self, Display},
     cell::UnsafeCell,
     num::NonZeroU32,
     time::Duration,
@@ -36,18 +38,17 @@ use core::{
 
 use ahash::AHashMap;
 
-use nox_mem::{
-    string::*,
+use leimu_core::collections::EntryExt;
+use leimu_mem::{
     vec::{FixedVec32, Vec32},
     slot_map::SlotMap,
     conditional::True,
-    collections::EntryExt,
     vec32,
     arena::Arena,
 };
-use nox_ash::vk;
+use tuhka::vk;
 
-use nox_threads::{
+use leimu_threads::{
     executor::{ThreadPool, block_on},
 };
 
@@ -65,7 +66,7 @@ pub(crate) mod prelude {
         device::*,
         instance::*,
         super::Gpu,
-        super::LogicalDeviceId,
+        super::DeviceId,
         super::queue::*,
         attributes::*,
         definitions::*,
@@ -80,7 +81,7 @@ pub(crate) mod prelude {
         resources::*,
         pipeline::*,
         commands::prelude::*,
-        nox_proc::VertexInput,
+        leimu_proc::VertexInput,
         shader::*,
         super::shader_set::*,
         super::descriptor::*,
@@ -90,6 +91,7 @@ pub(crate) mod prelude {
         super::ext,
         surface::VulkanWindow,
         super::event::Event,
+        super::format::*,
     };
 
     pub type DeviceName = ([u8; 256], usize);
@@ -141,16 +143,22 @@ impl Default for CacheAttributes {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Display)]
-#[display("{0}")]
-pub struct LogicalDeviceId(u64);
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+pub struct DeviceId(u64);
+
+impl Display for DeviceId {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 static DEVICE_ID: AtomicU64 = AtomicU64::new(0);
 
 pub struct Cache {
     command_cache: UnsafeCell<CommandRecorderCache>,
     arena: Arena<True>,
-    id: Option<LogicalDeviceId>,
+    id: Option<DeviceId>,
     submit_cache: Box<[Vec32<vk::SubmitInfo2<'static>>]>,
 }
 
@@ -168,7 +176,6 @@ impl Cache {
             }
         } else {
             self.id = Some(gpu.device().id());
-            self.command_cache.get_mut().init(gpu);
             self.submit_cache = (0..gpu.device().device_queues().len())
                 .map(|_| vec32![])
                 .collect();
@@ -208,10 +215,10 @@ struct GpuInner {
     draw_commands: RwLock<SlotMap<DrawCommandResource>>,
     tmp_allocs: Arc<TmpAllocs>,
     desired_buffered_frames: u32,
-    device: LogicalDevice,
+    device: Device,
 }
 
-/// The GPU interface of Nox.
+/// The GPU interface of Leimu.
 ///
 /// A [`Clone`] + [`Send`] + [`Sync`] handle.
 #[derive(Clone)]
@@ -222,7 +229,7 @@ pub struct Gpu {
 impl Gpu {
 
     pub fn standalone(
-        device: LogicalDevice,
+        device: Device,
         thread_pool: ThreadPool,
         memory_layout: MemoryLayout,
         desired_buffered_frames: NonZeroU32,
@@ -274,7 +281,7 @@ impl Gpu {
     #[cfg(feature = "event-loop")]
     pub(crate) fn new(
         event_loop: &crate::event_loop::EventLoop,
-        device: LogicalDevice,
+        device: Device,
         attributes: crate::Attributes,
     ) -> Result<(Self, Cache)>
     {
@@ -326,9 +333,9 @@ impl Gpu {
         self.inner.tmp_allocs.tmp_alloc()
     }
 
-    /// Gets the [`LogicalDevice`] used to create this [`Gpu`] instance.
+    /// Gets the [`Device`] used to create this [`Gpu`] instance.
     #[inline]
-    pub fn device(&self) -> &LogicalDevice {
+    pub fn device(&self) -> &Device {
         &self.inner.device
     }
 
@@ -385,7 +392,7 @@ impl Gpu {
         };
         let mut image_format_prop = vk::ImageFormatProperties2::default();
         unsafe {
-            self.inner.device.instance().ash()
+            self.inner.device.instance()
                 .get_physical_device_image_format_properties2(
                     self.inner.device.physical_device().handle(),
                     &format_info, &mut image_format_prop
@@ -396,7 +403,7 @@ impl Gpu {
         let mut format_properties = vk::FormatProperties2
             ::default().push_next(&mut format_properties3);
         unsafe {
-            self.inner.device.instance().ash().get_physical_device_format_properties2(
+            self.inner.device.instance().get_physical_device_format_properties2(
                 self.inner.device.physical_device().handle(),
                 vk_format, &mut format_properties,
             );
@@ -503,9 +510,7 @@ impl Gpu {
                 .begin_command_buffer(command_buffer, &begin_info)
                 .context("failed to command buffer")?;
         }
-        let mut storage = DrawCommandStorage::new(
-            self.get_extension_device()
-        );
+        let mut storage = DrawCommandStorage::default();
         storage.reinit(
             command_buffer,
             info.color_formats,
@@ -942,11 +947,11 @@ impl Gpu {
     {
         let cache = cache.into();
         if let Some(cache) = &cache &&
-            cache.logical_device_id() != self.device().id()
+            cache.device_id() != self.device().id()
         {
             return Err(Error::just_context(format!(
                 "cache logical device id {} is different from this Gpu instance device id {}",
-                cache.logical_device_id(), self.device().id(),
+                cache.device_id(), self.device().id(),
             )))
         }
         Ok(PipelineBatchBuilder::new(
@@ -1280,7 +1285,7 @@ impl Gpu {
                 )))
             }
             vk_ranges.push(vk::MappedMemoryRange {
-                memory: <_ as vk::Handle>::from_raw(memory.handle()),
+                memory: vk::DeviceMemory::from_raw(memory.handle()),
                 offset,
                 size: range.size,
                 ..Default::default()
@@ -1288,7 +1293,7 @@ impl Gpu {
         } 
         unsafe {
             self.device().flush_mapped_memory_ranges(&vk_ranges)
-        }.context("failed to flush mapped memory ranges")
+        }.context("failed to flush mapped memory ranges").map(|_| ())
     }
 
     pub fn invalidate_mapped_memory_ranges(
@@ -1334,7 +1339,7 @@ impl Gpu {
                 )))
             }
             vk_ranges.push(vk::MappedMemoryRange {
-                memory: <_ as vk::Handle>::from_raw(memory.handle()),
+                memory: vk::DeviceMemory::from_raw(memory.handle()),
                 offset,
                 size: range.size,
                 ..Default::default()
@@ -1342,7 +1347,7 @@ impl Gpu {
         } 
         unsafe {
             self.device().invalidate_mapped_memory_ranges(&vk_ranges)
-        }.context("failed to flush mapped memory ranges")
+        }.context("failed to flush mapped memory ranges").map(|_| ())
     }
 
     #[inline]
@@ -1414,7 +1419,7 @@ impl Gpu {
                     .create_semaphore(&semaphore_info, None)
             } {
                 Ok(handle) => {
-                    let index = semaphores.insert(handle);
+                    let index = semaphores.insert(handle.value);
                     indices.push(index);
                     *out_id = TimelineSemaphoreId(index);
                 },
@@ -1441,6 +1446,7 @@ impl Gpu {
             self.inner.device
                 .get_semaphore_counter_value(handle)
                 .context("failed to get timeline semaphore value")
+                .map(|res| res.value)
         }
     }
 
@@ -1482,7 +1488,7 @@ impl Gpu {
                 timeout.as_nanos() as u64,
             )
         }.context("unexpected vulkan error")?;
-        Ok(res == vk::Result::SUCCESS)
+        Ok(res.result == vk::Result::SUCCESS)
     }
 
     pub fn destroy_timeline_semaphores(&self, ids: &[TimelineSemaphoreId]) {

@@ -1,4 +1,4 @@
-use nox_mem::slot_map;
+use leimu_mem::slot_map;
 
 #[derive(Debug)]
 pub enum LogError {

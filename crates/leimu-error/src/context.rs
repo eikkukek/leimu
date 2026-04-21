@@ -33,9 +33,9 @@ pub trait Context<T, E>
     /// # Example
     /// ``` rust
     ///
-    /// use nox_error::Error;
-    /// use nox_error::Context;
-    /// use nox_error::Result;
+    /// use leimu_error::Error;
+    /// use leimu_error::Context;
+    /// use leimu_error::Result;
     ///
     /// fn do_thing() -> Result<()> {
     ///     Err(Error::just_ctx("failed"))
@@ -59,9 +59,9 @@ pub trait Context<T, E>
     /// # Example
     /// ``` rust
     ///
-    /// use nox_error::Error;
-    /// use nox_error::Context;
-    /// use nox_error::Result;
+    /// use leimu_error::Error;
+    /// use leimu_error::Context;
+    /// use leimu_error::Result;
     ///
     /// fn do_thing() -> Result<()> {
     ///     Err(Error::just_ctx("failed"))

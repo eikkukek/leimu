@@ -1,7 +1,7 @@
 use ahash::AHashMap;
 
-use nox_ash::vk;
-use nox_mem::{
+use tuhka::vk;
+use leimu_mem::{
     vec::{Vec32, FixedVec32},
     arena,
     vec32,
@@ -187,15 +187,15 @@ impl ImageMemoryBarrierCache {
             barrier.subresource_range.level_count,
         );
         self.cache.entry(key)
-        .and_modify(|barriers| {
-            if barriers.is_empty() {
+            .and_modify(|barriers| {
+                if barriers.is_empty() {
+                    self.touched.push(key);
+                }
+                barriers.push(barrier);
+            }).or_insert_with(|| {
                 self.touched.push(key);
-            }
-            barriers.push(barrier);
-        }).or_insert_with(|| {
-            self.touched.push(key);
-            vec32![barrier]
-        });
+                vec32![barrier]
+            });
     }
 
     pub fn flush<'a, Alloc>(

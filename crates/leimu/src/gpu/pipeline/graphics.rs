@@ -4,11 +4,10 @@ mod create_info;
 pub use definitions::*;
 pub use create_info::*;
 
-use nox_ash::vk;
-
-use nox_mem::{
+use tuhka::vk;
+use leimu_core::slice;
+use leimu_mem::{
     alloc::LocalAlloc,
-    slice::,
     vec::Vec32,
     vec32,
 };
@@ -37,7 +36,7 @@ impl GraphicsPipeline {
 
     #[inline(always)]
     pub(super) unsafe fn new(
-        device: LogicalDevice,
+        device: Device,
         handle: vk::Pipeline,
         shader_set: ShaderSet,
         create_info: &GraphicsPipelineCreateTemplate,

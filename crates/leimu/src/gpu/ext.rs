@@ -1,7 +1,7 @@
 //! Provides an interface for enabling and using Vulkan device extensions.
 //!
 //! # Core extensions
-//! The following device extensions are required by Nox and are always enabled:
+//! The following device extensions are required by Leimu and are always enabled:
 //! - [`VK_KHR_timeline_semaphore`][1]
 //! - If [`multi_viewport`][2] is enabled, [`VK_EXT_shader_viewport_index_layer`][3]
 //! - [`VK_KHR_create_renderpass2`][4]
@@ -19,7 +19,7 @@
 //! - [`VK_KHR_present_wait2`][16]
 //!
 //! # Provided extensions
-//! The following device extensions have been implemented for Nox and *can* be enabled by
+//! The following device extensions have been implemented for Leimu and *can* be enabled by
 //! applications:
 //! - [`VK_KHR_push_descriptor`][push_descriptor]
 //! - [`VK_EXT_inline_uniform_block`][inline_uniform_block]
@@ -63,22 +63,19 @@ use {
         ffi::CStr,
         hash::{self, Hash},
         borrow::Borrow,
-        ops::Deref,
+        ops::{Deref, DerefMut},
         any::Any,
         mem,
         ptr::NonNull,
+        fmt::{self, Display},
     },
-    nox_proc::Display,
-    nox_mem::{
-        option::OptionExt,
+    leimu_core::{
+        OptionExt,
         collections::EntryExt,
     },
     ahash::{AHashSet, AHashMap},
-    nox_ash::{
-        vk::{
-            self,
-            ExtendsStructureExt,
-        },
+    tuhka::{
+        vk,
     },
     crate::{
         gpu::prelude::*,
@@ -86,6 +83,62 @@ use {
         sync::Mutex,
     },
 };
+
+pub trait ExtendsDeviceCreateInfoExt {
+
+    fn s_type(&self) -> vk::StructureType;
+    fn as_mut(&mut self) -> &mut dyn vk::ExtendsDeviceCreateInfo;
+    fn to_obj(&self) -> ExtendsDeviceCreateInfoObj;
+}
+
+pub struct ExtendsDeviceCreateInfoObj(Box<dyn ExtendsDeviceCreateInfoExt>);
+
+impl ExtendsDeviceCreateInfoObj {
+
+    #[inline]
+    pub fn new<T>(x: T) -> Self
+        where T: ExtendsDeviceCreateInfoExt + 'static
+    {
+        Self(Box::new(x))
+    }
+}
+
+impl<T> ExtendsDeviceCreateInfoExt for T
+    where T:
+        vk::ExtendsDeviceCreateInfo +
+        Clone + Copy + 'static
+{
+    fn s_type(&self) -> vk::StructureType {
+        self.base_in()
+            .s_type
+    }
+
+    fn as_mut(&mut self) -> &mut dyn vk::ExtendsDeviceCreateInfo {
+        self
+    }
+
+    fn to_obj(&self) -> ExtendsDeviceCreateInfoObj {
+        ExtendsDeviceCreateInfoObj::new(*self)
+    }
+}
+
+impl Deref for ExtendsDeviceCreateInfoObj {
+
+    type Target = dyn ExtendsDeviceCreateInfoExt;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &*self.0
+    }
+}
+
+impl DerefMut for ExtendsDeviceCreateInfoObj {
+
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut *self.0
+    }
+}
 
 #[derive(Clone, Copy)]
 pub enum RobustAccessRequirements {
@@ -102,22 +155,16 @@ impl RobustAccessRequirements {
     }
 }
 
-/// Utility for creating [`vk::ExtendsDeviceCreateInfoObj`].
-#[inline(always)]
-pub fn create_extends_device_create_info_obj<T>(
-    value: T
-) -> vk::ExtendsDeviceCreateInfoObj
-    where T: ExtendsStructureExt<
-        dyn vk::ExtendsDeviceCreateInfo,
-        ExtendsObj = vk::ExtendsDeviceCreateInfoObj
-    >
-{
-    value.into_obj()
-}
-
-#[derive(Display)] #[display("{missing}")]
+#[derive(Debug)]
 pub struct MissingDeviceFeatureError {
     missing: String,
+}
+
+impl Display for MissingDeviceFeatureError {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.missing)
+    }
 }
 
 impl MissingDeviceFeatureError {
@@ -131,10 +178,17 @@ impl MissingDeviceFeatureError {
     }
 }
 
-#[derive(Clone, Copy, Display)] #[display("{name}")]
+#[derive(Clone, Copy, Debug)]
 pub struct ConstName {
     name: &'static str,
     hash: u64,
+}
+
+impl Display for ConstName {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.name)
+    }
 }
 
 impl ConstName {
@@ -337,8 +391,8 @@ pub trait ExtensionDevice: AnyExtensionDevice + Clone {
     fn precondition<'a, F>(f: F) -> bool
         where F: Fn(&ConstName) -> Option<&'a DeviceAttribute>;
 
-    /// Creates a new Device from [`LogicalDevice`].
-    fn new(device: &LogicalDevice) -> Box<Self>;
+    /// Creates a new Device from [`Device`].
+    fn new(device: &Device) -> Box<Self>;
 }
 
 #[derive(Default)]
@@ -369,7 +423,7 @@ impl EnabledDeviceExtensions {
     #[inline(always)]
     pub(crate) fn get_device<T: ExtensionDevice + 'static>(
         &self,
-        device: &LogicalDevice,
+        device: &Device,
     ) -> Option<T>
     {
         let mut devices = self.extension_devices.lock();
@@ -432,13 +486,13 @@ impl<'a> PhysicalDeviceContext<'a> {
     pub fn get_features<T>(
         &self,
         out: &mut T
-    ) where T: nox_ash::vk::ExtendsPhysicalDeviceFeatures2,
+    ) where T: vk::ExtendsPhysicalDeviceFeatures2,
     {
         let mut features = vk::PhysicalDeviceFeatures2
             ::default()
             .push_next(out);
         unsafe {
-            self.instance.ash().get_physical_device_features2(
+            self.instance.get_physical_device_features2(
                 self.physical_device.handle(), &mut features,
             );
         }
@@ -448,13 +502,13 @@ impl<'a> PhysicalDeviceContext<'a> {
     pub fn get_properties<T>(
         &self,
         out: &mut T,
-    ) where T: nox_ash::vk::ExtendsPhysicalDeviceProperties2,
+    ) where T: vk::ExtendsPhysicalDeviceProperties2,
     {
         let mut properties = vk::PhysicalDeviceProperties2
             ::default()
             .push_next(out);
         unsafe {
-            self.instance.ash().get_physical_device_properties2(
+            self.instance.get_physical_device_properties2(
                 self.physical_device.handle(),
                 &mut properties
             );
@@ -517,7 +571,7 @@ pub unsafe trait DeviceExtension: 'static + Send + Sync {
     fn register(
         &self,
         ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<vk::ExtendsDeviceCreateInfoObj>;
+    ) -> Option<ExtendsDeviceCreateInfoObj>;
 
     /// Clones self to a box.
     fn boxed(&self) -> Box<dyn DeviceExtension>;

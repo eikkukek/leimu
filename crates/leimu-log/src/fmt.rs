@@ -1,8 +1,6 @@
-use nox_mem::vec::Vec32;
+use leimu_mem::vec::Vec32;
 
 use termcolor::ColorSpec;
-
-use compact_str::CompactString;
 
 #[derive(Default)]
 pub struct LogFmt {
@@ -43,7 +41,7 @@ impl LogSpec {
 
 pub enum SegmentSpec {
     Message(LogSpec),
-    Text(CompactString, LogSpec),
+    Text(String, LogSpec),
 }
 
 pub struct LogFmtBuilder<'a> {
@@ -68,7 +66,7 @@ impl<'a> LogFmtBuilder<'a> {
 
     #[inline(always)]
     pub fn text(&mut self, text: &str, mut f: impl FnMut(LogSpec) -> LogSpec) -> &mut Self {
-        self.fmt.segments.push(SegmentSpec::Text(CompactString::new(text), f(Default::default())));
+        self.fmt.segments.push(SegmentSpec::Text(text.to_string(), f(Default::default())));
         self
     }
 }

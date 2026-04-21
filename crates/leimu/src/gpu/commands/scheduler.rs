@@ -5,18 +5,18 @@ use core::{
     marker::PhantomData,
 };
 
-use nox_ash::vk;
 use parking_lot::{RwLock, RwLockWriteGuard, RwLockReadGuard};
 use ahash::{AHashMap, AHashSet};
-
-use nox_mem::{
+use tuhka::vk;
+use leimu_core::{TryExtend, OptionExt};
+use leimu_mem::{
     alloc::{LocalAlloc, LocalAllocExt, Layout},
     arena::{self, Arena},
     slot_map::*,
     vec::{Vec32, FixedVec32, NonNullVec32},
     vec32,
-    option::OptionExt,
     conditional::True,
+    int::NonZeroOption,
 };
 
 
@@ -272,13 +272,6 @@ pub struct CommandRecorderCache {
     pub(super) compute_command_cache: ComputeCommandCache,
     pub pipeline_cache: PipelineCommandCache,
     pub(crate) present_submits: PresentSubmits,
-}
-
-impl CommandRecorderCache {
-
-    pub fn init(&mut self, gpu: &Gpu) {
-        self.pipeline_cache.init(gpu.get_extension_device());
-    }
 }
 
 struct CommandRecorderInner<'a> {

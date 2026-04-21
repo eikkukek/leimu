@@ -5,11 +5,8 @@ use core::{
     error,
 };
 
-use nox_proc::Display;
-
-use nox_mem::slot_map::*;
-
-use nox_ash::vk;
+use tuhka::vk;
+use leimu_mem::slot_map::*;
 
 use crate::gpu::prelude::*;
 
@@ -40,10 +37,22 @@ impl<Meta> ResourceId<Meta> for SlotIndex<Meta>
     }
 }
 
+macro_rules! impl_id_display {
+    ($name:ident) => {
+        impl Display for $name {
+
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "{}", self.0)
+            }
+        }
+    };
+}
+
 #[must_use]
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, Display)]
-#[display("{0}")]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct SurfaceId(pub(crate) SlotIndex<Surface>);
+
+impl_id_display!(SurfaceId);
 
 impl ResourceId<Surface> for SurfaceId {
  
@@ -54,9 +63,10 @@ impl ResourceId<Surface> for SurfaceId {
 }
 
 #[must_use]
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, Display)]
-#[display("{0}")]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct BufferId(pub(crate) SlotIndex<BufferMeta>);
+
+impl_id_display!(BufferId);
 
 impl BufferId {
     
@@ -157,8 +167,10 @@ pub(crate) type ResourceWriteGuard<'a, Meta, Id> =
     ResourceGuard<Meta, Id, RwLockWriteGuard<'a, SlotMap<Meta>>>;
 
 #[must_use]
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, Display)] #[display("{0}")]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct TimelineSemaphoreId(pub(super) SlotIndex<vk::Semaphore>);
+
+impl_id_display!(TimelineSemaphoreId);
 
 pub trait Flags: 
     Copy +

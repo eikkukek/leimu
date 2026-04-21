@@ -9,8 +9,7 @@ use ahash::AHashMap;
 
 use winit::event_loop::EventLoopProxy;
 
-use nox_mem::vec::StdVec;
-use nox_threads::executor::ThreadPool;
+use leimu_threads::executor::ThreadPool;
 
 use crate::error::*;
 
@@ -21,17 +20,17 @@ pub(crate) use winit::event_loop::ActiveEventLoop as WinitActiveEventLoop;
 pub struct EventLoop {
     pub(super) thread_pool: ThreadPool,
     pub(super) windows: UnsafeCell<AHashMap<WindowId, Box<win::Window>>>,
-    pub(super) active_ids: UnsafeCell<StdVec<WindowId>>,
+    pub(super) active_ids: UnsafeCell<Vec<WindowId>>,
     pub(super) delta_counter: time::Instant,
     pub(super) delta_time: time::Duration,
     pub(super) proxy: EventLoopProxy<RunEvent>,
-    platform: Option<Platform>,
+    platform: Option<Library>,
 }
 
 impl EventLoop {
 
     #[inline(always)]
-    pub(super) fn new(platform: Platform) -> Result<Self> {
+    pub(super) fn new(platform: Library) -> Result<Self> {
         platform.event_loop.set_control_flow(ControlFlow::Poll);
         Ok(Self {
             thread_pool: ThreadPool
@@ -46,7 +45,7 @@ impl EventLoop {
         })
     }
 
-    pub(super) fn init(&mut self) -> Platform {
+    pub(super) fn init(&mut self) -> Library {
         self.platform.take().unwrap()
     }
 

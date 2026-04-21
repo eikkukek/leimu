@@ -1,4 +1,4 @@
-use nox_proc::Display;
+use core::fmt::{self, Display};
 
 use super::*;
 
@@ -7,10 +7,17 @@ mod id_base {
     use super::*;
 
     #[must_use]
-    #[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, Display)]
-    #[display("(image id: {0}, view id: {1})")]
+    #[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
     pub struct Id<ImageId>(pub(super) ImageId, pub(super) u32)
         where ImageId: ResourceId<ImageMeta>;
+
+    impl<ImageId> Display for Id<ImageId>
+        where ImageId: ResourceId<ImageMeta>
+    {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{}::{}", self.0, self.1)
+        }
+    }
 
     impl<ImageId> Id<ImageId>
         where ImageId: ResourceId<ImageMeta>
