@@ -1,17 +1,19 @@
 [workspace]
 resolver = "3"
 members = [
-	"crates/nox-proc",
-	"crates/nox-mem",
-	"crates/nox-ash",
-	"crates/nox-error",
-	"crates/nox-alloc",
-	"crates/nox-threads",
-	"crates/nox-log",
-	"crates/nox",
-	"crates/nox-geom",
-	"crates/nox-font",
-	"crates/nox-gui",
+	"crates/tuhka",
+	"crates/leimu-spirv",
+	"crates/leimu-proc",
+	"crates/leimu-core",
+	"crates/leimu-mem",
+	"crates/leimu-ash",
+	"crates/leimu-error",
+	"crates/leimu-threads",
+	"crates/leimu-log",
+	"crates/leimu",
+	"crates/leimu-geom",
+	"crates/leimu-font",
+	"crates/leimu-gui",
 ]
 
 exclude = [

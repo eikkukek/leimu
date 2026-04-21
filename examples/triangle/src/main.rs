@@ -1,9 +1,9 @@
 use core::f32::consts::{PI, TAU, FRAC_PI_3};
 
-use nox::{
-    Platform,
+use leimu::{
+    Library,
     gpu::{self, ext},
-    mem::collections::{EntryExt, HashMap},
+    core::collections::{EntryExt, HashMap},
     sync::{Arc, SwapLock, atomic::{self, AtomicU64}},
     log,
 };
@@ -28,9 +28,11 @@ fn hsva_to_srgb_pack32(hue: f32, sat: f32, val: f32) -> u32 {
 }
 
 fn main() {
-    let platform = Platform::new();
+    let library = Library
+        ::new()
+        .expect("failed to init library");
     let instance = gpu::Instance::new(
-        &platform,
+        &library,
         "test",
         gpu::Version::new(1, 0, 0),
         &[gpu::InstanceLayer::new(gpu::LAYER_KHRONOS_VALIDATION, false)],
@@ -44,7 +46,7 @@ fn main() {
     let mut idx = 0;
     for (i, device) in devices.iter() {
         if device.device_type() ==
-            gpu::PhysicalDeviceType::DiscreteGpu
+            gpu::PhysicalDeviceType::DISCRETE_GPU
         {
             idx = i;
         }
@@ -65,7 +67,7 @@ fn main() {
         0
     );
     let logical_device = devices
-        .create_logical_device(idx, &[queue_create_info])
+        .create_device(idx, &[queue_create_info])
         .unwrap();
     log::info!("selected device: {}",
         logical_device.physical_device().device_name()
@@ -74,10 +76,10 @@ fn main() {
         .physical_device()
         .limits().min_uniform_buffer_offset_alignment;
     let queue = logical_device.device_queues()[0].clone();
-    let globals = nox::create_globals();
+    let globals = leimu::create_globals();
     let window = globals.add(|event_loop| {
         Ok(event_loop.create_window(
-            nox::win::default_attributes()
+            leimu::win::default_attributes()
                 .with_resizable(true)
                 .with_title("Hello, Triangle")
         )?)
@@ -190,14 +192,14 @@ fn main() {
     let mut hues = [0.0, PI / 3.0, 2.0 * PI / 3.0];
     let sat: f32 = 94.0 / 100.0;
     let val: f32 = 97.0 / 100.0;
-    nox::Nox::new(
-        platform,
+    leimu::Leimu::new(
+        library,
         logical_device,
-        nox::default_attributes(),
+        leimu::default_attributes(),
         &globals,
         |event_loop, event| {
             match event {
-                nox::Event::Update => {
+                leimu::Event::Update => {
                     let window = *window;
                     if !event_loop.is_window_valid(window) {
                         event_loop.exit();
@@ -305,7 +307,7 @@ fn main() {
                     }
                     Ok(())
                 },
-                nox::Event::GpuEvent(event) => {
+                leimu::Event::GpuEvent(event) => {
                     match event {
                         gpu::Event::SwapchainCreated {
                             surface_id: _, new_format, new_size, image_count: _
@@ -334,9 +336,9 @@ fn main() {
                                                         )
                                                 ]);
                                             let _ = batch.build()?;
-                                            nox::error::Result::Ok(id)
+                                            leimu::error::Result::Ok(id)
                                         })?;
-                                    nox::Result::Ok(())
+                                    leimu::Result::Ok(())
                                 })?;
                             } 
                             Ok(())
