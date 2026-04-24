@@ -38,7 +38,7 @@ unsafe impl DeviceExtension for Extension {
         let s = *self;
         Some(DeviceExtensionInfo {
             name: c"VK_KHR_robustness2",
-            deprecation_version: Version::MAX,
+            deprecation_version: VERSION_MAX,
             precondition: Precondition::new(move |context| {
                 let mut features = vk::PhysicalDeviceRobustness2FeaturesEXT::default();
                 context.get_features(&mut features);

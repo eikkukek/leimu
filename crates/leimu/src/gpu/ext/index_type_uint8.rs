@@ -23,7 +23,7 @@ unsafe impl DeviceExtension for DeviceExtensionIndexTypeUint8 {
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::index_type_uint8::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_4,
+            deprecation_version: API_VERSION_1_4,
             precondition: Precondition::new(|ctx| {
                 let mut features = vk::PhysicalDeviceIndexTypeUint8Features::default();
                 ctx.get_features(&mut features);

@@ -585,25 +585,24 @@ impl<Meta: Send + Sync> base::Template<Meta> {
         }
 
         match self.robustness_info.image_behavior {
-            PipelineRobustnessImageBehavior::ROBUST_IMAGE_ACCESS => {
+            PipelineRobustnessImageBehavior::ROBUST_IMAGE_ACCESS 
                 if !gpu
                     .get_device_attribute(ext::robust_image_access::Attributes::IS_SUPPORTED)
-                    .bool().unwrap_or_default()
-                {
-                    return Err(Error::just_context(
-                    "pipeline robustness image behavior must not robust image access if robust image accesss extension is not enabled"
-                    ))
-                }
+                    .bool().unwrap_or_default() =>
+            {
+                return Err(Error::just_context(format!("{}{}",
+                    "pipeline robustness image behavior is ROBUST_IMAGE_ACCESS, ",
+                    "when it is not supported",
+                )))
             },
-            PipelineRobustnessImageBehavior::ROBUST_IMAGE_ACCESS2 => {
+            PipelineRobustnessImageBehavior::ROBUST_IMAGE_ACCESS2
                 if !gpu
                     .get_device_attribute(ext::robustness2::Attributes::IS_ROBUST_IMAGE_ACCESS_2_SUPPORTED)
-                    .bool().unwrap_or_default()
-                {
-                    return Err(Error::just_context(
-                        "pipeline robustness image behavior must not be robust image access 2 if it is not supported"
-                    ))
-                }
+                    .bool().unwrap_or_default() =>
+            {
+                return Err(Error::just_context(
+                    "pipeline robustness image behavior is ROBUST_IMAGE_ACCESS2 when it is not supported"
+                ))
             },
             _ => {}
         };

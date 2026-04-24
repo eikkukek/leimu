@@ -8,7 +8,7 @@ use leimu_mem::{
 use crate::{
     gpu::prelude::*,
     error::*,
-    threads::executor::block_on,
+    executor::block_on,
 };
 
 #[derive(Default)]
@@ -107,6 +107,11 @@ unsafe impl<'a, 'b> Commands<'a, 'b> for ComputeCommands<'a, 'b> {
     fn finish<'c, Alloc>(self, alloc: &'c Alloc) -> Result<CommandResult<'c, Alloc>>
         where Alloc: ?Sized + LocalAlloc<Error = arena::Error>
     {
+        unsafe {
+            self.gpu.device().end_command_buffer(
+                self.primary_command_buffer
+            ).context("failed to end primary command buffer")?;
+        }
         let mut primary_command_buffers = FixedVec32
             ::with_capacity(1, alloc)
             .context("alloc failed")?;
@@ -161,6 +166,8 @@ impl<'a, 'b> ComputeCommands<'a, 'b> {
         f(&mut commands).context_from_tracked(|orig| format!(
             "failed to record pipeline commands at {}", orig.or_this(),
         ))?;
+        drop(buffers);
+        drop(images);
         unsafe {
             let tmp_alloc = self.gpu.tmp_alloc();
             let tmp_alloc = tmp_alloc.guard();

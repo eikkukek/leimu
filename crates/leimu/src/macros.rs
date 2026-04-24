@@ -262,3 +262,15 @@ macro_rules! c_enum {
         }
     )+};
 }
+
+macro_rules! impl_id_display {
+    ($name:ident) => {
+        impl ::core::fmt::Display for $name {
+
+            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                write!(f, "Id({})", self.0)
+            }
+        }
+    };
+}
+pub(crate) use impl_id_display;

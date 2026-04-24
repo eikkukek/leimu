@@ -63,26 +63,24 @@ mod base {
                     self.shader_set_id,
                 )))?;
             match self.robustness_info.images {
-                vk::PipelineRobustnessImageBehavior::ROBUST_IMAGE_ACCESS => {
+                vk::PipelineRobustnessImageBehavior::ROBUST_IMAGE_ACCESS 
                     if !gpu
                         .get_device_attribute(ext::robust_image_access::Attributes::IS_SUPPORTED)
                         .bool().unwrap_or_default()
-                    {
-                        return Err(Error::just_context(format!("{}{}",
-                            "pipeline robustness image behavior must not robust image access if robust",
-                            "image accesss extension is not enabled",
-                        )))
-                    }
+                => {
+                    return Err(Error::just_context(format!("{}{}",
+                        "pipeline robustness image behavior must not robust image access if robust",
+                        "image accesss extension is not enabled",
+                    )))
                 },
-                vk::PipelineRobustnessImageBehavior::ROBUST_IMAGE_ACCESS_2 => {
+                vk::PipelineRobustnessImageBehavior::ROBUST_IMAGE_ACCESS_2
                     if !gpu
                         .get_device_attribute(ext::robustness2::Attributes::IS_ROBUST_IMAGE_ACCESS_2_SUPPORTED)
                         .bool().unwrap_or_default()
-                    {
-                        return Err(Error::just_context(
-                            "pipeline robustness image behavior must not be robust image access 2 if it is not supported"
-                        ))
-                    }
+                => {
+                    return Err(Error::just_context(
+                        "pipeline robustness image behavior must not be robust image access 2 if it is not supported"
+                    ))
                 },
                 _ => {}
             }

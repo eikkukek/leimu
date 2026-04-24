@@ -10,7 +10,7 @@ unsafe impl DeviceExtension for TimelineSemaphoreExtension {
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::timeline_semaphore::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_2,
+            deprecation_version: API_VERSION_1_2,
             precondition: Precondition::new(|ctx| {
                 let mut features = vk::PhysicalDeviceTimelineSemaphoreFeatures::default();
                 ctx.get_features(&mut features);
@@ -45,9 +45,9 @@ unsafe impl DeviceExtension for ShaderViewportIndexLayerExtension {
         attributes.required_features.multi_viewport.then(|| {
             DeviceExtensionInfo {
                 name: ext::shader_viewport_index_layer::NAME,
-                deprecation_version: Version::VULKAN_API_VERSION_1_2,
+                deprecation_version: API_VERSION_1_2,
                 precondition: Precondition::new(|ctx| {
-                    if ctx.api_version() >= Version::VULKAN_API_VERSION_1_2 {
+                    if ctx.api_version() >= API_VERSION_1_2 {
                         let mut features = vk::PhysicalDeviceVulkan12Features::default();
                         ctx.get_features(&mut features);
                         (features.shader_output_viewport_index == 0).then(|| {
@@ -69,7 +69,7 @@ unsafe impl DeviceExtension for ShaderViewportIndexLayerExtension {
         &self,
         ctx: &mut PhysicalDeviceContext<'_>,
     ) -> Option<ExtendsDeviceCreateInfoObj> {
-        if ctx.api_version() >= Version::VULKAN_API_VERSION_1_2 {
+        if ctx.api_version() >= API_VERSION_1_2 {
             let features = ctx.vulkan_12_features();
             features.shader_output_viewport_index = vk::TRUE;
             features.shader_output_layer = vk::TRUE;
@@ -90,7 +90,7 @@ unsafe impl DeviceExtension for CreateRenderPass2Extension {
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::create_renderpass2::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_2,
+            deprecation_version: API_VERSION_1_2,
             precondition: None,
         })
     }
@@ -115,7 +115,7 @@ unsafe impl DeviceExtension for DepthStencilResolveExtension {
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::depth_stencil_resolve::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_2,
+            deprecation_version: API_VERSION_1_2,
             precondition: None,
         })
     }
@@ -140,7 +140,7 @@ unsafe impl DeviceExtension for DynamicRenderingExtension {
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::dynamic_rendering::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_3,
+            deprecation_version: API_VERSION_1_3,
             precondition: Precondition::new(|ctx| {
                 let mut features = vk::PhysicalDeviceDynamicRenderingFeatures::default();
                 ctx.get_features(&mut features);
@@ -174,7 +174,7 @@ unsafe impl DeviceExtension for FormatFeatureFlags2Extension {
     fn get_info(&self, _attributes: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::format_feature_flags2::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_3,
+            deprecation_version: API_VERSION_1_3,
             precondition: None,
         })
     }
@@ -199,9 +199,9 @@ unsafe impl DeviceExtension for ExtendedDynamicStateExtension {
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: ext::extended_dynamic_state::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_3,
+            deprecation_version: API_VERSION_1_3,
             precondition: Precondition::new(|ctx| {
-                if ctx.api_version() < Version::VULKAN_API_VERSION_1_3 {
+                if ctx.api_version() < API_VERSION_1_3 {
                     let mut features = vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT::default();
                     ctx.get_features(&mut features);
                     (features.extended_dynamic_state == 0).then(|| {
@@ -218,7 +218,7 @@ unsafe impl DeviceExtension for ExtendedDynamicStateExtension {
         &self,
         ctx: &mut PhysicalDeviceContext<'_>,
     ) -> Option<ExtendsDeviceCreateInfoObj> {
-        (ctx.api_version() < Version::VULKAN_API_VERSION_1_3).then(||
+        (ctx.api_version() < API_VERSION_1_3).then(||
             ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
                 ::default()
                 .extended_dynamic_state(true)
@@ -239,7 +239,7 @@ unsafe impl DeviceExtension for CopyCommands2Extension {
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::copy_commands2::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_3,
+            deprecation_version: API_VERSION_1_3,
             precondition: None,
         })
     }
@@ -264,7 +264,7 @@ unsafe impl DeviceExtension for Synchronization2Extension {
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::synchronization2::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_3,
+            deprecation_version: API_VERSION_1_3,
             precondition: Precondition::new(|ctx| {
                 let mut features = vk::PhysicalDeviceSynchronization2Features::default();
                 ctx.get_features(&mut features);
@@ -297,7 +297,7 @@ unsafe impl DeviceExtension for Maintenance4Extension {
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::maintenance4::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_3,
+            deprecation_version: API_VERSION_1_3,
             precondition: Precondition::new(|ctx| {
                 let mut features = vk::PhysicalDeviceMaintenance4Features::default();
                 ctx.get_features(&mut features);
@@ -331,7 +331,7 @@ unsafe impl DeviceExtension for DynamicRenderingLocalReadExtension {
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::dynamic_rendering_local_read::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_4,
+            deprecation_version: API_VERSION_1_4,
             precondition: Precondition::new(|ctx| {
                 let mut features = vk::PhysicalDeviceDynamicRenderingLocalReadFeatures::default();
                 ctx.get_features(&mut features);
@@ -364,7 +364,7 @@ unsafe impl DeviceExtension for Maintenance5Extension {
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::maintenance5::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_4,
+            deprecation_version: API_VERSION_1_4,
             precondition: Precondition::new(|ctx| {
                 let mut features = vk::PhysicalDeviceMaintenance5Features::default();
                 ctx.get_features(&mut features);
@@ -398,7 +398,7 @@ unsafe impl DeviceExtension for Maintenance6Extension {
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::maintenance6::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_4,
+            deprecation_version: API_VERSION_1_4,
             precondition: Precondition::new(|ctx| {
                 let mut features = vk::PhysicalDeviceMaintenance6Features::default();
                 ctx.get_features(&mut features);
@@ -432,7 +432,7 @@ unsafe impl DeviceExtension for SwapchainExtension {
     fn get_info(&self, _attributes: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::swapchain::NAME,
-            deprecation_version: Version::MAX,
+            deprecation_version: VERSION_MAX,
             precondition: None
         })
     }
@@ -457,7 +457,7 @@ unsafe impl DeviceExtension for PresentId2Extension {
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::present_id2::NAME,
-            deprecation_version: Version::MAX,
+            deprecation_version: VERSION_MAX,
             precondition: Precondition::new(|ctx| {
                 let mut features = vk::PhysicalDevicePresentId2FeaturesKHR::default();
                 ctx.get_features(&mut features);
@@ -491,7 +491,7 @@ unsafe impl DeviceExtension for PresentWait2Extension {
     fn get_info(&self, _attributes: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::present_wait2::NAME,
-            deprecation_version: Version::MAX,
+            deprecation_version: VERSION_MAX,
             precondition: Precondition::new(|ctx| {
                 let mut features = vk::PhysicalDevicePresentWait2FeaturesKHR::default();
                 ctx.get_features(&mut features);

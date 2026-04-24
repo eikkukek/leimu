@@ -19,7 +19,7 @@ use leimu_mem::{
     vec::Vec32,
     vec32,
 };
-use leimu_threads::futures::{
+use ::futures::{
     future::RemoteHandle,
 };
 
@@ -30,7 +30,7 @@ use shader_fn::glsl_to_spirv;
 use crate::{
     error::*,
     sync::*,
-    threads::executor::SpawnExt,
+    executor::SpawnExt,
     gpu::prelude::*,
 };
 
@@ -74,7 +74,7 @@ impl<'a> ShaderSource<'a> {
             },
             Self::Glsl(input) => unsafe {
                 let comp = glsl_to_spirv(input, name, stage.into(), api_version)
-                .context("failed to compile glsl to spirv")?;
+                    .context("failed to compile glsl to spirv")?;
                 let bin = comp.as_binary();
                 let len = bin.len();
                 assert!(len <= u32::MAX as usize);
@@ -228,9 +228,12 @@ impl<'a> ShaderAttributes<'a> {
         self
     }
 
-    /// Sets the entry point for the shader. A shader can have multiple entry points, so you need
-    /// to specify which entry point to use for pipelines and shader reflection. The default entry
-    /// point is `c"main"`.
+    /// Sets the entry point for the shader.
+    ///
+    /// A shader can have multiple entry points, so an entry point to use for pipelines and
+    /// shader reflection needs to specified.
+    ///
+    /// The default entry point is `c"main"`.
     #[inline(always)]
     pub fn with_entry_point(mut self, name: &'a CStr) -> Self {
         self.entry_point = name;
@@ -238,13 +241,20 @@ impl<'a> ShaderAttributes<'a> {
     }
 
     #[inline(always)]
-    pub fn to_owned(self) -> ShaderAttributesOwned {
+    fn to_owned(&self) -> ShaderAttributesOwned {
         ShaderAttributesOwned {
             source: self.source.map(|s| s.to_owned()),
             stage: self.stage,
             name: self.name.into(),
             entry_point: self.entry_point.into(),
         }
+    }
+
+    pub fn build(
+        self,
+        gpu: &Gpu,
+    ) -> Result<Shader> {
+        Shader::new(gpu, self)
     }
 }
 

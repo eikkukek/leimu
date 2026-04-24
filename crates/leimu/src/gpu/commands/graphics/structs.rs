@@ -30,7 +30,6 @@ pub enum ClearColorValue {
 impl Default for ClearColorValue {
 
     fn default() -> Self {
-        //Self::Float([Hashable(0.0); 4])
         Self::Int([0; 4])
     }
 }

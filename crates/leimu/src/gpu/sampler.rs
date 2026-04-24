@@ -1,9 +1,12 @@
 use core::{
     hash::{self, Hash},
-    fmt::{self, Debug},
+    fmt::{self,
+        Debug,
+        Display,
+    },
 };
 
-use leimu_proc::{Display, BuildStructure};
+use leimu_proc::BuildStructure;
 use tuhka::vk;
 
 use crate::{
@@ -15,7 +18,7 @@ use crate::{
 struct Inner {
     device: Device,
     handle: vk::Sampler,
-    create_info: SamplerCreateInfo,
+    attributes: SamplerAttributes,
 }
 
 impl Drop for Inner {
@@ -29,8 +32,7 @@ impl Drop for Inner {
     }
 }
 
-#[derive(Clone, Display)]
-#[display(format_args!("{:?}", self.inner.handle))]
+#[derive(Clone)]
 pub struct Sampler {
     inner: Arc<Inner>,
 }
@@ -42,24 +44,24 @@ impl Sampler {
     #[inline(always)]
     fn new(
         device: Device,
-        create_info: SamplerCreateInfo,
+        attributes: SamplerAttributes,
     ) -> Result<Self> {
         let info = vk::SamplerCreateInfo {
             s_type: vk::StructureType::SAMPLER_CREATE_INFO,
-            mag_filter: create_info.mag_filter.into(),
-            min_filter: create_info.min_filter.into(),
-            mipmap_mode: create_info.mip_mode.into(),
-            address_mode_u: create_info.address_mode_u.into(),
-            address_mode_v: create_info.address_mode_v.into(),
-            address_mode_w: create_info.address_mode_w.into(),
-            mip_lod_bias: create_info.mip_lod_bias,
-            anisotropy_enable: create_info.max_anisotropy.is_some() as u32,
-            max_anisotropy: create_info.max_anisotropy.unwrap_or_default(),
-            compare_enable: create_info.compare_op.is_some() as u32,
-            compare_op: create_info.compare_op.unwrap_or(CompareOp::NEVER).into(),
-            min_lod: create_info.min_lod,
-            max_lod: create_info.max_lod,
-            border_color: create_info.border_color.into(),
+            mag_filter: attributes.mag_filter.into(),
+            min_filter: attributes.min_filter.into(),
+            mipmap_mode: attributes.mip_mode.into(),
+            address_mode_u: attributes.address_mode_u.into(),
+            address_mode_v: attributes.address_mode_v.into(),
+            address_mode_w: attributes.address_mode_w.into(),
+            mip_lod_bias: attributes.mip_lod_bias,
+            anisotropy_enable: attributes.max_anisotropy.is_some() as u32,
+            max_anisotropy: attributes.max_anisotropy.unwrap_or_default(),
+            compare_enable: attributes.compare_op.is_some() as u32,
+            compare_op: attributes.compare_op.unwrap_or(CompareOp::NEVER).into(),
+            min_lod: attributes.min_lod,
+            max_lod: attributes.max_lod,
+            border_color: attributes.border_color.into(),
             ..Default::default()
         };
         let handle = unsafe {
@@ -67,7 +69,7 @@ impl Sampler {
             .context("failed to create sampler")?
         }.value;
         Ok(Self {
-            inner: Arc::new(Inner { device, handle, create_info })
+            inner: Arc::new(Inner { device, handle, attributes, })
         })
     }
 
@@ -77,13 +79,13 @@ impl Sampler {
     }
 
     #[inline(always)]
-    pub fn create_info(&self) -> &SamplerCreateInfo {
-        &self.inner.create_info
+    pub fn attributes(&self) -> &SamplerAttributes {
+        &self.inner.attributes
     }
 }
 
 #[derive(Default, Clone, Copy, BuildStructure)]
-pub struct SamplerCreateInfo {
+pub struct SamplerAttributes {
     /// Specifies which magnification [`Filter`] to apply to look ups. Default is [`Filter::Nearest`].
     ///
     /// See the Vulkan docs for more information on filtering:
@@ -105,7 +107,9 @@ pub struct SamplerCreateInfo {
     /// See the Vulkan docs for details:
     /// <https://docs.vulkan.org/spec/latest/chapters/textures.html#textures-level-of-detail-operation>
     pub mip_lod_bias: f32,
-    /// Enables anisotropic filtering if `max_anisotropy` is [`Some`]. The default is [`None`].
+    /// Enables anisotropic filtering if `max_anisotropy` is [`Some`].
+    ///
+    /// The default is [`None`].
     ///
     /// See the Vulkan docs for details:
     /// <https://docs.vulkan.org/spec/latest/chapters/textures.html#textures-texel-anisotropic-filtering>
@@ -117,14 +121,17 @@ pub struct SamplerCreateInfo {
     #[skip]
     pub address_mode_w: SamplerAddressMode,
     pub compare_op: Option<CompareOp>,
-    /// Specifies the value used to clamp the minimum level of detail value. The default value is
-    /// `0.0`.
+    /// Specifies the value used to clamp the minimum level of detail value.
+    ///
+    /// The default value is `0.0`.
     ///
     /// See the Vulkan docs for details:
     /// <https://docs.vulkan.org/spec/latest/chapters/textures.html#textures-level-of-detail-operation>
     pub min_lod: f32,
     /// Specifies the value used to clamp the maximum level of detail value. To disable clamping
-    /// the maximum, use the [`Sampler::LOD_CLAMP_NONE`] constant. The default value is `0.0`.
+    /// the maximum, use the [`Sampler::LOD_CLAMP_NONE`] constant.
+    ///
+    /// The default value is `0.0`.
     ///
     /// See the Vulkan docs for details:
     /// <https://docs.vulkan.org/spec/latest/chapters/textures.html#textures-level-of-detail-operation>
@@ -133,10 +140,12 @@ pub struct SamplerCreateInfo {
     pub border_color: BorderColor,
 }
 
-impl SamplerCreateInfo {
+impl SamplerAttributes {
 
-    /// Specifies which wrapping operation is used when the coordinates of used to sample an image
-    /// would be out of bounds. The default is [`AddressMode::REPEAT`] for each coordinate.
+    /// Specifies which wrapping operation is used when the coordinates used to sample an image
+    /// would be out of bounds.
+    ///
+    /// The default is [`AddressMode::REPEAT`] for each coordinate.
     ///
     /// See the Vulkan docs for details:
     /// <https://docs.vulkan.org/spec/latest/chapters/textures.html#textures-wrapping-operation>
@@ -162,7 +171,7 @@ impl SamplerCreateInfo {
 
 impl PartialEq for Sampler {
 
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.inner, &other.inner)
     }
@@ -172,15 +181,22 @@ impl Eq for Sampler {}
 
 impl Hash for Sampler {
 
+    #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         Arc::as_ptr(&self.inner).hash(state);
     }
 }
-
 impl Debug for Sampler {
 
-    #[inline(always)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.inner.handle.fmt(f)
+        f.debug_tuple("Sampler")
+            .field(&self.inner.handle)
+            .finish()
+    }
+}
+impl Display for Sampler {
+
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:#x}", self.inner.handle)
     }
 }

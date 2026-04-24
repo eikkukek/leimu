@@ -10,18 +10,18 @@ keywords = ["gpu", "graphics", "vulkan"]
 
 [dependencies]
 tuhka = { path = "../tuhka", features = ["window", "ext-load-with"] }
-leimu-core = { path = "../leimu-core" }
 leimu-spirv = { path = "../leimu-spirv" }
 leimu-mem = { path = "../leimu-mem" }
 leimu-proc = { path = "../leimu-proc" }
-leimu-error = { path = "../leimu-error" }
-leimu-log = { path = "../leimu-log" }
-leimu-threads = { path = "../leimu-threads" }
 
-raw-window-handle = "0.6.0"
-parking_lot = "0.12.5"
-shaderc = "0.9.1"
+log = "0.4.29"
 ahash = "0.8.12"
+raw-window-handle = "0.6.0"
+futures = "0.3.0"
+crossbeam = "0.8.4"
+parking_lot = "0.12.5"
+arc-swap = "1.8.0"
+shaderc = "0.9.1"
 
 winit = { version = "0.30", optional = true }
 

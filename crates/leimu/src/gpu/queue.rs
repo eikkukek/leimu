@@ -45,10 +45,6 @@ impl DeviceQueueCreateInfo {
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct DeviceQueueInfo {
-}
-
 struct DeviceQueueInner {
     handle: vk::Queue,
     device_id: DeviceId,
@@ -181,7 +177,7 @@ impl QueueFamilies {
     {
         let n_properties = unsafe { instance
             .get_physical_device_queue_family_properties2_len(physical_device)
-        } as u32;
+        };
         let mut properties = vec32![Default::default(); n_properties];
         unsafe { instance
             .get_physical_device_queue_family_properties2(physical_device, &mut properties)

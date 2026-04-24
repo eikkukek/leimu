@@ -26,6 +26,7 @@
 //! - [`VK_KHR_index_type_uint8`][index_type_uint8]
 //! - [`VK_KHR_robustness2`][robustness2]
 //! - [`VK_EXT_pipeline_robustness`][pipeline_robustness]
+//! - [`VK_EXT_descriptor_indexing`][descriptor_indexing]
 //!
 //! # Future extensions
 //!  *can* be enabled, but doesn't yet have a high level
@@ -55,23 +56,20 @@ pub mod index_type_uint8;
 pub mod robust_image_access;
 pub mod robustness2;
 pub mod pipeline_robustness;
+pub mod descriptor_indexing;
 
 pub(crate) use core::core_extensions;
 
 use {
     ::core::{
+        any::Any,
         ffi::CStr,
         hash::{self, Hash},
         borrow::Borrow,
         ops::{Deref, DerefMut},
-        any::Any,
         mem,
         ptr::NonNull,
         fmt::{self, Display},
-    },
-    leimu_core::{
-        OptionExt,
-        collections::EntryExt,
     },
     ahash::{AHashSet, AHashMap},
     tuhka::{
@@ -79,7 +77,10 @@ use {
     },
     crate::{
         gpu::prelude::*,
-        log,
+        core::{
+            OptionExt,
+            collections::EntryExt,
+        },
         sync::Mutex,
     },
 };
@@ -149,7 +150,7 @@ pub enum RobustAccessRequirements {
 
 impl RobustAccessRequirements {
 
-    #[inline(always)]
+    #[inline]
     pub fn is_required(self) -> bool {
         matches!(self, Self::Required | Self::Enabled)
     }
@@ -169,7 +170,7 @@ impl Display for MissingDeviceFeatureError {
 
 impl MissingDeviceFeatureError {
 
-    #[inline(always)]
+    #[inline]
     pub fn new(missing_features: &str) -> Self
     {
         Self {
@@ -213,7 +214,7 @@ impl ConstName {
 
 impl Hash for ConstName {
 
-    #[inline(always)]
+    #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         self.hash.hash(state);
     }
@@ -221,7 +222,7 @@ impl Hash for ConstName {
 
 impl PartialEq for ConstName {
 
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name
     }
@@ -235,6 +236,7 @@ enum AttributeType {
     U32(u32),
     I32(i32),
     DeviceSize(vk::DeviceSize),
+    Structure(Box<dyn Any + Send + Sync>),
 }
 
 pub struct DeviceAttribute {
@@ -244,7 +246,7 @@ pub struct DeviceAttribute {
 
 impl DeviceAttribute {
 
-    #[inline(always)]
+    #[inline]
     const fn empty() -> Self {
         Self {
             name: ConstName::new(""),
@@ -252,7 +254,7 @@ impl DeviceAttribute {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn new_bool(name: ConstName, value: bool) -> Self {
         Self {
             name,
@@ -260,7 +262,7 @@ impl DeviceAttribute {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn new_u32(name: ConstName, value: u32) -> Self {
         Self {
             name,
@@ -268,7 +270,7 @@ impl DeviceAttribute {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn new_i32(name: ConstName, value: i32) -> Self {
         Self {
             name,
@@ -276,7 +278,7 @@ impl DeviceAttribute {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn new_device_size(name: ConstName, value: vk::DeviceSize) -> Self {
         Self {
             name,
@@ -284,7 +286,17 @@ impl DeviceAttribute {
         }
     }
 
-    #[inline(always)]
+    #[inline]
+    pub fn new_structure<
+        T: Any + Send + Sync
+    >(name: ConstName, value: T) -> Self {
+        Self {
+            name,
+            ty: AttributeType::Structure(Box::new(value)),
+        }
+    }
+
+    #[inline]
     pub fn bool(&self) -> Option<bool> {
         match self.ty {
             AttributeType::Bool(value) => Some(value),
@@ -292,7 +304,7 @@ impl DeviceAttribute {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn u32(&self) -> Option<u32> {
         match self.ty {
             AttributeType::U32(value) => Some(value),
@@ -300,7 +312,7 @@ impl DeviceAttribute {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn i32(&self) -> Option<i32> {
         match self.ty {
             AttributeType::I32(value) => Some(value),
@@ -308,10 +320,27 @@ impl DeviceAttribute {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn device_size(&self) -> Option<vk::DeviceSize> {
         match self.ty {
             AttributeType::DeviceSize(value) => Some(value),
+            _ => None,
+        }
+    }
+
+    #[inline]
+    pub fn structure<T: Any>(&self) -> Option<&T> {
+        match &self.ty {
+            AttributeType::Structure(value) => {
+                if value.is::<T>() {
+                    let ptr: *const dyn Any = value;
+                    Some(unsafe {
+                        &*ptr.cast()
+                    })
+                } else {
+                    None
+                }
+            }
             _ => None,
         }
     }
@@ -319,16 +348,16 @@ impl DeviceAttribute {
 
 impl Default for &DeviceAttribute {
 
-    #[inline(always)]
+    #[inline]
     fn default() -> Self {
-        const DEFAULT: DeviceAttribute = DeviceAttribute::empty();
+        static DEFAULT: DeviceAttribute = DeviceAttribute::empty();
         &DEFAULT
     }
 }
 
 impl PartialEq for DeviceAttribute {
     
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name
     }
@@ -338,7 +367,7 @@ impl Eq for DeviceAttribute {}
 
 impl Hash for DeviceAttribute {
 
-    #[inline(always)]
+    #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
     }
@@ -346,7 +375,7 @@ impl Hash for DeviceAttribute {
 
 impl Borrow<ConstName> for DeviceAttribute {
     
-    #[inline(always)]
+    #[inline]
     fn borrow(&self) -> &ConstName {
         &self.name
     }
@@ -365,7 +394,7 @@ impl Deref for ExtensionDeviceObj {
 
     type Target = dyn Any;
     
-    #[inline(always)]
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &*self.0
     }
@@ -373,7 +402,7 @@ impl Deref for ExtensionDeviceObj {
 
 impl Clone for ExtensionDeviceObj {
 
-    #[inline(always)]
+    #[inline]
     fn clone(&self) -> Self {
         Self(self.0.boxed())
     }
@@ -403,24 +432,24 @@ pub struct EnabledDeviceExtensions {
 
 impl EnabledDeviceExtensions {
 
-    #[inline(always)]
+    #[inline]
     pub fn new() -> Self {
         Self::default()
     }
     
-    #[inline(always)]
+    #[inline]
     pub fn add_attribute(&mut self, property: DeviceAttribute) {
         self.attributes.insert(property);
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn get_attribute(&self, name: ConstName) -> &DeviceAttribute {
         self.attributes
             .get(&name)
             .unwrap_or_default()
     }
 
-    #[inline(always)]
+    #[inline]
     pub(crate) fn get_device<T: ExtensionDevice + 'static>(
         &self,
         device: &Device,
@@ -460,7 +489,7 @@ pub struct PhysicalDeviceContext<'a> {
 
 impl<'a> PhysicalDeviceContext<'a> {
 
-    #[inline(always)]
+    #[inline]
     pub fn new(
         instance: &'a Instance,
         physical_device: &'a PhysicalDevice,
@@ -477,12 +506,12 @@ impl<'a> PhysicalDeviceContext<'a> {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn api_version(&self) -> Version {
         self.physical_device.api_version()
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn get_features<T>(
         &self,
         out: &mut T
@@ -498,7 +527,7 @@ impl<'a> PhysicalDeviceContext<'a> {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn get_properties<T>(
         &self,
         out: &mut T,
@@ -515,17 +544,17 @@ impl<'a> PhysicalDeviceContext<'a> {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn vulkan_12_features(&mut self) -> &mut vk::PhysicalDeviceVulkan12Features<'static> {
         self.vulkan_12_features.get_or_insert_default()
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn vulkan_14_features(&mut self) -> &mut vk::PhysicalDeviceVulkan14Features<'static> {
         self.vulkan_14_features.get_or_insert_default()
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn register_attribute(&mut self, attribute: DeviceAttribute) {
         self.enabled_extensions.edit(|extensions| {
             extensions.add_attribute(attribute);
@@ -539,14 +568,14 @@ pub struct Precondition(Box<FnPrecondition>);
 
 impl Precondition {
 
-    #[inline(always)]
+    #[inline]
     pub fn new<F>(f: F) -> Option<Self>
         where F: Fn(&PhysicalDeviceContext<'_>) -> Option<MissingDeviceFeatureError> + 'static
     {
         Some(Self(Box::new(f)))
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn call(&self, ctx: &PhysicalDeviceContext<'_>) -> Option<MissingDeviceFeatureError> {
         (self.0)(ctx)
     }
@@ -581,7 +610,7 @@ pub struct DeviceExtensionObj(Box<dyn DeviceExtension>);
 
 impl From<Box<dyn DeviceExtension>> for DeviceExtensionObj {
 
-    #[inline(always)]
+    #[inline]
     fn from(value: Box<dyn DeviceExtension>) -> Self {
         Self(value)
     }
@@ -589,7 +618,7 @@ impl From<Box<dyn DeviceExtension>> for DeviceExtensionObj {
 
 impl Clone for DeviceExtensionObj {
 
-    #[inline(always)]
+    #[inline]
     fn clone(&self) -> Self {
         Self(self.0.boxed())
     }
@@ -599,7 +628,7 @@ impl Deref for DeviceExtensionObj {
 
     type Target = dyn DeviceExtension;
 
-    #[inline(always)]
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &*self.0
     }

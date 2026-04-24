@@ -1,5 +1,8 @@
 //! The sync prelude of Leimu.
 
+mod future_lock;
+mod swap_lock;
+
 pub use std::sync::{
     Arc, OnceLock, LazyLock, atomic,
 };
@@ -13,4 +16,5 @@ pub use parking_lot::{
     Condvar,
 };
 
-pub use leimu_threads::sync::{FutureLock, SwapLock};
+pub use future_lock::FutureLock;
+pub use swap_lock::*;

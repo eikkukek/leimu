@@ -1,130 +1,50 @@
-//! The error prelude of LeimLeimuu.
+//! The error prelude of Leimu.
 //!
 //! # Includes 
-//! - [`Error`] and [`EventError`] error types.
-//! - [`Result`] and [`EventResult`] [`Result`][core::result::Result] types.
+//! - [`Error`] and [`EventError`] [`error`][1] types.
+//! - [`Result`] and [`EventResult`] [`result`][2] types.
 //! - [`Context`] and [`Tracked`] traits for error handling.
+//!
+//! [1]: core::error::Error
+//! [2]: core::result::Result
 
-use core::{
-    error,
-    fmt::{self, Display, Debug, Formatter},
-};
+#![warn(missing_docs)]
 
-pub use leimu_error::*;
+pub mod location;
+mod out;
+mod tracked;
+mod context;
+mod event;
 
-use crate::{
-    sync::OnceLock,
-};
+use core::error;
 
-pub mod expand {
+pub use leimu_proc::Error;
 
-    use super::*;
+pub use location::Location;
+pub use tracked::*;
+pub use out::*;
+pub use event::*;
+pub use context::*;
 
-    use crate::log::{self, Result, error, warn};
-
-    pub static ERROR_CAUSE_FMT: OnceLock<log::CustomFmt> = OnceLock::new();
-
-    pub fn fn_expand_error(target: &str, err: Error) -> Result<bool> {
-        if let Some(&error_cause_fmt) = ERROR_CAUSE_FMT.get() &&
-            error!("{}", err)
-        {
-            let mut err: &dyn error::Error = &err;
-            while let Some(source) = err.source() {
-                err = source;
-                log::log(
-                    target,
-                    log::LevelFmt::Other(error_cause_fmt, log::Level::Error),
-                    format_args!("{}", err)
-                )?;
-            }
-            Ok(true)
-        } else {
-            Ok(false)
-        }
-    }
-
-    pub fn fn_expand_warn(target: &str, err: Error) -> Result<bool> {
-        if let Some(&error_cause_fmt) = ERROR_CAUSE_FMT.get() &&
-            warn!("{}", err)
-        {
-            let mut err: &dyn error::Error = &err;
-            while let Some(source) = err.source() {
-                err = source;
-                log::log(
-                    target,
-                    log::LevelFmt::Other(error_cause_fmt, log::Level::Warn),
-                    format_args!("{}", err)
-                )?;
-            }
-            Ok(true)
-        } else {
-            Ok(false)
-        }
-    }
-
-    #[macro_export]
-    macro_rules! expand_error {
-        ($err:expr) => {
-            $crate::error::expand::fn_expand_error(module_path!(), $err)
-                .unwrap_or(false)
-        };
-    }
-
-    #[macro_export]
-    macro_rules! expand_warn {
-        ($err:expr) => {
-            $crate::error::expand::fn_expand_warn(module_path!(), $err)
-                .unwrap_or(false)
-        };
+/// [`Logs`][1] an entire error [`source`][2] chain.
+///
+/// [1]: log::error
+/// [2]: error::Error::source
+pub fn expand_error(err: Error) {
+    log::error!("{}", err);
+    let mut err: &dyn error::Error = &err;
+    while let Some(source) = err.source() {
+        err = source;
+        log::error!("caused by: {err}");
     }
 }
 
-/// The event error type of Leimu.
-#[derive(Error)]
-#[display("{0}")]
-pub struct EventError(
-    #[source(self.0.source())]
-    Error
-);
-
-impl EventError {
-
-    #[track_caller]
-    pub fn new<C>(err: impl error::Error + Send + Sync + 'static, ctx: C) -> Self
-        where C: Display + Send + Sync + 'static
-    {
-        Self(build_error::new(err, ctx, Some(caller!())))
-    }
-
-    #[track_caller]
-    pub fn just_context<C>(ctx: C) -> Self
-        where C: Display + Send + Sync + 'static,
-    {
-        Self(build_error::just_context(ctx, Some(caller!())))
-    }
-}
-
-impl From<Error> for EventError {
-
-    #[track_caller]
-    fn from(value: Error) -> Self {
-        Self(value.with_location(caller!()))
-    }
-}
-
-impl Debug for EventError {
-
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        <Error as Debug>::fmt(&self.0, f)
-    }
-}
-
-impl Tracked for EventError {
-
-    fn location(&self) -> Option<Location> {
-        self.0.location()
-    }
-}
-
-/// The [`Result`][core::result::Result] type for event handlers.
+/// The [`Result`][1] type for event handlers.
+///
+/// [1]: core::result::Result
 pub type EventResult<T> = core::result::Result<T, EventError>;
+
+/// The [`Result`][1] type returned by Leimu functions.
+///
+/// [1]: core::result::Result
+pub type Result<T> = core::result::Result<T, Error>;

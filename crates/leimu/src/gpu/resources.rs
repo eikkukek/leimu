@@ -13,6 +13,7 @@ use crate::gpu::prelude::*;
 use crate::{
     error::*,
     sync::*,
+    macros::impl_id_display,
 };
 
 pub trait ResourceMeta {
@@ -35,17 +36,6 @@ impl<Meta> ResourceId<Meta> for SlotIndex<Meta>
     fn slot_index(self) -> SlotIndex<Meta> {
         self
     }
-}
-
-macro_rules! impl_id_display {
-    ($name:ident) => {
-        impl Display for $name {
-
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "{}", self.0)
-            }
-        }
-    };
 }
 
 #[must_use]

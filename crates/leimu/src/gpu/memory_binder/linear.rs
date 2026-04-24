@@ -352,7 +352,7 @@ unsafe impl MemoryBinder for LinearBinder {
             .limits().buffer_image_granularity;
         unsafe {
             if let Some(dedicated_requirements) = chain_in_iter(memory_requirements)
-                .find(|_in| (**_in).s_type == vk::MemoryDedicatedRequirements::S_TYPE)
+                .find(|_in| (_in).s_type == vk::MemoryDedicatedRequirements::S_TYPE)
             {
                 let dedicated_requirements: *const _ = dedicated_requirements;
                 let dedicated_requirements = dedicated_requirements

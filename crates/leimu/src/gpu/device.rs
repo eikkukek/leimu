@@ -4,8 +4,6 @@ use leimu_mem::{
     vec::Vec32, vec32,
 };
 
-use leimu_log::info;
-
 use tuhka::{vk, khr};
 
 use super::prelude::*;
@@ -148,7 +146,7 @@ impl Device {
                 }
             }).collect();
         for queue in &device_queues {
-            info!("selected {queue:?} with queue family index {} and queue index {}",
+            log::info!("selected queue {queue} with queue family index {} and queue index {}",
                 queue.family_index(), queue.queue_index(),
             );
         }

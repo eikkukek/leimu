@@ -1,5 +1,4 @@
 use tuhka::vk;
-use leimu_core::{OptionExt, TryExtend};
 use leimu_mem::{
     vec::{FixedVec32, NonNullVec32},
     alloc::LocalAlloc,
@@ -11,6 +10,7 @@ use crate::{
         command_cache::*,
         *,
     },
+    core::{OptionExt, TryExtend},
     error::*,
 };
 
@@ -116,10 +116,11 @@ impl<'a, 'b> PipelineCommands<'a, 'b> {
         for (i, set_layout) in set_layouts[first_set as usize..sets_end as usize].iter().enumerate() {
             let set_id = sets[i];
             let pool_id = set_id.pool_id();
-            let pool = write_cache
-                .get_mut(pool_id.slot_index().index() as usize)
-                .ok_or_else(|| Error::just_context(format!("invalid descriptor pool id {pool_id}")))?
-                .get_or_try_insert_with(|| {
+            let pool = OptionExt::get_or_try_insert_with(
+                write_cache
+                    .get_mut(pool_id.slot_index().index() as usize)
+                    .ok_or_else(|| Error::just_context(format!("invalid descriptor pool id {pool_id}")))?,
+                || {
                     Ok(pools.get(pool_id.slot_index())
                         .context_with(|| format!(
                             "invalid descriptor pool id {pool_id}",

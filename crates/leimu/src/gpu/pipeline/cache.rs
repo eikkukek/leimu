@@ -2,9 +2,7 @@ use std::sync::Arc;
 
 use tuhka::vk;
 
-use leimu_error::Context;
-
-use crate::error::Result;
+use crate::error::{Result, Context};
 
 use crate::gpu::prelude::*;
 

@@ -3,7 +3,6 @@ mod draw;
 
 use tuhka::vk;
 use leimu_proc::BuildStructure;
-use leimu_core::OptionExt;
 use leimu_mem::{
     alloc::LocalAlloc,
     vec::{NonNullVec32, FixedVec32, Vec32},
@@ -13,6 +12,7 @@ use leimu_mem::{
 
 use crate::{
     error::*,
+    core::OptionExt,
     gpu::prelude::*,
 };
 
@@ -319,19 +319,20 @@ impl<'a, 'b> GraphicsCommands<'a, 'b> {
                         )))
                     }
                     match resolve_aspect {
-                        ResolveAspect::Depth => {
-                            if self.gpu.device().supported_depth_resolve_modes().as_raw() & mode_bit != mode_bit {
-                                return Err(Error::just_context(format!(
-                                    "resolve mode {} is not supported for depth attachments", resolve.mode,
-                                )))
-                            }
+                        ResolveAspect::Depth if
+                            self.gpu.device().supported_depth_resolve_modes().as_raw() &
+                            mode_bit != mode_bit
+                        => {
+                            return Err(Error::just_context(format!(
+                                "resolve mode {} is not supported for depth attachments", resolve.mode,
+                            )))
                         },
-                        ResolveAspect::Stencil => {
-                            if self.gpu.device().supported_stencil_resolve_modes().as_raw() & mode_bit != mode_bit {
-                                return Err(Error::just_context(format!(
-                                    "resolve mode {} is not supported for stencil attachments", resolve.mode,
-                                )))
-                            }
+                        ResolveAspect::Stencil if
+                            self.gpu.device().supported_stencil_resolve_modes().as_raw() & mode_bit != mode_bit
+                        => {
+                            return Err(Error::just_context(format!(
+                                "resolve mode {} is not supported for stencil attachments", resolve.mode,
+                            )))
                         },
                         _ => {},
                     };

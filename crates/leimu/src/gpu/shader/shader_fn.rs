@@ -1,3 +1,4 @@
+use tuhka::vk;
 use crate::gpu::Version;
 
 #[inline]
@@ -12,7 +13,12 @@ pub fn glsl_to_spirv(
     let mut options = shaderc::CompileOptions::new().unwrap();
     options.set_target_env(
         shaderc::TargetEnv::Vulkan,
-        Version::new(vulkan_version.major(), vulkan_version.minor(), 0).as_u32(),
+        vk::make_api_version(
+            0,
+            vulkan_version.major(),
+            vulkan_version.minor(),
+            0,
+        ),
     );
     options.set_source_language(shaderc::SourceLanguage::GLSL);
     options.set_optimization_level(shaderc::OptimizationLevel::Performance);

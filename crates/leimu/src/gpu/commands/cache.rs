@@ -2,7 +2,6 @@ use core::ffi::CStr;
 
 use ahash::{AHashSet, AHashMap};
 
-use leimu_core::OptionExt;
 use leimu_mem::{
     vec::{Vec32, FixedVec32, NonNullVec32},
     alloc::LocalAlloc,
@@ -12,6 +11,7 @@ use leimu_mem::{
 use tuhka::vk;
 
 use crate::{
+    core::OptionExt,
     gpu::prelude::*,
     error::*,
 };
@@ -257,14 +257,17 @@ pub struct PushDescriptorBinding<'a> {
 impl<'a> PushDescriptorBinding<'a> {
 
     #[inline(always)]
-    pub fn new<Barrier>(
+    pub fn new<Infos, Barrier>(
         binding: &'a CStr,
         starting_index: u32,
-        infos: DescriptorInfos<'a>,
+        infos: Infos,
         barrier_info: Barrier,
     ) -> Result<Self>
-        where Barrier: Into<Option<CommandBarrierInfo>>
+        where
+            Infos: Into<DescriptorInfos<'a>>,
+            Barrier: Into<Option<CommandBarrierInfo>>,
     {
+        let infos = infos.into();
         if infos.is_inline_uniform_block() {
             return Err(Error::just_context(
                 "push descriptor binding can't be inline uniform block"
@@ -444,10 +447,11 @@ impl PipelineCommandCache {
                 barrier_info.clear();
                 barrier_info.extend(call.barriers.iter().copied().filter(|barrier| barrier.set == set));
                 let pool_id = set_id.pool_id();
-                let pool = write_cache
-                    .get_mut(pool_id.slot_index().index() as usize)
-                    .ok_or_else(|| Error::just_context(format!("invalid pool id {pool_id}")))?
-                    .get_or_try_insert_with(|| {
+                let pool = OptionExt::get_or_try_insert_with(
+                    write_cache
+                        .get_mut(pool_id.slot_index().index() as usize)
+                        .ok_or_else(|| Error::just_context(format!("invalid pool id {pool_id}")))?,
+                    || {
                         Ok(pools.get(pool_id.slot_index())
                             .context_with(|| format!(
                                 "failed to find pool {pool_id}",

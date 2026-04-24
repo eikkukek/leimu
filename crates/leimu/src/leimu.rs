@@ -22,8 +22,6 @@ use event_loop::{EventLoop, ActiveEventLoop, WinitActiveEventLoop};
 
 use crate::{
     error::*,
-    expand_error,
-    log,
     gpu,
     win::WindowId,
     Library,
@@ -111,7 +109,7 @@ impl<'a, 'b, F> ApplicationHandler<RunEvent> for LeimuRun<'a, 'b, F>
                 &event_loop,
             ) {
                 event_loop.exit();
-                expand_error!(err);
+                expand_error(err);
                 return
             }
             if let Err(err) = (self.event_handler)(
@@ -122,7 +120,7 @@ impl<'a, 'b, F> ApplicationHandler<RunEvent> for LeimuRun<'a, 'b, F>
             ))
             {
                 event_loop.exit();
-                expand_error!(err);
+                expand_error(err);
             }
             self.event_loop.tick();
         }
@@ -140,7 +138,7 @@ impl<'a, 'b, F> ApplicationHandler<RunEvent> for LeimuRun<'a, 'b, F>
                 "clean up event error at {}", orig.or_this(),
             ))
         {
-            expand_error!(err);
+            expand_error(err);
         }
         self.event_loop.clean_up();
     }
@@ -163,7 +161,7 @@ impl<'a, 'b, F> ApplicationHandler<RunEvent> for LeimuRun<'a, 'b, F>
                 ))
                 {
                     event_loop.exit();
-                    expand_error!(err);
+                    expand_error(err);
                     return
                 }
                 if !event_loop.winit().exiting() {
@@ -189,7 +187,7 @@ impl<'a, 'b, F> ApplicationHandler<RunEvent> for LeimuRun<'a, 'b, F>
                         .context("gpu error")
                     {
                         event_loop.exit();
-                        expand_error!(err);
+                        expand_error(err);
                         return
                     }
                 } 

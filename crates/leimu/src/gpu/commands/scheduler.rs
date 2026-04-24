@@ -8,7 +8,6 @@ use core::{
 use parking_lot::{RwLock, RwLockWriteGuard, RwLockReadGuard};
 use ahash::{AHashMap, AHashSet};
 use tuhka::vk;
-use leimu_core::{TryExtend, OptionExt};
 use leimu_mem::{
     alloc::{LocalAlloc, LocalAllocExt, Layout},
     arena::{self, Arena},
@@ -22,11 +21,13 @@ use leimu_mem::{
 
 use crate::{
     error::*,
+    sync::*,
+    core::{TryExtend, OptionExt},
     gpu::prelude::{
         command_cache::*,
         *,
     },
-    sync::*,
+    caller,
 };
 
 #[derive(Default)]
@@ -49,7 +50,6 @@ impl FlushResources {
 }
 
 struct Inner {
-    gpu: Gpu,
     frame_semaphore: TimelineSemaphoreId,
     current_frame: u64,
     workers: Vec32<SchedulerWorker>,
@@ -81,24 +81,13 @@ impl Inner {
             ),
             command_resources: vec32![],
             flush_resources: FlushResources::default(),
-            gpu,
         })
     } 
 }
 
-impl Drop for Inner {
-
-    fn drop(&mut self) {
-        let semaphores: Vec32<_> = self.command_resources
-            .iter()
-            .map(|r| r.semaphore_id)
-            .collect();
-        self.gpu.destroy_timeline_semaphores(&semaphores);
-    }
-}
-
 pub struct CommandScheduler<'a> {
     inner: UnsafeCell<RwLockWriteGuard<'a, Inner>>,
+    gpu: Gpu,
 }
 
 impl<'a> CommandScheduler<'a> {
@@ -109,7 +98,7 @@ impl<'a> CommandScheduler<'a> {
         let capacity = self.inner.get_mut().commands.capacity();
         self.inner.get_mut().command_resources.reserve(capacity);
         let mut new_ids = vec32![TimelineSemaphoreId::default(); n_new_resources];
-        self.inner.get_mut().gpu.create_timeline_semaphores(
+        self.gpu.create_timeline_semaphores(
             new_ids.iter_mut().map(|id| (id, 0))
         )?;
         self.inner.get_mut().command_resources.extend(
@@ -202,14 +191,16 @@ impl QueueScheduler {
     }
 
     #[inline]
-    pub fn schedule(&self) -> CommandScheduler<'_> {
+    pub fn schedule(&self, gpu: Gpu) -> CommandScheduler<'_> {
         CommandScheduler {
             inner: UnsafeCell::new(self.inner.write()),
+            gpu,
         }
     }
 
     pub fn record<'a, F, Alloc>(
         &self,
+        gpu: &Gpu,
         cache: &mut UnsafeCell<CommandRecorderCache>,
         event_handler: &mut F,
         alloc: &'a Alloc,
@@ -219,9 +210,9 @@ impl QueueScheduler {
             Alloc: LocalAlloc<Error = arena::Error>,
     {
         let inner = self.inner.write();
-        let gpu = inner.gpu.clone();
         let mut recorder = CommandRecorderInner {
             surfaces: gpu.write_surfaces(),
+            gpu: gpu.clone(),
             inner,
             cache,
         };
@@ -275,6 +266,7 @@ pub struct CommandRecorderCache {
 }
 
 struct CommandRecorderInner<'a> {
+    gpu: Gpu,
     inner: RwLockWriteGuard<'a, Inner>,
     surfaces: ResourceWriteGuard<'a, Surface, SurfaceId>,
     cache: &'a mut UnsafeCell<CommandRecorderCache>,
@@ -343,7 +335,7 @@ impl CommandRecorderInner<'_> {
         let current_frame = self.inner.current_frame;
         for (i, worker) in self.inner.workers.iter_mut().enumerate() {
             let result = worker
-                .reset(current_frame)
+                .reset(&self.gpu, current_frame)
                 .context("unexpected worker reset error")?;
             match result {
                 CommandPoolResetResult::Ready(id, value) => {
@@ -355,10 +347,14 @@ impl CommandRecorderInner<'_> {
                 }
             }
         }
-        let &mut free_worker = free_worker.get_or_try_insert_with(|| {
-            let (id, value) = self.inner.workers[fallback_index.0].wait_and_reset(current_frame)?;
-            Ok((fallback_index.0, id, value))
-        })?;
+        let &mut free_worker = OptionExt::get_or_try_insert_with(
+            &mut free_worker,
+            || {
+                let (id, value) = self.inner.workers[fallback_index.0]
+                    .wait_and_reset(&self.gpu, current_frame)?;
+                Ok((fallback_index.0, id, value))
+            }
+        )?;
         self.inner.free_worker = free_worker.0 as u32;
         let mut sorted = FixedVec32
             ::with_capacity(queue.capacity(), alloc)
@@ -429,7 +425,7 @@ impl CommandRecorderInner<'_> {
                 result
             };
             {
-                let mut buffers = self.inner.gpu.write_buffers();
+                let mut buffers = self.gpu.write_buffers();
                 for &id in &self.inner.flush_resources.flush_buffers {
                     if let Ok(buffer) = buffers.get_mut(id.slot_index()) {
                         buffer.flush_state();
@@ -437,7 +433,7 @@ impl CommandRecorderInner<'_> {
                 }
             }
             {
-                let mut images = self.inner.gpu.write_images();
+                let mut images = self.gpu.write_images();
                 for &id in &self.inner.flush_resources.flush_images {
                     if let Ok(image) = images.get_mut(id) {
                         image.flush_subresources();
@@ -448,7 +444,7 @@ impl CommandRecorderInner<'_> {
             let command_resources = unsafe {
                 self.inner.command_resources.get_unchecked(index)
             };
-            let signal = unsafe { self.inner.gpu
+            let signal = unsafe { self.gpu
                 .get_timeline_semaphore(command_resources.semaphore_id)
                 .unwrap_unchecked()
             };
@@ -486,7 +482,7 @@ impl CommandRecorderInner<'_> {
                         )))
                     }
                     Ok(vk::SemaphoreSubmitInfo {
-                        semaphore: self.inner.gpu.get_timeline_semaphore(id)?,
+                        semaphore: self.gpu.get_timeline_semaphore(id)?,
                         value,
                         stage_mask: if dependency_hint.is_empty() {
                             command_result.wait_scope
@@ -514,7 +510,7 @@ impl CommandRecorderInner<'_> {
             submit_info.signal_semaphore_infos.try_extend(command_resources.signal_semaphores
                 .iter()
                 .map(|&(id, value)| {
-                    let semaphore = self.inner.gpu.get_timeline_semaphore(id)?;
+                    let semaphore = self.gpu.get_timeline_semaphore(id)?;
                     Ok(vk::SemaphoreSubmitInfo {
                         semaphore,
                         value,
@@ -542,13 +538,13 @@ impl CommandRecorderInner<'_> {
         }
         self.inner.commands.clear();
         let present_prep_semaphore = unsafe {
-            self.inner.gpu.get_timeline_semaphore(
+            self.gpu.get_timeline_semaphore(
                 self.inner.workers[self.inner.free_worker as usize]
                 .present_prep_semaphore
             ).unwrap_unchecked()
         };
         if !self.surfaces.is_empty() {
-            let queue = self.inner.gpu
+            let queue = self.gpu
                 .any_device_queue(QueueFlags::empty())
                 .expect("no queues created");
             let free_worker = self.inner.free_worker as usize;
@@ -558,7 +554,7 @@ impl CommandRecorderInner<'_> {
                 ..Default::default()
             };
             unsafe {
-                self.inner.gpu.device().begin_command_buffer(
+                self.gpu.device().begin_command_buffer(
                     command_buffer,
                     &begin_info
                 ).context("failed to begin command buffer")?;
@@ -574,7 +570,7 @@ impl CommandRecorderInner<'_> {
                     ))?;
             }
             unsafe {
-                self.inner.gpu.device().end_command_buffer(
+                self.gpu.device().end_command_buffer(
                     command_buffer
                 ).context("failed to end command buffer")?;
             }
@@ -669,7 +665,7 @@ impl CommandRecorderInner<'_> {
         global_signal_semaphore_infos.fast_append(&[
             vk::SemaphoreSubmitInfo {
                 s_type: vk::StructureType::SEMAPHORE_SUBMIT_INFO,
-                semaphore: unsafe { self.inner.gpu
+                semaphore: unsafe { self.gpu
                     .get_timeline_semaphore(worker.semaphore_id) 
                     .unwrap_unchecked()
                 },
@@ -679,7 +675,7 @@ impl CommandRecorderInner<'_> {
             },
             vk::SemaphoreSubmitInfo {
                 s_type: vk::StructureType::SEMAPHORE_SUBMIT_INFO,
-                semaphore: unsafe { self.inner.gpu
+                semaphore: unsafe { self.gpu
                     .get_timeline_semaphore(self.inner.frame_semaphore) 
                     .unwrap_unchecked()
                 },
@@ -689,7 +685,7 @@ impl CommandRecorderInner<'_> {
             },
         ]);
         submits.submits.push(SubmitInfo {
-            device_queue_index: self.inner.gpu
+            device_queue_index: self.gpu
                 .any_device_queue(QueueFlags::empty())
                 .expect("no queues created")
                 .device_queue_index(),
@@ -827,7 +823,7 @@ impl<'a, 'b> CommandRecorder<'a, 'b> {
 
     #[inline]
     pub fn gpu(&self) -> &Gpu {
-        &self.as_ref().inner.gpu
+        &self.as_ref().gpu
     }
 
     #[inline]
@@ -892,12 +888,12 @@ impl<'a, 'b> CommandRecorder<'a, 'b> {
 
     #[inline]
     pub(crate) fn buffers(&self) -> ResourceReadGuard<'_, BufferMeta, BufferId> {
-        self.as_ref().inner.gpu.read_buffers::<BufferId>()
+        self.as_ref().gpu.read_buffers::<BufferId>()
     }
 
     #[inline]
     pub(crate) fn images(&self) -> ResourceReadGuard<'_, ImageMeta, ImageIndex> {
-        self.as_ref().inner.gpu.read_images()
+        self.as_ref().gpu.read_images()
     }
 
     #[inline]
@@ -905,8 +901,8 @@ impl<'a, 'b> CommandRecorder<'a, 'b> {
         where F: FnOnce(&mut ImageBufferWriteGuard) -> Result<T>,
     {
         let mut guard = ImageBufferWriteGuard {
-            buffers: unsafe { &*self.inner }.inner.gpu.write_buffers(),
-            images: unsafe { &*self.inner }.inner.gpu.write_images(),
+            buffers: unsafe { &*self.inner }.gpu.write_buffers(),
+            images: unsafe { &*self.inner }.gpu.write_images(),
             inner: &mut unsafe { &mut *self.inner }.inner
         };
         f(&mut guard)

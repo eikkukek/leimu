@@ -29,7 +29,7 @@ unsafe impl DeviceExtension for Extension {
         let s = *self;
         Some(DeviceExtensionInfo {
             name: ext::image_robustness::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_3,
+            deprecation_version: API_VERSION_1_3,
             precondition: Precondition::new(move |context| {
                 if s.robust_image_access.is_required() {
                     let mut features = vk::PhysicalDeviceImageRobustnessFeatures::default();

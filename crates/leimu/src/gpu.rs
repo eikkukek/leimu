@@ -38,7 +38,6 @@ use core::{
 
 use ahash::AHashMap;
 
-use leimu_core::collections::EntryExt;
 use leimu_mem::{
     vec::{FixedVec32, Vec32},
     slot_map::SlotMap,
@@ -48,14 +47,11 @@ use leimu_mem::{
 };
 use tuhka::vk;
 
-use leimu_threads::{
-    executor::{ThreadPool, block_on},
-};
-
 use crate::{
     error::*,
     sync::{atomic::AtomicU64, *},
-    log,
+    executor::{ThreadPool, block_on},
+    core::collections::EntryExt,
 };
 
 pub(crate) mod prelude {
@@ -469,7 +465,7 @@ impl Gpu {
             self.inner.queue_scheduler
             .get()
             .unwrap_unchecked()
-        }.schedule()
+        }.schedule(self.clone())
     }
 
     pub fn create_draw_commands<F>(
@@ -587,7 +583,8 @@ impl Gpu {
             cache.arena.clear();
         }
         let submits = self.queue_scheduler().record(
-            &mut cache.command_cache, &mut event_handler, &cache.arena,
+            self, &mut cache.command_cache,
+            &mut event_handler, &cache.arena,
         ).context("failed to record commands")?;
         for submit in &submits.submits {
             let submit_info = vk::SubmitInfo2 {

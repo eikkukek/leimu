@@ -5,7 +5,6 @@ pub use definitions::*;
 pub use create_info::*;
 
 use tuhka::vk;
-use leimu_core::slice;
 use leimu_mem::{
     alloc::LocalAlloc,
     vec::Vec32,
@@ -13,6 +12,7 @@ use leimu_mem::{
 };
 
 use crate::{
+    core::slice,
     error::*,
     gpu::prelude::*,
     sync::Arc,

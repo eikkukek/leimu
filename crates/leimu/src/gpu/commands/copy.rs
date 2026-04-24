@@ -1,5 +1,4 @@
 use tuhka::vk;
-use leimu_core::{slice, OptionExt};
 use leimu_mem::{
     vec::{FixedVec32},
     alloc,
@@ -7,8 +6,9 @@ use leimu_mem::{
 };
 
 use crate::{
-    gpu::prelude::*,
+    core::{slice, OptionExt},
     error::*,
+    gpu::prelude::*,
 };
 
 /// A wrapper around a [`command buffer`][1], which allows transfer commands to be performed.
@@ -111,23 +111,26 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
                 "queue {queue} doesn't support graphics operations"
             )))
         }
-        let &mut command_buffer = command_buffer.get_or_try_insert_with(|| {
-            let command_buffer = recorder
-                .get_current_worker()
-                .allocate_primaries(&queue, 1)?[0];
-            let begin_info = vk::CommandBufferBeginInfo {
-                s_type: vk::StructureType::COMMAND_BUFFER_BEGIN_INFO,
-                flags: vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT,
-                ..Default::default()
-            };
-            let gpu = recorder.gpu().clone();
-            unsafe {
-                gpu.device()
-                    .begin_command_buffer(command_buffer, &begin_info)
-                    .context("failed to begin primary command buffer")?;
-            };
-            Ok(command_buffer)
-        })?;
+        let &mut command_buffer = OptionExt::get_or_try_insert_with(
+            &mut command_buffer,
+            || {
+                let command_buffer = recorder
+                    .get_current_worker()
+                    .allocate_primaries(&queue, 1)?[0];
+                let begin_info = vk::CommandBufferBeginInfo {
+                    s_type: vk::StructureType::COMMAND_BUFFER_BEGIN_INFO,
+                    flags: vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT,
+                    ..Default::default()
+                };
+                let gpu = recorder.gpu().clone();
+                unsafe {
+                    gpu.device()
+                        .begin_command_buffer(command_buffer, &begin_info)
+                        .context("failed to begin primary command buffer")?;
+                };
+                Ok(command_buffer)
+            },
+        )?;
         Ok(Self {
             gpu: recorder.gpu().clone(),
             recorder,
@@ -264,7 +267,7 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
     ) -> Result<()> {
         self.wait_scope |= vk::PipelineStageFlags2::COPY;
         self.signal_scope |= vk::PipelineStageFlags2::COPY;
-        if dst_offset.is_multiple_of(4) {
+        if !dst_offset.is_multiple_of(4) {
             return Err(Error::just_context(format!(
                 "destination offset {dst_offset} is not a multiple of 4"
             )))
@@ -607,7 +610,7 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
                 return Err(Error::new(err, "destination image usage mismatch"))
             }
             if !src_multi_planar && !dst_multi_planar &&
-                !src_format_class.is_size_compatible(&dst_format_class)
+                !src_format_class.is_size_compatible(dst_format_class)
             {
                 return Err(Error::just_context(format!(
                     "source format {} is not size compatible with destination format {}",

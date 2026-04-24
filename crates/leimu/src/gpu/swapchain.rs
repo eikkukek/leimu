@@ -11,6 +11,7 @@ use leimu_mem::{
 use tuhka::vk;
 
 use crate::{
+    location,
     error::*,
     gpu::prelude::*,
 };

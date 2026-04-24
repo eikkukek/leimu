@@ -153,6 +153,15 @@ impl Surface {
                     );
                 }
                 recorder.destroy_swapchain_images(&self.image_view_ids);
+                for &semaphore in &self.wait_semaphores {
+                    unsafe {
+                        self.gpu.device()
+                            .destroy_semaphore(
+                                semaphore,
+                                None
+                            );
+                    }
+                }
                 unsafe {
                     self.alloc.clear();
                 }
@@ -292,6 +301,14 @@ impl Drop for Surface {
                 self.gpu.device(),
                 self.present_queue.handle(),
             );
+            for &semaphore in &self.wait_semaphores {
+                unsafe {
+                    self.gpu.device().destroy_semaphore(
+                        semaphore,
+                        None
+                    );
+                }
+            }
         }
         self.gpu.destroy_resources([], self
             .image_view_ids

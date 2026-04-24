@@ -9,9 +9,10 @@ use ahash::AHashMap;
 
 use winit::event_loop::EventLoopProxy;
 
-use leimu_threads::executor::ThreadPool;
-
-use crate::error::*;
+use crate::{
+    error::*,
+    executor::ThreadPool,
+};
 
 use super::*;
 
@@ -133,6 +134,7 @@ impl EventLoop {
         log::info!("cleaning up event loop");
         self.active_ids.get_mut().clear();
         self.windows.get_mut().clear();
+        self.thread_pool().shutdown();
     }
 }
 

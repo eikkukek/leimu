@@ -12,9 +12,13 @@ use {
 pub struct Attributes;
 
 impl Attributes {
-    /// Attribute type `bool`.
+    /// Attribute type [`bool`][1].
+    ///
+    /// [1]: DeviceAttribute::bool
     pub const IS_ENABLED: ConstName = ConstName::new("push_descriptor");
-    /// Attribute type `u32`.
+    /// Attribute type [`u32`][1].
+    ///
+    /// [1]: DeviceAttribute::u32
     pub const MAX_PUSH_DESCRIPTORS: ConstName = ConstName::new("max_push_descriptors");
 }
 
@@ -27,9 +31,9 @@ unsafe impl DeviceExtension for Extension {
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: khr::push_descriptor::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_4,
+            deprecation_version: API_VERSION_1_4,
             precondition: Precondition::new(|ctx| {
-                if ctx.api_version() >= Version::VULKAN_API_VERSION_1_4 {
+                if ctx.api_version() >= API_VERSION_1_4 {
                     let mut features = vk::PhysicalDeviceVulkan14Features::default();
                     ctx.get_features(&mut features);
                     (features.push_descriptor == 0).then(|| MissingDeviceFeatureError::new(
@@ -56,7 +60,7 @@ unsafe impl DeviceExtension for Extension {
             Attributes::IS_ENABLED,
             true,
         ));
-        if ctx.api_version() >= Version::VULKAN_API_VERSION_1_4 {
+        if ctx.api_version() >= API_VERSION_1_4 {
             ctx.vulkan_14_features().push_descriptor = vk::TRUE;
         }
         None

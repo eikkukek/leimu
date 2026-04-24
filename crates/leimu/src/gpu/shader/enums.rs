@@ -183,7 +183,7 @@ impl From<ShaderStage> for op::ExecutionModel {
             ShaderStage::TessellationEvaluation => Self::TESSELLATION_EVALUATION,
             ShaderStage::Geometry => Self::GEOMETRY,
             ShaderStage::Fragment => Self::FRAGMENT,
-            ShaderStage::Compute => Self::KERNEL,
+            ShaderStage::Compute => Self::GLCOMPUTE,
             ShaderStage::RaygenKHR => Self::RAY_GENERATION_KHR,
             ShaderStage::AnyHitKHR => Self::ANY_HIT_KHR,
             ShaderStage::MissKHR => Self::MISS_KHR,

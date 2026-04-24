@@ -7,7 +7,6 @@ use core::{
 
 use tuhka::vk;
 use leimu_proc::BuildStructure;
-use leimu_core::slice;
 use leimu_mem::{
     alloc::LocalAlloc,
     arena::{self, Arena},
@@ -18,12 +17,13 @@ use leimu_mem::{
 };
 
 use crate::{
+    core::slice,
     gpu::{
         prelude::*,
         command_cache::PipelineCommandCache,
     },
     error::*,
-    threads::executor::block_on,
+    executor::block_on,
 };
 
 #[derive(Clone, Copy, BuildStructure)]

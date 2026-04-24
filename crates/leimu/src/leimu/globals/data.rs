@@ -8,11 +8,10 @@ use leimu_mem::{
     alloc::{LocalAlloc, StdAlloc, Layout},
 };
 
-use leimu_error::{Context, Tracked};
-
-use crate::event_loop;
-
-use super::error;
+use super::{
+    event_loop,
+    error::{self, Context, Tracked},
+};
 
 trait DynAny {}
 

@@ -1,13 +1,13 @@
 use core::{
-    ops::{Deref, DerefMut},
     ptr::NonNull,
     marker::PhantomData,
+    ops::{Deref, DerefMut},
+    fmt::{self, Display},
 };
 
 use ahash::{AHashMap, AHashSet};
 
-use leimu_core::{slice, TryExtend};
-use leimu_proc::{BuildStructure, Display};
+use leimu_proc::BuildStructure;
 use leimu_mem::{
     vec::{Vec32, NonNullVec32, FixedVec32},
     arena::{self, Arena},
@@ -17,30 +17,61 @@ use leimu_mem::{
 use tuhka::vk;
 
 use crate::{
+    core::{slice, TryExtend},
     gpu::prelude::*,
     error::*,
-    log,
     sync::*,
+    macros::impl_id_display,
 };
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Display)]
+macro_rules! match_display {
+    (match $name:ident {$(
+        $var:ident
+            $({ $($field:ident $($ft1:tt $ft2:tt)?),* $(,)? })?
+            $(($($tuple:tt),* $(,)?))?
+        => $fmt:literal
+    ),+ $(,)?}) => {
+        impl ::core::fmt::Display for $name {
+
+            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                match self {$(
+                    Self::$var $({ $($field $($ft1 $ft2)?),* })? $(($($tuple),*))? => write!(f, $fmt)
+                ),+}
+            }
+        }
+    };
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DepthStencilAttachmentType {
-    #[display("depth")]
     Depth,
-    #[display("stencil")]
     Stencil,
-    #[display("depth stencil")]
     DepthStencil,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Display)]
+match_display! {
+    match DepthStencilAttachmentType {
+        Depth => "depth",
+        Stencil => "stencil",
+        DepthStencil => "depth stencil",
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum AttachmentImageLayout {
-    #[display("color attachment")]
     Color,
-    #[display("{0} attachment")]
     DepthStencil(DepthStencilAttachmentType),
-    #[display("rendering local read")]
     RenderingLocalRead { is_color: bool, },
+}
+
+match_display! {
+    match AttachmentImageLayout {
+        Color => "color",
+        DepthStencil(ty) => "{ty} attachment",
+        RenderingLocalRead {
+            is_color: _,
+        } => "rendering local read",
+    }
 }
 
 impl AttachmentImageLayout {
@@ -61,14 +92,22 @@ impl AttachmentImageLayout {
 
     pub fn access_mask(self) -> vk::AccessFlags2 {
         match self {
-            Self::Color => vk::AccessFlags2::COLOR_ATTACHMENT_READ | vk::AccessFlags2::COLOR_ATTACHMENT_WRITE,
-            Self::DepthStencil(_) => vk::AccessFlags2::DEPTH_STENCIL_ATTACHMENT_READ | vk::AccessFlags2::DEPTH_STENCIL_ATTACHMENT_WRITE,
+            Self::Color =>
+                vk::AccessFlags2::COLOR_ATTACHMENT_READ |
+                vk::AccessFlags2::COLOR_ATTACHMENT_WRITE,
+            Self::DepthStencil(_) =>
+                vk::AccessFlags2::DEPTH_STENCIL_ATTACHMENT_READ |
+                vk::AccessFlags2::DEPTH_STENCIL_ATTACHMENT_WRITE,
             Self::RenderingLocalRead { is_color } => {
                 let mut mask = vk::AccessFlags2::INPUT_ATTACHMENT_READ;
                 if is_color {
-                    mask |= vk::AccessFlags2::COLOR_ATTACHMENT_READ | vk::AccessFlags2::COLOR_ATTACHMENT_WRITE;
+                    mask |=
+                        vk::AccessFlags2::COLOR_ATTACHMENT_READ |
+                        vk::AccessFlags2::COLOR_ATTACHMENT_WRITE;
                 } else {
-                    mask |= vk::AccessFlags2::DEPTH_STENCIL_ATTACHMENT_READ | vk::AccessFlags2::DEPTH_STENCIL_ATTACHMENT_WRITE;
+                    mask |=
+                        vk::AccessFlags2::DEPTH_STENCIL_ATTACHMENT_READ |
+                        vk::AccessFlags2::DEPTH_STENCIL_ATTACHMENT_WRITE;
                 }
                 mask
             }
@@ -92,14 +131,19 @@ impl From<AttachmentImageLayout> for vk::ImageLayout {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Display)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum ShaderImageLayout {
-    #[display("general")]
     General(vk::AccessFlags2),
-    #[display("sampled read only")]
     SampledReadOnly,
-    #[display("{0}")]
     Attachment(AttachmentImageLayout),
+}
+
+match_display! {
+    match ShaderImageLayout {
+        General(_) => "general",
+        SampledReadOnly => "sampled read only",
+        Attachment(layout) => "{layout}",
+    }
 }
 
 impl ShaderImageLayout {
@@ -178,14 +222,18 @@ pub(crate) struct ImageDescriptor {
     pub image_track_id: TrackedDescriptorSetId<ImageView>,
 }
 
-#[derive(Display)]
 pub(super) enum DescriptorSetDescriptors {
-    #[display("Buffer")]
     Buffers(NonNullVec32<'static, DescriptorSetBuffer>),
-    #[display("Image")]
     Images(NonNullVec32<'static, ImageDescriptor>),
-    #[display("inline uniform block")]
     InlineUniformBlock(u32),
+}
+
+match_display! {
+    match DescriptorSetDescriptors {
+        Buffers(_) => "buffers",
+        Images(_) => "images",
+        InlineUniformBlock(_) => "inline uniform block",
+    }
 }
 
 pub(crate) struct DescriptorSetBinding {
@@ -389,8 +437,10 @@ impl Drop for DescriptorSet {
     }
 }
 
-#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash, Display)] #[display("{0}")]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct DescriptorPoolId(SlotIndex<DescriptorPool>);
+
+impl_id_display!(DescriptorPoolId);
 
 impl DescriptorPoolId {
 
@@ -405,8 +455,15 @@ impl DescriptorPoolId {
     }
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug, Display)] #[display("(pass id: {0}, inner id: {0})")]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct DescriptorSetId(DescriptorPoolId, DescriptorSetInnerId);
+
+impl Display for DescriptorSetId {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}::{}", self.0, self.1)
+    }
+}
 
 impl DescriptorSetId {
 
@@ -447,7 +504,7 @@ pub struct DescriptorBufferInfo {
     pub size: u64,
 }
 
-#[derive(Clone)]
+#[derive(Default, Clone, BuildStructure)]
 pub struct DescriptorImageInfo {
     pub sampler: Option<Sampler>,
     pub image_view: Option<ImageViewId>,
@@ -469,10 +526,20 @@ impl<'a> DescriptorInfos<'a> {
         Self(DescriptorInfosInner::Buffer(buffers))
     }
 
+    #[inline(always)]
+    pub fn single_buffer(buffer: &'a DescriptorBufferInfo) -> Self {
+        Self(DescriptorInfosInner::Buffer(slice::from_ref(buffer)))
+    }
+
     /// Image descriptor writes.
     #[inline(always)]
     pub fn images(images: &'a [DescriptorImageInfo]) -> Self {
         Self(DescriptorInfosInner::Image(images))
+    }
+
+    #[inline(always)]
+    pub fn single_image(image: &'a DescriptorImageInfo) -> Self {
+        Self(DescriptorInfosInner::Image(slice::from_ref(image)))
     }
 
     /// [`Inline uniform block`][1] write.
@@ -549,6 +616,22 @@ impl<'a> DescriptorInfos<'a> {
             DescriptorInfosInner::InlineUniformBlock(b) => Some(b),
             _ => None,
         }
+    }
+}
+
+impl<'a> From<&'a DescriptorBufferInfo> for DescriptorInfos<'a> {
+
+    #[inline]
+    fn from(value: &'a DescriptorBufferInfo) -> Self {
+        Self::single_buffer(value)
+    }
+}
+
+impl<'a> From<&'a DescriptorImageInfo> for DescriptorInfos<'a> {
+
+    #[inline]
+    fn from(value: &'a DescriptorImageInfo) -> Self {
+        Self::single_image(value)
     }
 }
 
@@ -690,8 +773,10 @@ pub(crate) struct DescriptorPool {
     inner: Arc<RwLock<inner::Inner>>,
 }
 
-#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash, Display)] #[display("{0}")]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(crate) struct DescriptorSetInnerId(pub SlotIndex<DescriptorSet>);
+
+impl_id_display!(DescriptorSetInnerId);
 
 pub(crate) struct DescriptorPoolWriteGuard<'a> {
     inner: RwLockWriteGuard<'a, inner::Inner>,

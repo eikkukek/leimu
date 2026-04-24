@@ -26,14 +26,8 @@ use tuhka::{
 use crate::{
     gpu::prelude::*,
     error::*,
-    log::warn,
     sync::*,
 };
-
-/// Khronos validation layer.
-///
-/// For this to be used, the Vulkan SDK needs to be installed.
-pub const LAYER_KHRONOS_VALIDATION: &CStr = c"VK_LAYER_KHRONOS_validation";
 
 #[derive(Clone, Copy)]
 pub struct InstanceLayer<'a> {
@@ -41,34 +35,36 @@ pub struct InstanceLayer<'a> {
     is_required: bool,
 }
 
+#[inline]
+pub fn instance_layer<'a>(
+    name: &'a CStr,
+    is_required: bool,
+) -> InstanceLayer<'a> {
+    InstanceLayer { name, is_required }
+}
+
+/// Khronos validation layer.
+///
+/// For this to be used, the Vulkan SDK needs to be installed.
+pub const LAYER_KHRONOS_VALIDATION: &CStr = c"VK_LAYER_KHRONOS_validation";
+
+/// Khronos validation layer.
+///
+/// For this to be used, the Vulkan SDK needs to be installed.
+#[inline(always)]
+pub const fn layer_khronos_validation(
+    is_required: bool,
+) -> InstanceLayer<'static> {
+    InstanceLayer {
+        name: LAYER_KHRONOS_VALIDATION,
+        is_required,
+    }
+}
+
 impl Display for InstanceLayer<'_> {
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.name)
-    }
-}
-
-impl<'a> InstanceLayer<'a> {
-
-    #[inline(always)]
-    pub fn new(
-        name: &'a CStr,
-        is_required: bool,
-    ) -> Self {
-        Self {
-            name,
-            is_required,
-        }
-    }
-
-    #[inline(always)]
-    pub fn khronos_validation(
-        is_required: bool,
-    ) -> Self {
-        Self {
-            name: LAYER_KHRONOS_VALIDATION,
-            is_required,
-        }
     }
 }
 
@@ -95,7 +91,7 @@ pub struct Instance {
 
 impl Instance {
 
-    pub fn new(
+    pub(crate) fn new(
         library: &crate::Library,
         app_name: &str, 
         app_version: Version,
@@ -245,7 +241,7 @@ impl SuitablePhysicalDevices {
 
     /// Returns an iterator over all suitable physical devices.
     #[inline(always)]
-    pub fn iter(&self) -> impl Iterator<Item = (u32, &PhysicalDevice)> {
+    pub fn enumerate(&self) -> impl Iterator<Item = (u32, &PhysicalDevice)> {
         self.devices
         .iter().enumerate()
         .map(|(idx, d)| (idx as u32, d))
@@ -337,7 +333,7 @@ fn verify_instance_layers<'a>(
             if layer.is_required {
                 return Err(Error::just_context(format!("instance layer {layer} not present")))
             } else {
-                warn!("optional instance layer {layer} not present");
+                log::warn!("optional instance layer {layer} not present");
             }
         } else {
             found.push(layer.name.as_ptr());
@@ -372,7 +368,7 @@ fn verify_instance_extensions<'a>(
                     "instance extension {extension:?} not present"
                 )))
             } else {
-                warn!("optional instance extension {extension:?} not present");
+                log::warn!("optional instance extension {extension:?} not present");
             }
         } else {
             found.push(extension.as_ptr());

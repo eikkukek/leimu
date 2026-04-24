@@ -18,7 +18,8 @@ use tuhka::vk;
 use crate::{
     bitflags,
     error::*,
-    gpu::prelude::*
+    gpu::prelude::*,
+    location,
 };
 
 /// An opaque handle to a [`command buffer`][1].
@@ -384,7 +385,7 @@ pub(crate) enum CommandPoolResetResult {
 }
 
 pub struct SchedulerWorker {
-    pub(super) gpu: Gpu,
+    pub(super) device: Device,
     command_pools: AHashMap<DeviceQueue, SchedulerCommandPool>,
     pub(super) semaphore_id: TimelineSemaphoreId,
     pub(super) timeline_value: u64,
@@ -413,7 +414,7 @@ impl SchedulerWorker {
         }
         Ok(Self {
             command_pools,
-            gpu,
+            device: gpu.device().clone(),
             semaphore_id,
             timeline_value: 0,
             last_reset: 0,
@@ -430,11 +431,10 @@ impl SchedulerWorker {
         queue: &DeviceQueue,
         count: u32,
     ) -> Result<&[CommandBuffer]> {
-        let device = self.gpu.device();
         self.command_pools
             .get_mut(queue)
             .ok_or_else(|| Error::just_context(format!("invalid device queue {queue}")))?
-            .allocate_primaries(device, count)
+            .allocate_primaries(&self.device, count)
             .context_with(|| format!("failed to allocate primary command buffers for queue {queue}"))
     }
 
@@ -444,11 +444,10 @@ impl SchedulerWorker {
         queue: &DeviceQueue,
         count: u32,
     ) -> Result<&[CommandBuffer]> {
-        let device = self.gpu.device();
         self.command_pools
             .get_mut(queue)
             .ok_or_else(|| Error::just_context(format!("invalid device queue {queue}")))?
-            .allocate_secondaries(device, count)
+            .allocate_secondaries(&self.device, count)
             .context_with(|| format!("failed to allocate secondary command buffers for queue {queue}"))
     }
 
@@ -463,9 +462,13 @@ impl SchedulerWorker {
     }
 
     #[inline(always)]
-    pub(crate) fn reset(&mut self, current_frame: u64) -> Result<CommandPoolResetResult> {
-        if self.gpu.get_semaphore_counter_value(self.semaphore_id)? >= self.timeline_value {
-            let device = self.gpu.device();
+    pub(crate) fn reset(
+        &mut self,
+        gpu: &Gpu,
+        current_frame: u64,
+    ) -> Result<CommandPoolResetResult> {
+        if gpu.get_semaphore_counter_value(self.semaphore_id)? >= self.timeline_value {
+            let device = &self.device;
             for pool in self.command_pools.values_mut() {
                 unsafe {
                     pool.reset(device)?;
@@ -484,11 +487,12 @@ impl SchedulerWorker {
     #[inline(always)]
     pub(crate) fn wait_and_reset(
         &mut self,
+        gpu: &Gpu,
         current_frame: u64,
     ) -> Result<(TimelineSemaphoreId, u64)> {
-        if self.gpu.wait_for_semaphores(
+        if gpu.wait_for_semaphores(
             &[(self.semaphore_id, self.timeline_value)],
-            core::time::Duration::from_nanos(self.gpu.device().frame_timeout()),
+            core::time::Duration::from_nanos(self.device.frame_timeout()),
         )? {
             self.timeline_value += 1;
             self.last_reset = current_frame;
@@ -497,7 +501,7 @@ impl SchedulerWorker {
             Ok((self.semaphore_id, self.timeline_value))
         } else {
             Err(Error::just_context(format!(
-                "frame timeout {} nanoseconds reached at {}", self.gpu.device().frame_timeout(), location!(),
+                "frame timeout {} nanoseconds reached at {}", gpu.device().frame_timeout(), location!(),
             )))
         }
     }
@@ -507,11 +511,10 @@ impl Drop for SchedulerWorker {
 
     fn drop(&mut self) {
         unsafe {
-            let device = self.gpu.device();
+            let device = &self.device;
             for pool in self.command_pools.values_mut() {
                 pool.destroy(device);
             }
-            self.gpu.destroy_timeline_semaphores(&[self.semaphore_id]);
         }
     }
 }

@@ -1,14 +1,12 @@
 use core::{
     ffi::CStr,
     slice,
-    fmt::{self, Display},
     hash::{Hasher, Hash},
 };
 
-use ahash::{AHashMap, AHashSet};
+use ahash::AHashMap;
 
 use tuhka::vk;
-use leimu_core::{OptionExt, TryExtend};
 use leimu_mem::{
     alloc::{self, Layout}, int::Integer,
     pack_alloc,
@@ -16,12 +14,8 @@ use leimu_mem::{
     vec::{ArrayVec, FixedVec32, Pointer, Vec32},
     vec32,
 };
-use leimu_threads::{
-    futures::{
-        future::RemoteHandle,
-    },
-    executor::{ThreadPool, SpawnExt},
-};
+
+use futures::future::RemoteHandle;
 
 use crate::{
     bitflags,
@@ -31,7 +25,10 @@ use crate::{
         ext,
     },
     sync::{Arc, FutureLock, RwLock},
+    executor::{ThreadPool, SpawnExt},
     error::*,
+    macros::impl_id_display,
+    core::{OptionExt, TryExtend},
 };
 
 bitflags!(
@@ -49,6 +46,29 @@ bitflags!(
         PUSH_DESCRIPTOR = 0x1,
     }
 );
+
+/// Specifies how a binding in a descriptor set *can* be used.
+#[derive(Default, Clone, Copy)]
+pub struct DescriptorBindingAttributes {
+    variable_descriptor_count: Option<u32>,
+}
+
+impl DescriptorBindingAttributes {
+
+    /// Specifies that the binding has variable descriptor count up to `upper_bound`.
+    ///
+    /// Requires enabling the [`descriptor indexing`][1] extension with
+    /// [`variable descriptor count`][2] enabled.
+    ///
+    /// [1]: ext::descriptor_indexing
+    /// [2]: ext::descriptor_indexing::Features::descriptor_binding_variable_descriptor_count
+    #[inline]
+    pub fn with_variable_descriptor_count(mut self, upper_bound: u32) -> Self
+    {
+        self.variable_descriptor_count = Some(upper_bound);
+        self
+    }
+}
 
 /// Contains the handle and metadata of a [`descriptor set layout`][1].
 ///
@@ -318,65 +338,85 @@ impl Drop for ShaderSetInner {
     }
 }
 
-macro_rules! impl_id_display {
-    ($name:ident) => {
-        impl Display for $name {
-
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "{}", self.0)
-            }
-        }
-    };
-}
-
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct ShaderSetId(SlotIndex<ShaderSetHandle>);
 
 impl_id_display!(ShaderSetId);
 
 #[derive(Clone)]
+struct SetAttributes {
+    set_flags: DescriptorSetLayoutFlags,
+    binding_attributes: Option<Vec32<(u32, DescriptorBindingAttributes)>>
+}
+
+#[derive(Clone)]
 pub struct ShaderSetAttributes {
-    count_spec: AHashMap<(u32, u32), Vec32<SpecializationConstant<u32>>>,
-    flags: AHashMap<u32, DescriptorSetLayoutFlags>,
-    inline_uniform_blocks: AHashSet<(u32, u32)>,
+    set_attributes: Vec32<(u32, SetAttributes)>,
+    inline_uniform_blocks: Vec32<(u32, u32)>,
 }
 
 pub fn default_shader_set_attributes() -> ShaderSetAttributes {
     ShaderSetAttributes {
-        count_spec: AHashMap::default(),
-        flags: AHashMap::default(),
-        inline_uniform_blocks: AHashSet::default()
+        set_attributes: vec32![],
+        inline_uniform_blocks: vec32![],
     }
 }
 
 impl ShaderSetAttributes {
 
+    /// Specifies [`flags'][1] for a specific descriptor set in the shader set.
+    ///
+    /// [1]: DescriptorSetLayoutFlags
     #[inline(always)]
     pub fn with_descriptor_set_layout_flags(
         mut self,
         set: u32,
         flags: DescriptorSetLayoutFlags,
     ) -> Self {
-        self.flags
-            .entry(set)
-            .and_modify(|f| *f |= flags)
-            .or_insert(flags);
+        if let Some((_, contained)) = self.set_attributes
+            .iter_mut()
+            .find(|&&mut(s, _)| set == s)
+        {
+            contained.set_flags |= flags;
+        } else {
+            self.set_attributes.push((set, SetAttributes {
+            set_flags: flags,
+                binding_attributes: None,
+            }));
+        }
         self
     }
 
-    #[inline(always)]
-    pub fn with_count_specialization_constant(
+    /// Sets [`descriptor binding attributes`][1] for the given `binding` in `set`.
+    ///
+    /// This requires enabling the [`descriptor_indexing`][2] extension.
+    ///
+    /// [1]: DescriptorBindingAttributes
+    /// [2]: ext::descriptor_indexing
+    pub fn with_descriptor_binding_attribute(
         mut self,
         set: u32,
         binding: u32,
-        constant: SpecializationConstant<u32>,
+        attributes: DescriptorBindingAttributes,
     ) -> Self {
-        self.count_spec
-            .entry((set, binding))
-            .and_modify(|c| c.push(constant))
-            .or_insert_with(|| vec32![constant]);
+        if let Some((_, contained)) = self.set_attributes
+            .iter_mut()
+            .find(|&&mut(s, _)| set == s)
+        {
+            if let Some(attrs) = &mut contained.binding_attributes {
+                attrs.push((binding, attributes));
+            } else {
+                contained.binding_attributes = Some(vec32![(binding, attributes); 1]);
+            }
+        } else {
+            self.set_attributes.push((set, SetAttributes {
+                set_flags: DescriptorSetLayoutFlags::empty(),
+                binding_attributes: Some(vec32![(binding, attributes); 1])
+            }));
+        }
         self
     }
+
 
     /// Specifies that a `binding` in set index `set` is an [`inline uniform block`][1].
     ///
@@ -395,15 +435,16 @@ impl ShaderSetAttributes {
         set: u32,
         binding: u32,
     ) -> Self {
-        self.inline_uniform_blocks.insert((set, binding));
+        self.inline_uniform_blocks.push((set, binding));
         self
     }
 }
 
 #[derive(Clone)]
 struct DescriptorSetLayoutKey {
-    _flags: DescriptorSetLayoutFlags,
+    flags: DescriptorSetLayoutFlags,
     bindings: Vec32<DescriptorSetLayoutBinding>,
+    binding_flags: Option<Vec32<vk::DescriptorBindingFlags>>,
     hash: u64,
 }
 
@@ -411,15 +452,18 @@ impl DescriptorSetLayoutKey {
 
     fn new(
         flags: DescriptorSetLayoutFlags,
-        bindings: Vec32<DescriptorSetLayoutBinding>
+        bindings: Vec32<DescriptorSetLayoutBinding>,
+        binding_flags: Option<Vec32<vk::DescriptorBindingFlags>>,
     ) -> Self {
         let mut hasher = ahash::AHasher::default();
         flags.hash(&mut hasher);
         bindings.hash(&mut hasher);
+        binding_flags.hash(&mut hasher);
         let hash = hasher.finish();
         Self {
-            _flags: flags,
+            flags,
             bindings,
+            binding_flags,
             hash,
         }
     }
@@ -429,7 +473,9 @@ impl PartialEq for DescriptorSetLayoutKey {
 
     #[inline(always)]
     fn eq(&self, other: &Self) -> bool {
-        self.bindings == other.bindings
+        self.flags == other.flags &&
+        self.bindings == other.bindings &&
+        self.binding_flags == other.binding_flags
     }
 }
 
@@ -469,7 +515,7 @@ impl ShaderCache {
     pub fn create_shader_set<const N_SHADERS: usize>(
         &mut self,
         shaders: [Shader; N_SHADERS],
-        attributes: ShaderSetAttributes,
+        mut attributes: ShaderSetAttributes,
         thread_pool: ThreadPool,
         tmp_allocs: Arc<TmpAllocs>,
     ) -> Result<ShaderSetId>
@@ -508,12 +554,15 @@ impl ShaderCache {
                 }
                 let tmp_alloc = tmp_allocs.tmp_alloc();
                 let tmp_alloc = tmp_alloc.guard();
-                let mut sets = FixedVec32::<(
-                    Vec32<DescriptorSetLayoutBinding>,
-                    ShaderStageFlags,
-                    DescriptorSetLayoutFlags,
-                    u32,
-                ), _>::with_capacity(max_set + 1, &tmp_alloc)
+                #[derive(Default, Clone)]
+                struct Set {
+                    bindings: Vec32<DescriptorSetLayoutBinding>,
+                    binding_attributes: Option<Vec32<(u32, DescriptorBindingAttributes)>>,
+                    stage_flags: ShaderStageFlags,
+                    flags: DescriptorSetLayoutFlags,
+                    inline_ubos: u32,
+                }
+                let mut sets = FixedVec32::<Set, _>::with_capacity(max_set + 1, &tmp_alloc)
                 .context("alloc failed")?;
                 let mut per_stage_inline_ubos = FixedVec32::with_capacity(
                     all_stage_flags.count_ones(),
@@ -523,29 +572,35 @@ impl ShaderCache {
                     per_stage_inline_ubos.push((ShaderStageFlags::from_raw(stage), 0u32));
                 }
                 let mut push_constant_ranges = Vec32::new();
+                let mut any_binding_attributes = false;
                 for shader in &mut shaders_inner {
                     for uniform in shader.uniforms() {
                         let set = uniform.set;
                         if set >= sets.len() {
-                            sets.resize(set + 1, (
-                                vec32![],
-                                ShaderStageFlags::empty(),
-                                DescriptorSetLayoutFlags::empty(),
-                                0,
-                            ));
+                            sets.resize(set + 1, Default::default());
                             unsafe {
                                 let last = sets.last_mut().unwrap_unchecked();
-                                last.0.reserve(4);
-                                last.2 = attributes.flags.get(&set).copied().unwrap_or_default();
+                                last.bindings.reserve(4);
+                                if let Some((_, attrs)) = attributes.set_attributes
+                                    .iter_mut().find(|&&mut(s, _)| {
+                                        s == set
+                                    })
+                                {
+                                    last.flags = attrs.set_flags;
+                                    last.binding_attributes = attrs.binding_attributes.take();
+                                    if last.binding_attributes.is_some() {
+                                        any_binding_attributes = true;
+                                    }
+                                }
                             }
                         }
-                        let (bindings, stage_flags, _, inline_ubos) = unsafe {
+                        let set = unsafe {
                             sets.get_unchecked_mut(set as usize)
                         };
-                        *stage_flags |= shader.stage().into();
+                        set.stage_flags |= shader.stage().into();
                         let inline_uniform_block = attributes.inline_uniform_blocks
                             .contains(&(uniform.set, uniform.binding));
-                        *inline_ubos += inline_uniform_block as u32;
+                        set.inline_ubos += inline_uniform_block as u32;
                         if inline_uniform_block {
                             let (_, ubos) = per_stage_inline_ubos
                                 .iter_mut()
@@ -553,13 +608,30 @@ impl ShaderCache {
                                 .unwrap();
                             *ubos += 1;
                         }
-                        bindings.push(uniform.as_layout_binding(
+                        let b = uniform.as_layout_binding(
                             inline_uniform_block,
-                            |count| count.declared() as u32,
+                            |count| {
+                                match count {
+                                    DescriptorCount::Static(count) => count as u32,
+                                    DescriptorCount::Runtime { declared } => {
+                                        if let Some(attrs) = &set.binding_attributes &&
+                                            let Some((_, attrs)) = attrs
+                                                .iter()
+                                                .find(|&&(b, _)| b == uniform.binding) &&
+                                            let Some(count) = attrs.variable_descriptor_count
+                                        {
+                                            declared as u32 * count
+                                        } else {
+                                            declared as u32
+                                        }
+                                    },
+                                }
+                            },
                         ).context_with(|| format!(
                             "failed to convert uniform (set {}, binding {})",
                             uniform.set, uniform.binding,
-                        ))?);
+                        ))?;
+                        set.bindings.push(b);
                     }
                     for &pc in shader.push_constant_ranges() {
                         push_constant_ranges.push(pc);
@@ -587,7 +659,17 @@ impl ShaderCache {
                     .get_device_attribute(ext::inline_uniform_block::Attributes
                         ::MAX_DESCRIPTOR_SET_INLINE_UNIFORM_BLOCKS
                     ).u32().unwrap_or(0);
-                for (i, (mut bindings, stage_flags, flags, inline_ubos)) in sets.into_iter().enumerate() {
+                if any_binding_attributes &&
+                    !device.get_device_attribute(ext::descriptor_indexing::Attributes::IS_ENABLED)
+                    .bool().unwrap_or(false)
+                {
+                    return Err(Error::just_context(
+                        "attempting to use descriptor indexing features without enabling the extension"
+                    ))
+                }
+                for (i, Set { mut bindings, binding_attributes, stage_flags, flags, inline_ubos }) in
+                    sets.into_iter().enumerate()
+                {
                     if inline_ubos > max_descriptor_set_inline_ubos {
                         return Err(Error::just_context(format!(
                             "{}{}",
@@ -628,12 +710,39 @@ impl ShaderCache {
                         if binding_count > max_push_descriptors {
                             return Err(Error::just_context(format!(
                                 "{}{}",
-                                format_args!("descriptor with push descriptor flag has {binding_count} descriptors "),
+                                format_args!(
+                                    "descriptor with push descriptor flag has {binding_count} descriptors "),
                                 format_args!("when max push descriptors count is {max_push_descriptors}"),
                             )))
                         }
                     }
-                    let key = DescriptorSetLayoutKey::new(flags, bindings);
+                    let binding_flags =
+                        if let Some(attributes) = binding_attributes {
+                            let mut flags = vec32![vk::DescriptorBindingFlags::empty(); bindings.len()];
+                            for (binding, attr) in attributes {
+                                let index_of = bindings
+                                    .iter().enumerate()
+                                    .find_map(|(idx, b)| {
+                                        (b.binding == binding).then_some(idx)
+                                    }).ok_or_else(|| Error::just_context(format!(
+                                        "{}{}",
+                                        format_args!(
+                                            "descriptor binding attributes references binding {binding}, ",
+                                        ),
+                                        format_args!(
+                                            "which is not present in set {i}",
+                                        )
+                                    )))?;
+                                let flags = &mut flags[index_of];
+                                if attr.variable_descriptor_count.is_some() {
+                                    *flags |= vk::DescriptorBindingFlags::VARIABLE_DESCRIPTOR_COUNT;
+                                }
+                            }
+                            Some(flags)
+                        } else {
+                            None
+                        };
+                    let key = DescriptorSetLayoutKey::new(flags, bindings, binding_flags);
                     let mut cache = descriptor_set_layout_cache.write();
                     let handle = cache
                         .get(&key)
@@ -653,13 +762,21 @@ impl ShaderCache {
                                     ..Default::default()
                                 }),
                             );
-                            let create_info = vk::DescriptorSetLayoutCreateInfo {
+                            let mut create_info = vk::DescriptorSetLayoutCreateInfo {
                                 s_type: vk::StructureType::DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
                                 flags: layout_flags,
                                 binding_count,
                                 p_bindings: vk_bindings.as_ptr(),
                                 ..Default::default()
                             };
+                            let mut binding_info = vk::DescriptorSetLayoutBindingFlagsCreateInfo
+                                ::default();
+                            if let Some(flags) = &key.binding_flags {
+                                binding_info = binding_info
+                                    .binding_count(flags.len())
+                                    .p_binding_flags(flags.as_ptr());
+                                create_info = create_info.push_next(&mut binding_info);
+                            }
                             let handle = unsafe {
                                 device
                                     .create_descriptor_set_layout(&create_info, None)
@@ -750,7 +867,9 @@ impl ShaderCache {
     }
 
     #[inline(always)]
-    pub fn get_shader_set<'a>(&self, id: ShaderSetId) -> impl Future<Output = Result<ShaderSet>> + Send + Sync + use<'a> {
+    pub fn get_shader_set<'a>(&self, id: ShaderSetId) -> impl Future<
+        Output = Result<ShaderSet>> + Send + Sync + use<'a
+    > {
         let set = self.shader_sets
             .get(id.0)
             .context_with(|| format!(

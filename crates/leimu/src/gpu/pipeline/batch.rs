@@ -9,29 +9,15 @@ use leimu_mem::{
     vec32,
     slot_map::SlotIndex,
 };
-use leimu_threads::{
-    futures::future::RemoteHandle,
-    executor::SpawnExt,
-    sync::{FutureLock, SwapLock},
-};
+use futures::future::RemoteHandle;
 
 use crate::{
     gpu::prelude::*,
     error::*,
     sync::*,
-    log,
+    executor::SpawnExt,
+    macros::impl_id_display,
 };
-
-macro_rules! impl_id_display {
-    ($name:ident) => {
-        impl Display for $name {
-
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "{}", self.0)
-            }
-        }
-    };
-}
 
 /// An identifier for a pipeline batch.
 ///
@@ -70,7 +56,7 @@ pub struct GraphicsPipelineId(PipelineBatchId, u32);
 impl Display for GraphicsPipelineId {
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}::{}", self.0, self.1)
+        write!(f, "{}::Index({})", self.0, self.1)
     }
 }
 
@@ -98,7 +84,7 @@ pub struct ComputePipelineId(PipelineBatchId, u32);
 impl Display for ComputePipelineId {
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}::{}", self.0, self.1)
+        write!(f, "{}::Index({})", self.0, self.1)
     }
 }
 

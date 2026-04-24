@@ -39,7 +39,7 @@ unsafe impl DeviceExtension for Extension {
     fn get_info(&self, _attributes: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
             name: ext::pipeline_robustness::NAME,
-            deprecation_version: Version::VULKAN_API_VERSION_1_4,
+            deprecation_version: API_VERSION_1_4,
             precondition: Precondition::new(|ctx| {
                 let mut features = vk::PhysicalDevicePipelineRobustnessFeatures::default();
                 ctx.get_features(&mut features);
