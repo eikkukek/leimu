@@ -266,7 +266,7 @@ impl Library {
         allocator: Option<&AllocationCallbacks>,
     ) {
         unsafe {
-            (self.fp_v10.destroy_instance)(
+            (instance.fp_v10().destroy_instance)(
                 instance.handle(),
                 allocator.as_ptr(),
             )

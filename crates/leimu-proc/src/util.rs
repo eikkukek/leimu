@@ -1,6 +1,8 @@
-
-
-pub fn find_attr<'a>(input: &'a syn::DeriveInput, ident: &str) -> Option<&'a syn::Attribute> {
+pub fn find_attr<'a>(
+    input: &'a syn::DeriveInput,
+    ident: &str,
+) -> Option<&'a syn::Attribute>
+{
     input.attrs
         .iter()
         .find(|attr|
