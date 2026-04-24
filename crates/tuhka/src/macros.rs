@@ -2,7 +2,7 @@
 macro_rules! define_non_dispatchable_handle {
     ($name:ident, $ty:ident, $doc_link:literal $(,)?) => {
         #[repr(transparent)]
-        #[derive(Default, Clone, Copy)]
+        #[derive(Default, Clone, Copy, Debug)]
         #[doc = $doc_link]
         pub struct $name(u64);
         impl $name {
@@ -20,14 +20,14 @@ macro_rules! define_non_dispatchable_handle {
                 Self(x)
             }
         }
-        impl fmt::Pointer for $name {
+        impl fmt::LowerHex for $name {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "0x{:x}", self.0)
+                fmt::LowerHex::fmt(&self.0, f)
             }
         }
-        impl fmt::Debug for $name {
+        impl fmt::UpperHex for $name {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "0x{:x}", self.0)
+                fmt::UpperHex::fmt(&self.0, f)
             }
         }
     };
@@ -36,7 +36,7 @@ macro_rules! define_non_dispatchable_handle {
 macro_rules! define_handle {
     ($name:ident, $ty:ident, $doc_link:literal $(,)?) => {
         #[repr(transparent)]
-        #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+        #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
         #[doc = $doc_link]
         pub struct $name(*mut u8);
         impl $name {
@@ -66,11 +66,6 @@ macro_rules! define_handle {
         impl fmt::Pointer for $name {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 fmt::Pointer::fmt(&self.0, f)
-            }
-        }
-        impl fmt::Debug for $name {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                fmt::Debug::fmt(&self.0, f)
             }
         }
     };
@@ -107,7 +102,9 @@ macro_rules! bitflags {
         impl ::core::fmt::Debug for $name {
 
             fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-                write!(f, "0x{:x}", self.0)
+                write!(f, "{}(", stringify!($name))?;
+                write!(f, "{:#x}", self.0)?;
+                write!(f, ")")
             }
         }
         impl ::core::ops::BitOr for $name {
