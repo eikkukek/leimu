@@ -588,11 +588,9 @@ impl DynamicState {
     pub const STENCIL_TEST_ENABLE_EXT: Self = Self::STENCIL_TEST_ENABLE;
     pub const STENCIL_OP_EXT: Self = Self::STENCIL_OP;
     pub const VERTEX_INPUT_EXT: Self = Self(1000352000);
-    #[doc = "Not promoted to 1.3"]
     pub const PATCH_CONTROL_POINTS_EXT: Self = Self(1000377000);
     pub const RASTERIZER_DISCARD_ENABLE_EXT: Self = Self::RASTERIZER_DISCARD_ENABLE;
     pub const DEPTH_BIAS_ENABLE_EXT: Self = Self::DEPTH_BIAS_ENABLE;
-    #[doc = "Not promoted to 1.3"]
     pub const LOGIC_OP_EXT: Self = Self(1000377003);
     pub const PRIMITIVE_RESTART_ENABLE_EXT: Self = Self::PRIMITIVE_RESTART_ENABLE;
     pub const COLOR_WRITE_ENABLE_EXT: Self = Self(1000381000);
@@ -1547,23 +1545,14 @@ impl ImageLayout {
     }
 }
 impl ImageLayout {
-    #[doc = "Implicit layout an image is when its contents are undefined due to various reasons (e.g. right after creation)"]
     pub const UNDEFINED: Self = Self(0);
-    #[doc = "General layout when image can be used for any kind of access"]
     pub const GENERAL: Self = Self(1);
-    #[doc = "Optimal layout when image is only used for color attachment read/write"]
     pub const COLOR_ATTACHMENT_OPTIMAL: Self = Self(2);
-    #[doc = "Optimal layout when image is only used for depth/stencil attachment read/write"]
     pub const DEPTH_STENCIL_ATTACHMENT_OPTIMAL: Self = Self(3);
-    #[doc = "Optimal layout when image is used for read only depth/stencil attachment and shader access"]
     pub const DEPTH_STENCIL_READ_ONLY_OPTIMAL: Self = Self(4);
-    #[doc = "Optimal layout when image is used for read only shader access"]
     pub const SHADER_READ_ONLY_OPTIMAL: Self = Self(5);
-    #[doc = "Optimal layout when image is used only as source of transfer operations"]
     pub const TRANSFER_SRC_OPTIMAL: Self = Self(6);
-    #[doc = "Optimal layout when image is used only as destination of transfer operations"]
     pub const TRANSFER_DST_OPTIMAL: Self = Self(7);
-    #[doc = "Initial layout used when the data is populated by the CPU"]
     pub const PREINITIALIZED: Self = Self(8);
     pub const DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL: Self = Self(1000117000);
     pub const DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL: Self = Self(1000117001);
@@ -2048,7 +2037,6 @@ impl QueryType {
 }
 impl QueryType {
     pub const OCCLUSION: Self = Self(0);
-    #[doc = "Optional"]
     pub const PIPELINE_STATISTICS: Self = Self(1);
     pub const TIMESTAMP: Self = Self(2);
     pub const RESULT_STATUS_ONLY_KHR: Self = Self(1000023000);
@@ -2148,43 +2136,24 @@ impl Result {
     }
 }
 impl Result {
-    #[doc = "Command completed successfully"]
     pub const SUCCESS: Self = Self(0);
-    #[doc = "A fence or query has not yet completed"]
     pub const NOT_READY: Self = Self(1);
-    #[doc = "A wait operation has not completed in the specified time"]
     pub const TIMEOUT: Self = Self(2);
-    #[doc = "An event is signaled"]
     pub const EVENT_SET: Self = Self(3);
-    #[doc = "An event is unsignaled"]
     pub const EVENT_RESET: Self = Self(4);
-    #[doc = "A return array was too small for the result"]
     pub const INCOMPLETE: Self = Self(5);
-    #[doc = "A host memory allocation has failed"]
     pub const ERROR_OUT_OF_HOST_MEMORY: Self = Self(-1);
-    #[doc = "A device memory allocation has failed"]
     pub const ERROR_OUT_OF_DEVICE_MEMORY: Self = Self(-2);
-    #[doc = "Initialization of an object has failed"]
     pub const ERROR_INITIALIZATION_FAILED: Self = Self(-3);
-    #[doc = "The logical device has been lost. See <<devsandqueues-lost-device>>"]
     pub const ERROR_DEVICE_LOST: Self = Self(-4);
-    #[doc = "Mapping of a memory object has failed"]
     pub const ERROR_MEMORY_MAP_FAILED: Self = Self(-5);
-    #[doc = "Layer specified does not exist"]
     pub const ERROR_LAYER_NOT_PRESENT: Self = Self(-6);
-    #[doc = "Extension specified does not exist"]
     pub const ERROR_EXTENSION_NOT_PRESENT: Self = Self(-7);
-    #[doc = "Requested feature is not available on this device"]
     pub const ERROR_FEATURE_NOT_PRESENT: Self = Self(-8);
-    #[doc = "Unable to find a Vulkan driver"]
     pub const ERROR_INCOMPATIBLE_DRIVER: Self = Self(-9);
-    #[doc = "Too many objects of the type have already been created"]
     pub const ERROR_TOO_MANY_OBJECTS: Self = Self(-10);
-    #[doc = "Requested format is not supported on this device"]
     pub const ERROR_FORMAT_NOT_SUPPORTED: Self = Self(-11);
-    #[doc = "A requested pool allocation has failed due to fragmentation of the pool's memory"]
     pub const ERROR_FRAGMENTED_POOL: Self = Self(-12);
-    #[doc = "An unknown error has occurred, due to an implementation or application bug"]
     pub const ERROR_UNKNOWN: Self = Self(-13);
     pub const ERROR_VALIDATION_FAILED: Self = Self(-1000011001);
     pub const ERROR_OUT_OF_POOL_MEMORY: Self = Self(-1000069000);
@@ -2411,9 +2380,7 @@ impl StructureType {
     pub const BUFFER_MEMORY_BARRIER: Self = Self(44);
     pub const IMAGE_MEMORY_BARRIER: Self = Self(45);
     pub const MEMORY_BARRIER: Self = Self(46);
-    #[doc = "Reserved for internal use by the loader, layers, and ICDs"]
     pub const LOADER_INSTANCE_CREATE_INFO: Self = Self(47);
-    #[doc = "Reserved for internal use by the loader, layers, and ICDs"]
     pub const LOADER_DEVICE_CREATE_INFO: Self = Self(48);
     pub const BIND_BUFFER_MEMORY_INFO: Self = Self(1000157000);
     pub const BIND_IMAGE_MEMORY_INFO: Self = Self(1000157001);
@@ -3221,7 +3188,6 @@ impl StructureType {
         Self::PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
     pub const PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT: Self =
         Self::PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES;
-    #[doc = "Not promoted to 1.3"]
     pub const PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT: Self = Self(1000267000);
     pub const PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR: Self = Self(1000269000);
     pub const PIPELINE_INFO_KHR: Self = Self(1000269001);
@@ -3278,7 +3244,6 @@ impl StructureType {
         Self::PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_FEATURES;
     pub const PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_PROPERTIES_KHR: Self =
         Self::PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_PROPERTIES;
-    #[doc = "Not promoted to 1.3"]
     pub const PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT: Self = Self(1000281000);
     pub const PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES_EXT: Self =
         Self::PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES;
@@ -3502,7 +3467,6 @@ impl StructureType {
         Self(1000376000);
     pub const SUBPASS_RESOLVE_PERFORMANCE_QUERY_EXT: Self = Self(1000376001);
     pub const MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_INFO_EXT: Self = Self(1000376002);
-    #[doc = "Not promoted to 1.3"]
     pub const PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT: Self = Self(1000377000);
     pub const SCREEN_SURFACE_CREATE_INFO_QNX: Self = Self(1000378000);
     pub const PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT: Self = Self(1000381000);
@@ -7169,7 +7133,6 @@ impl SamplerAddressMode {
     pub const MIRRORED_REPEAT: Self = Self(1);
     pub const CLAMP_TO_EDGE: Self = Self(2);
     pub const CLAMP_TO_BORDER: Self = Self(3);
-    #[doc = "No need to add an extnumber attribute, since this uses a core enum value"]
     pub const MIRROR_CLAMP_TO_EDGE: Self = Self(4);
     #[deprecated = "aliased"]
     pub const MIRROR_CLAMP_TO_EDGE_KHR: Self = Self::MIRROR_CLAMP_TO_EDGE;
@@ -7231,9 +7194,7 @@ impl SamplerMipmapMode {
     }
 }
 impl SamplerMipmapMode {
-    #[doc = "Choose nearest mip level"]
     pub const NEAREST: Self = Self(0);
-    #[doc = "Linear filter between mip levels"]
     pub const LINEAR: Self = Self(1);
 }
 impl fmt::Display for SamplerMipmapMode {
@@ -7416,9 +7377,7 @@ impl ObjectType {
     pub const DISPLAY_KHR: Self = Self(1000002000);
     pub const DISPLAY_MODE_KHR: Self = Self(1000002001);
     pub const DEBUG_REPORT_CALLBACK_EXT: Self = Self(1000011000);
-    #[doc = "VkVideoSessionKHR"]
     pub const VIDEO_SESSION_KHR: Self = Self(1000023000);
-    #[doc = "VkVideoSessionParametersKHR"]
     pub const VIDEO_SESSION_PARAMETERS_KHR: Self = Self(1000023001);
     pub const CU_MODULE_NVX: Self = Self(1000029000);
     pub const CU_FUNCTION_NVX: Self = Self(1000029001);
@@ -7434,7 +7393,6 @@ impl ObjectType {
     pub const PRIVATE_DATA_SLOT_EXT: Self = Self::PRIVATE_DATA_SLOT;
     pub const CUDA_MODULE_NV: Self = Self(1000307000);
     pub const CUDA_FUNCTION_NV: Self = Self(1000307001);
-    #[doc = "VkBufferCollectionFUCHSIA"]
     pub const BUFFER_COLLECTION_FUCHSIA: Self = Self(1000366000);
     pub const MICROMAP_EXT: Self = Self(1000396000);
     pub const TENSOR_ARM: Self = Self(1000460000);
@@ -7442,7 +7400,6 @@ impl ObjectType {
     pub const OPTICAL_FLOW_SESSION_NV: Self = Self(1000464000);
     pub const SHADER_EXT: Self = Self(1000482000);
     pub const PIPELINE_BINARY_KHR: Self = Self(1000483000);
-    #[doc = "VkSemaphoreSciSyncPoolNV"]
     pub const SEMAPHORE_SCI_SYNC_POOL_NV: Self = Self(1000489000);
     pub const DATA_GRAPH_PIPELINE_SESSION_ARM: Self = Self(1000507000);
     pub const EXTERNAL_COMPUTE_QUEUE_NV: Self = Self(1000556000);
@@ -7608,7 +7565,6 @@ impl DescriptorUpdateTemplateType {
     }
 }
 impl DescriptorUpdateTemplateType {
-    #[doc = "Create descriptor update template for descriptor set updates"]
     pub const DESCRIPTOR_SET: Self = Self(0);
     pub const PUSH_DESCRIPTORS: Self = Self(1);
     pub const PUSH_DESCRIPTORS_KHR: Self = Self::PUSH_DESCRIPTORS;
@@ -10717,13 +10673,9 @@ impl SamplerYcbcrModelConversion {
 }
 impl SamplerYcbcrModelConversion {
     pub const RGB_IDENTITY: Self = Self(0);
-    #[doc = "just range expansion"]
     pub const YCBCR_IDENTITY: Self = Self(1);
-    #[doc = "aka HD YUV"]
     pub const YCBCR_709: Self = Self(2);
-    #[doc = "aka SD YUV"]
     pub const YCBCR_601: Self = Self(3);
-    #[doc = "aka UHD YUV"]
     pub const YCBCR_2020: Self = Self(4);
     pub const RGB_IDENTITY_KHR: Self = Self::RGB_IDENTITY;
     pub const YCBCR_IDENTITY_KHR: Self = Self::YCBCR_IDENTITY;
@@ -10758,9 +10710,7 @@ impl SamplerYcbcrRange {
     }
 }
 impl SamplerYcbcrRange {
-    #[doc = "Luma 0..1 maps to 0..255, chroma -0.5..0.5 to 1..255 (clamped)"]
     pub const ITU_FULL: Self = Self(0);
-    #[doc = "Luma 0..1 maps to 16..235, chroma -0.5..0.5 to 16..240"]
     pub const ITU_NARROW: Self = Self(1);
     pub const ITU_FULL_KHR: Self = Self::ITU_FULL;
     pub const ITU_NARROW_KHR: Self = Self::ITU_NARROW;
@@ -11049,7 +10999,6 @@ impl DeviceFaultAddressTypeKHR {
     }
 }
 impl DeviceFaultAddressTypeKHR {
-    #[doc = "Currently unused"]
     pub const NONE_KHR: Self = Self(0);
     pub const READ_INVALID_KHR: Self = Self(1);
     pub const WRITE_INVALID_KHR: Self = Self(2);
@@ -11209,21 +11158,13 @@ impl VendorId {
     }
 }
 impl VendorId {
-    #[doc = "Khronos vendor ID"]
     pub const KHRONOS: Self = Self(0x10000);
-    #[doc = "Vivante vendor ID"]
     pub const VIV: Self = Self(0x10001);
-    #[doc = "VeriSilicon vendor ID"]
     pub const VSI: Self = Self(0x10002);
-    #[doc = "Kazan Software Renderer"]
     pub const KAZAN: Self = Self(0x10003);
-    #[doc = "Codeplay Software Ltd. vendor ID"]
     pub const CODEPLAY: Self = Self(0x10004);
-    #[doc = "Mesa vendor ID"]
     pub const MESA: Self = Self(0x10005);
-    #[doc = "PoCL vendor ID"]
     pub const POCL: Self = Self(0x10006);
-    #[doc = "Mobileye vendor ID"]
     pub const MOBILEYE: Self = Self(0x10007);
 }
 impl fmt::Display for VendorId {
@@ -11256,61 +11197,33 @@ impl DriverId {
     }
 }
 impl DriverId {
-    #[doc = "Advanced Micro Devices, Inc."]
     pub const AMD_PROPRIETARY: Self = Self(1);
-    #[doc = "Advanced Micro Devices, Inc."]
     pub const AMD_OPEN_SOURCE: Self = Self(2);
-    #[doc = "Mesa open source project"]
     pub const MESA_RADV: Self = Self(3);
-    #[doc = "NVIDIA Corporation"]
     pub const NVIDIA_PROPRIETARY: Self = Self(4);
-    #[doc = "Intel Corporation"]
     pub const INTEL_PROPRIETARY_WINDOWS: Self = Self(5);
-    #[doc = "Intel Corporation"]
     pub const INTEL_OPEN_SOURCE_MESA: Self = Self(6);
-    #[doc = "Imagination Technologies"]
     pub const IMAGINATION_PROPRIETARY: Self = Self(7);
-    #[doc = "Qualcomm Technologies, Inc."]
     pub const QUALCOMM_PROPRIETARY: Self = Self(8);
-    #[doc = "Arm Limited"]
     pub const ARM_PROPRIETARY: Self = Self(9);
-    #[doc = "Google LLC"]
     pub const GOOGLE_SWIFTSHADER: Self = Self(10);
-    #[doc = "Google LLC"]
     pub const GGP_PROPRIETARY: Self = Self(11);
-    #[doc = "Broadcom Inc."]
     pub const BROADCOM_PROPRIETARY: Self = Self(12);
-    #[doc = "Mesa"]
     pub const MESA_LLVMPIPE: Self = Self(13);
-    #[doc = "MoltenVK"]
     pub const MOLTENVK: Self = Self(14);
-    #[doc = "Core Avionics & Industrial Inc."]
     pub const COREAVI_PROPRIETARY: Self = Self(15);
-    #[doc = "Juice Technologies, Inc."]
     pub const JUICE_PROPRIETARY: Self = Self(16);
-    #[doc = "Verisilicon, Inc."]
     pub const VERISILICON_PROPRIETARY: Self = Self(17);
-    #[doc = "Mesa open source project"]
     pub const MESA_TURNIP: Self = Self(18);
-    #[doc = "Mesa open source project"]
     pub const MESA_V3DV: Self = Self(19);
-    #[doc = "Mesa open source project"]
     pub const MESA_PANVK: Self = Self(20);
-    #[doc = "Samsung Electronics Co., Ltd."]
     pub const SAMSUNG_PROPRIETARY: Self = Self(21);
-    #[doc = "Mesa open source project"]
     pub const MESA_VENUS: Self = Self(22);
-    #[doc = "Mesa open source project"]
     pub const MESA_DOZEN: Self = Self(23);
-    #[doc = "Mesa open source project"]
     pub const MESA_NVK: Self = Self(24);
-    #[doc = "Imagination Technologies"]
     pub const IMAGINATION_OPEN_SOURCE_MESA: Self = Self(25);
-    #[doc = "Mesa open source project"]
     pub const MESA_HONEYKRISP: Self = Self(26);
-    #[doc = "Vulkan SC Emulation on Vulkan"]
     pub const VULKAN_SC_EMULATION_ON_VULKAN: Self = Self(27);
-    #[doc = "Mesa open source project"]
     pub const MESA_KOSMICKRISP: Self = Self(28);
     pub const AMD_PROPRIETARY_KHR: Self = Self::AMD_PROPRIETARY;
     pub const AMD_OPEN_SOURCE_KHR: Self = Self::AMD_OPEN_SOURCE;

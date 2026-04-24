@@ -185,6 +185,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroySurfaceKHR.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_surface(
                 &self,
                 surface: SurfaceKHR,
@@ -198,6 +199,8 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSurfaceSupportKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_physical_device_surface_support(
                 &self,
                 physical_device: PhysicalDevice,
@@ -223,6 +226,8 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSurfaceCapabilitiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_physical_device_surface_capabilities(
                 &self,
                 physical_device: PhysicalDevice,
@@ -245,6 +250,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSurfaceFormatsKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_surface_formats_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -271,6 +279,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSurfaceFormatsKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_surface_formats(
                 &self,
                 physical_device: PhysicalDevice,
@@ -295,6 +306,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSurfacePresentModesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_surface_present_modes_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -321,6 +335,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSurfacePresentModesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_surface_present_modes(
                 &self,
                 physical_device: PhysicalDevice,
@@ -347,6 +364,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDevicePresentRectanglesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_present_rectangles_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -375,6 +395,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDevicePresentRectanglesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_present_rectangles(
                 &self,
                 physical_device: PhysicalDevice,
@@ -630,10 +653,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateSwapchainKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_swapchain(
                 &self,
                 create_info: &SwapchainCreateInfoKHR<'_>,
@@ -654,6 +681,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroySwapchainKHR.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_swapchain(
                 &self,
                 swapchain: SwapchainKHR,
@@ -666,10 +694,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetSwapchainImagesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_swapchain_images_len(
                 &self,
                 swapchain: SwapchainKHR,
@@ -691,10 +725,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetSwapchainImagesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_swapchain_images(
                 &self,
                 swapchain: SwapchainKHR,
@@ -716,10 +756,20 @@ pub mod khr {
             #[doc = "* [`TIMEOUT`][1]"]
             #[doc = "* [`NOT_READY`][2]"]
             #[doc = "* [`SUBOPTIMAL_KHR`][3]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::TIMEOUT"]
+            #[doc = "[2]: Result::NOT_READY"]
+            #[doc = "[3]: Result::SUBOPTIMAL_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkAcquireNextImageKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::TIMEOUT"]
+            #[doc = "[2]: Result::NOT_READY"]
+            #[doc = "[3]: Result::SUBOPTIMAL_KHR"]
             pub unsafe fn acquire_next_image(
                 &self,
                 swapchain: SwapchainKHR,
@@ -751,10 +801,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`SUBOPTIMAL_KHR`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::SUBOPTIMAL_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkQueuePresentKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::SUBOPTIMAL_KHR"]
             pub unsafe fn queue_present(
                 &self,
                 queue: Queue,
@@ -771,10 +827,14 @@ pub mod khr {
             #[doc = "* VK_VERSION_1_1"]
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceGroupPresentCapabilitiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_device_group_present_capabilities(
                 &self,
                 device_group_present_capabilities: &mut DeviceGroupPresentCapabilitiesKHR<'_>,
@@ -791,10 +851,14 @@ pub mod khr {
             #[doc = "* VK_VERSION_1_1"]
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceGroupSurfacePresentModesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_device_group_surface_present_modes(
                 &self,
                 surface: SurfaceKHR,
@@ -816,10 +880,20 @@ pub mod khr {
             #[doc = "* [`TIMEOUT`][1]"]
             #[doc = "* [`NOT_READY`][2]"]
             #[doc = "* [`SUBOPTIMAL_KHR`][3]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::TIMEOUT"]
+            #[doc = "[2]: Result::NOT_READY"]
+            #[doc = "[3]: Result::SUBOPTIMAL_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkAcquireNextImage2KHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::TIMEOUT"]
+            #[doc = "[2]: Result::NOT_READY"]
+            #[doc = "[3]: Result::SUBOPTIMAL_KHR"]
             pub unsafe fn acquire_next_image2(
                 &self,
                 acquire_info: &AcquireNextImageInfoKHR<'_>,
@@ -1079,6 +1153,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceDisplayPropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_display_properties_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -1103,6 +1180,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceDisplayPropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_display_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -1125,6 +1205,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceDisplayPlanePropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_display_plane_properties_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -1149,6 +1232,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceDisplayPlanePropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_display_plane_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -1171,6 +1257,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDisplayPlaneSupportedDisplaysKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_display_plane_supported_displays_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -1197,6 +1286,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDisplayPlaneSupportedDisplaysKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_display_plane_supported_displays(
                 &self,
                 physical_device: PhysicalDevice,
@@ -1221,6 +1313,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDisplayModePropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_display_mode_properties_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -1247,6 +1342,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDisplayModePropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_display_mode_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -1270,6 +1368,8 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateDisplayModeKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_display_mode(
                 &self,
                 physical_device: PhysicalDevice,
@@ -1295,6 +1395,8 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDisplayPlaneCapabilitiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_display_plane_capabilities(
                 &self,
                 physical_device: PhysicalDevice,
@@ -1318,6 +1420,8 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateDisplayPlaneSurfaceKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_display_plane_surface(
                 &self,
                 create_info: &DisplaySurfaceCreateInfoKHR<'_>,
@@ -1429,10 +1533,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateSharedSwapchainsKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_shared_swapchains(
                 &self,
                 create_infos: &[SwapchainCreateInfoKHR<'_>],
@@ -1575,6 +1683,8 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateXlibSurfaceKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_xlib_surface(
                 &self,
                 create_info: &XlibSurfaceCreateInfoKHR<'_>,
@@ -1595,6 +1705,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceXlibPresentationSupportKHR.html>"]
+            #[doc = r""]
             pub unsafe fn get_physical_device_xlib_presentation_support(
                 &self,
                 physical_device: PhysicalDevice,
@@ -1732,6 +1843,8 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateXcbSurfaceKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_xcb_surface(
                 &self,
                 create_info: &XcbSurfaceCreateInfoKHR<'_>,
@@ -1752,6 +1865,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceXcbPresentationSupportKHR.html>"]
+            #[doc = r""]
             pub unsafe fn get_physical_device_xcb_presentation_support(
                 &self,
                 physical_device: PhysicalDevice,
@@ -1889,6 +2003,8 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateWaylandSurfaceKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_wayland_surface(
                 &self,
                 create_info: &WaylandSurfaceCreateInfoKHR<'_>,
@@ -1909,6 +2025,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceWaylandPresentationSupportKHR.html>"]
+            #[doc = r""]
             pub unsafe fn get_physical_device_wayland_presentation_support(
                 &self,
                 physical_device: PhysicalDevice,
@@ -2021,6 +2138,8 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateAndroidSurfaceKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_android_surface(
                 &self,
                 create_info: &AndroidSurfaceCreateInfoKHR<'_>,
@@ -2156,6 +2275,8 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateWin32SurfaceKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_win32_surface(
                 &self,
                 create_info: &Win32SurfaceCreateInfoKHR<'_>,
@@ -2176,6 +2297,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceWin32PresentationSupportKHR.html>"]
+            #[doc = r""]
             pub unsafe fn get_physical_device_win32_presentation_support(
                 &self,
                 physical_device: PhysicalDevice,
@@ -2532,10 +2654,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceVideoCapabilitiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_physical_device_video_capabilities(
                 &self,
                 physical_device: PhysicalDevice,
@@ -2554,10 +2680,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceVideoFormatPropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_video_format_properties_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -2580,10 +2712,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceVideoFormatPropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_video_format_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -2603,10 +2741,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateVideoSessionKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_video_session(
                 &self,
                 create_info: &VideoSessionCreateInfoKHR<'_>,
@@ -2627,6 +2769,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyVideoSessionKHR.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_video_session(
                 &self,
                 video_session: VideoSessionKHR,
@@ -2643,10 +2786,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetVideoSessionMemoryRequirementsKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_video_session_memory_requirements_len(
                 &self,
                 video_session: VideoSessionKHR,
@@ -2668,10 +2817,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetVideoSessionMemoryRequirementsKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_video_session_memory_requirements(
                 &self,
                 video_session: VideoSessionKHR,
@@ -2690,10 +2845,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkBindVideoSessionMemoryKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn bind_video_session_memory(
                 &self,
                 video_session: VideoSessionKHR,
@@ -2715,10 +2874,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateVideoSessionParametersKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_video_session_parameters(
                 &self,
                 create_info: &VideoSessionParametersCreateInfoKHR<'_>,
@@ -2740,10 +2903,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkUpdateVideoSessionParametersKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn update_video_session_parameters(
                 &self,
                 video_session_parameters: VideoSessionParametersKHR,
@@ -2762,6 +2929,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyVideoSessionParametersKHR.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_video_session_parameters(
                 &self,
                 video_session_parameters: VideoSessionParametersKHR,
@@ -2779,6 +2947,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginVideoCodingKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_begin_video_coding(
                 &self,
                 command_buffer: CommandBuffer,
@@ -2790,6 +2959,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEndVideoCodingKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_end_video_coding(
                 &self,
                 command_buffer: CommandBuffer,
@@ -2801,6 +2971,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdControlVideoCodingKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_control_video_coding(
                 &self,
                 command_buffer: CommandBuffer,
@@ -2898,6 +3069,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDecodeVideoKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_decode_video(
                 &self,
                 command_buffer: CommandBuffer,
@@ -3135,10 +3307,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMemoryWin32HandleKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_memory_win32_handle(
                 &self,
                 get_win32_handle_info: &MemoryGetWin32HandleInfoKHR<'_>,
@@ -3155,10 +3331,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMemoryWin32HandlePropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_memory_win32_handle_properties(
                 &self,
                 handle_type: ExternalMemoryHandleTypeFlags,
@@ -3285,10 +3465,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMemoryFdKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_memory_fd(
                 &self,
                 get_fd_info: &MemoryGetFdInfoKHR<'_>,
@@ -3301,10 +3485,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMemoryFdPropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_memory_fd_properties(
                 &self,
                 handle_type: ExternalMemoryHandleTypeFlags,
@@ -3461,10 +3649,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkImportSemaphoreWin32HandleKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn import_semaphore_win32_handle(
                 &self,
                 import_semaphore_win32_handle_info: &ImportSemaphoreWin32HandleInfoKHR<'_>,
@@ -3479,10 +3671,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetSemaphoreWin32HandleKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_semaphore_win32_handle(
                 &self,
                 get_win32_handle_info: &SemaphoreGetWin32HandleInfoKHR<'_>,
@@ -3604,10 +3800,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkImportSemaphoreFdKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn import_semaphore_fd(
                 &self,
                 import_semaphore_fd_info: &ImportSemaphoreFdInfoKHR<'_>,
@@ -3619,10 +3819,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetSemaphoreFdKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_semaphore_fd(
                 &self,
                 get_fd_info: &SemaphoreGetFdInfoKHR<'_>,
@@ -3791,10 +3995,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`SUBOPTIMAL_KHR`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::SUBOPTIMAL_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetSwapchainStatusKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::SUBOPTIMAL_KHR"]
             pub unsafe fn get_swapchain_status(
                 &self,
                 swapchain: SwapchainKHR,
@@ -3939,10 +4149,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkImportFenceWin32HandleKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn import_fence_win32_handle(
                 &self,
                 import_fence_win32_handle_info: &ImportFenceWin32HandleInfoKHR<'_>,
@@ -3957,10 +4171,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetFenceWin32HandleKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_fence_win32_handle(
                 &self,
                 get_win32_handle_info: &FenceGetWin32HandleInfoKHR<'_>,
@@ -4073,10 +4291,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkImportFenceFdKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn import_fence_fd(
                 &self,
                 import_fence_fd_info: &ImportFenceFdInfoKHR<'_>,
@@ -4088,10 +4310,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetFenceFdKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_fence_fd(
                 &self,
                 get_fd_info: &FenceGetFdInfoKHR<'_>,
@@ -4263,10 +4489,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn enumerate_physical_device_queue_family_performance_query_counters_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -4292,10 +4524,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn enumerate_physical_device_queue_family_performance_query_counters(
                 &self,
                 physical_device: PhysicalDevice,
@@ -4321,6 +4559,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR.html>"]
+            #[doc = r""]
             pub unsafe fn get_physical_device_queue_family_performance_query_passes(
                 &self,
                 physical_device: PhysicalDevice,
@@ -4340,10 +4579,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkAcquireProfilingLockKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn acquire_profiling_lock(
                 &self,
                 info: &AcquireProfilingLockInfoKHR<'_>,
@@ -4357,6 +4600,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkReleaseProfilingLockKHR.html>"]
+            #[doc = r""]
             pub unsafe fn release_profiling_lock(&self) {
                 unsafe { (self.fp.release_profiling_lock_khr)(self.handle) }
             }
@@ -4489,6 +4733,8 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSurfaceCapabilities2KHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_physical_device_surface_capabilities2(
                 &self,
                 physical_device: PhysicalDevice,
@@ -4511,6 +4757,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSurfaceFormats2KHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_surface_formats2_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -4537,6 +4786,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSurfaceFormats2KHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_surface_formats2(
                 &self,
                 physical_device: PhysicalDevice,
@@ -4729,6 +4981,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceDisplayProperties2KHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_display_properties2_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -4753,6 +5008,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceDisplayProperties2KHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_display_properties2(
                 &self,
                 physical_device: PhysicalDevice,
@@ -4775,6 +5033,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceDisplayPlaneProperties2KHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_display_plane_properties2_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -4799,6 +5060,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceDisplayPlaneProperties2KHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_display_plane_properties2(
                 &self,
                 physical_device: PhysicalDevice,
@@ -4821,6 +5085,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDisplayModeProperties2KHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_display_mode_properties2_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -4847,6 +5114,9 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDisplayModeProperties2KHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_display_mode_properties2(
                 &self,
                 physical_device: PhysicalDevice,
@@ -4870,6 +5140,8 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDisplayPlaneCapabilities2KHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_display_plane_capabilities2(
                 &self,
                 physical_device: PhysicalDevice,
@@ -5380,10 +5652,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateAccelerationStructureKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_acceleration_structure(
                 &self,
                 create_info: &AccelerationStructureCreateInfoKHR<'_>,
@@ -5404,6 +5680,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyAccelerationStructureKHR.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_acceleration_structure(
                 &self,
                 acceleration_structure: AccelerationStructureKHR,
@@ -5421,6 +5698,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBuildAccelerationStructuresKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_build_acceleration_structures(
                 &self,
                 command_buffer: CommandBuffer,
@@ -5444,6 +5722,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBuildAccelerationStructuresIndirectKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_build_acceleration_structures_indirect(
                 &self,
                 command_buffer: CommandBuffer,
@@ -5479,10 +5758,18 @@ pub mod khr {
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
             #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkBuildAccelerationStructuresKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             pub unsafe fn build_acceleration_structures(
                 &self,
                 deferred_operation: DeferredOperationKHR,
@@ -5512,10 +5799,18 @@ pub mod khr {
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
             #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCopyAccelerationStructureKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             pub unsafe fn copy_acceleration_structure(
                 &self,
                 deferred_operation: DeferredOperationKHR,
@@ -5534,10 +5829,18 @@ pub mod khr {
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
             #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCopyAccelerationStructureToMemoryKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             pub unsafe fn copy_acceleration_structure_to_memory(
                 &self,
                 deferred_operation: DeferredOperationKHR,
@@ -5560,10 +5863,18 @@ pub mod khr {
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
             #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCopyMemoryToAccelerationStructureKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             pub unsafe fn copy_memory_to_acceleration_structure(
                 &self,
                 deferred_operation: DeferredOperationKHR,
@@ -5584,10 +5895,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkWriteAccelerationStructuresPropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn write_acceleration_structures_properties(
                 &self,
                 acceleration_structures: &[AccelerationStructureKHR],
@@ -5617,6 +5932,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyAccelerationStructureKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_copy_acceleration_structure(
                 &self,
                 command_buffer: CommandBuffer,
@@ -5628,6 +5944,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyAccelerationStructureToMemoryKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_copy_acceleration_structure_to_memory(
                 &self,
                 command_buffer: CommandBuffer,
@@ -5641,6 +5958,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyMemoryToAccelerationStructureKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_copy_memory_to_acceleration_structure(
                 &self,
                 command_buffer: CommandBuffer,
@@ -5654,6 +5972,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetAccelerationStructureDeviceAddressKHR.html>"]
+            #[doc = r""]
             pub unsafe fn get_acceleration_structure_device_address(
                 &self,
                 info: &AccelerationStructureDeviceAddressInfoKHR<'_>,
@@ -5666,6 +5985,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdWriteAccelerationStructuresPropertiesKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_write_acceleration_structures_properties(
                 &self,
                 command_buffer: CommandBuffer,
@@ -5693,6 +6013,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceAccelerationStructureCompatibilityKHR.html>"]
+            #[doc = r""]
             pub unsafe fn get_device_acceleration_structure_compatibility(
                 &self,
                 version_info: &AccelerationStructureVersionInfoKHR<'_>,
@@ -5711,6 +6032,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetAccelerationStructureBuildSizesKHR.html>"]
+            #[doc = r""]
             pub unsafe fn get_acceleration_structure_build_sizes(
                 &self,
                 build_type: AccelerationStructureBuildTypeKHR,
@@ -5972,6 +6294,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdTraceRaysKHR.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_trace_rays(
                 &self,
@@ -6002,10 +6325,20 @@ pub mod khr {
             #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
             #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
             #[doc = "* [`PIPELINE_COMPILE_REQUIRED_EXT`][3]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
+            #[doc = "[3]: Result::PIPELINE_COMPILE_REQUIRED_EXT"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateRayTracingPipelinesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
+            #[doc = "[3]: Result::PIPELINE_COMPILE_REQUIRED_EXT"]
             pub unsafe fn create_ray_tracing_pipelines(
                 &self,
                 deferred_operation: DeferredOperationKHR,
@@ -6038,10 +6371,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetRayTracingShaderGroupHandlesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_ray_tracing_shader_group_handles(
                 &self,
                 pipeline: Pipeline,
@@ -6064,10 +6401,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetRayTracingCaptureReplayShaderGroupHandlesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_ray_tracing_capture_replay_shader_group_handles(
                 &self,
                 pipeline: Pipeline,
@@ -6094,6 +6435,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdTraceRaysIndirectKHR.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_trace_rays_indirect(
                 &self,
@@ -6119,6 +6461,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetRayTracingShaderGroupStackSizeKHR.html>"]
+            #[doc = r""]
             pub unsafe fn get_ray_tracing_shader_group_stack_size(
                 &self,
                 pipeline: Pipeline,
@@ -6138,6 +6481,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetRayTracingPipelineStackSizeKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_ray_tracing_pipeline_stack_size(
                 &self,
                 command_buffer: CommandBuffer,
@@ -6429,10 +6773,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceFragmentShadingRatesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_fragment_shading_rates_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -6453,10 +6803,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceFragmentShadingRatesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_fragment_shading_rates(
                 &self,
                 physical_device: PhysicalDevice,
@@ -6476,6 +6832,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetFragmentShadingRateKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_fragment_shading_rate(
                 &self,
                 command_buffer: CommandBuffer,
@@ -6632,10 +6989,18 @@ pub mod khr {
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`TIMEOUT`][1]"]
             #[doc = "* [`SUBOPTIMAL_KHR`][2]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::TIMEOUT"]
+            #[doc = "[2]: Result::SUBOPTIMAL_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkWaitForPresentKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::TIMEOUT"]
+            #[doc = "[2]: Result::SUBOPTIMAL_KHR"]
             pub unsafe fn wait_for_present(
                 &self,
                 swapchain: SwapchainKHR,
@@ -6850,10 +7215,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateDeferredOperationKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_deferred_operation(
                 &self,
                 allocator: Option<&AllocationCallbacks>,
@@ -6872,6 +7241,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyDeferredOperationKHR.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_deferred_operation(
                 &self,
                 operation: DeferredOperationKHR,
@@ -6889,6 +7259,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeferredOperationMaxConcurrencyKHR.html>"]
+            #[doc = r""]
             pub unsafe fn get_deferred_operation_max_concurrency(
                 &self,
                 operation: DeferredOperationKHR,
@@ -6900,10 +7271,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`NOT_READY`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::NOT_READY"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeferredOperationResultKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::NOT_READY"]
             pub unsafe fn get_deferred_operation_result(
                 &self,
                 operation: DeferredOperationKHR,
@@ -6917,10 +7294,18 @@ pub mod khr {
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`THREAD_DONE_KHR`][1]"]
             #[doc = "* [`THREAD_IDLE_KHR`][2]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::THREAD_DONE_KHR"]
+            #[doc = "[2]: Result::THREAD_IDLE_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDeferredOperationJoinKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::THREAD_DONE_KHR"]
+            #[doc = "[2]: Result::THREAD_IDLE_KHR"]
             pub unsafe fn deferred_operation_join(
                 &self,
                 operation: DeferredOperationKHR,
@@ -7075,10 +7460,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPipelineExecutablePropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_pipeline_executable_properties_len(
                 &self,
                 pipeline_info: &PipelineInfoKHR<'_>,
@@ -7100,10 +7491,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPipelineExecutablePropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_pipeline_executable_properties(
                 &self,
                 pipeline_info: &PipelineInfoKHR<'_>,
@@ -7123,10 +7520,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPipelineExecutableStatisticsKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_pipeline_executable_statistics_len(
                 &self,
                 executable_info: &PipelineExecutableInfoKHR<'_>,
@@ -7148,10 +7551,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPipelineExecutableStatisticsKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_pipeline_executable_statistics(
                 &self,
                 executable_info: &PipelineExecutableInfoKHR<'_>,
@@ -7171,10 +7580,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPipelineExecutableInternalRepresentationsKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_pipeline_executable_internal_representations_len(
                 &self,
                 executable_info: &PipelineExecutableInfoKHR<'_>,
@@ -7196,10 +7611,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPipelineExecutableInternalRepresentationsKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_pipeline_executable_internal_representations(
                 &self,
                 executable_info: &PipelineExecutableInfoKHR<'_>,
@@ -7391,10 +7812,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceVideoEncodeQualityLevelPropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_physical_device_video_encode_quality_level_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -7415,10 +7840,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetEncodedVideoSessionParametersKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_encoded_video_session_parameters_len(
                 &self,
                 video_session_parameters_info: &VideoEncodeSessionParametersGetInfoKHR<'_>,
@@ -7442,10 +7873,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetEncodedVideoSessionParametersKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_encoded_video_session_parameters(
                 &self,
                 video_session_parameters_info: &VideoEncodeSessionParametersGetInfoKHR<'_>,
@@ -7468,6 +7905,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEncodeVideoKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_encode_video(
                 &self,
                 command_buffer: CommandBuffer,
@@ -7591,6 +8029,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdRefreshObjectsKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_refresh_objects(
                 &self,
                 command_buffer: CommandBuffer,
@@ -7601,10 +8040,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceRefreshableObjectTypesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_refreshable_object_types_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -7625,10 +8070,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceRefreshableObjectTypesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_refreshable_object_types(
                 &self,
                 physical_device: PhysicalDevice,
@@ -8200,6 +8651,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindIndexBuffer3KHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_bind_index_buffer3(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8211,6 +8663,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindVertexBuffers3KHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_bind_vertex_buffers3(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8234,6 +8687,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawIndirect2KHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_draw_indirect2(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8245,6 +8699,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawIndexedIndirect2KHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_draw_indexed_indirect2(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8256,6 +8711,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDispatchIndirect2KHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_dispatch_indirect2(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8267,6 +8723,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyMemoryKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_copy_memory(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8278,6 +8735,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyMemoryToImageKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_copy_memory_to_image(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8294,6 +8752,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyImageToMemoryKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_copy_image_to_memory(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8310,6 +8769,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdUpdateMemoryKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_update_memory(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8335,6 +8795,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdFillMemoryKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_fill_memory(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8348,6 +8809,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyQueryPoolResultsToMemoryKHR.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_copy_query_pool_results_to_memory(
                 &self,
@@ -8378,6 +8840,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawIndirectCount2KHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_draw_indirect_count2(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8392,6 +8855,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawIndexedIndirectCount2KHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_draw_indexed_indirect_count2(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8405,6 +8869,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginConditionalRendering2EXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_begin_conditional_rendering2_ext(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8423,6 +8888,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindTransformFeedbackBuffers2EXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_bind_transform_feedback_buffers2_ext(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8447,6 +8913,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginTransformFeedback2EXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_begin_transform_feedback2_ext(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8471,6 +8938,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEndTransformFeedback2EXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_end_transform_feedback2_ext(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8495,6 +8963,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawIndirectByteCount2EXT.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_draw_indirect_byte_count2_ext(
                 &self,
@@ -8522,6 +8991,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawMeshTasksIndirect2EXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_draw_mesh_tasks_indirect2_ext(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8536,6 +9006,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawMeshTasksIndirectCount2EXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_draw_mesh_tasks_indirect_count2_ext(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8549,6 +9020,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdWriteMarkerToMemoryAMD.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_write_marker_to_memory_amd(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8560,10 +9032,14 @@ pub mod khr {
             #[doc = "* VK_KHR_acceleration_structure"]
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateAccelerationStructure2KHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_acceleration_structure2(
                 &self,
                 create_info: &AccelerationStructureCreateInfo2KHR<'_>,
@@ -8722,6 +9198,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdTraceRaysIndirect2KHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_trace_rays_indirect2(
                 &self,
                 command_buffer: CommandBuffer,
@@ -8881,10 +9358,18 @@ pub mod khr {
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`TIMEOUT`][1]"]
             #[doc = "* [`SUBOPTIMAL_KHR`][2]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::TIMEOUT"]
+            #[doc = "[2]: Result::SUBOPTIMAL_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkWaitForPresent2KHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::TIMEOUT"]
+            #[doc = "[2]: Result::SUBOPTIMAL_KHR"]
             pub unsafe fn wait_for_present2(
                 &self,
                 swapchain: SwapchainKHR,
@@ -9085,10 +9570,18 @@ pub mod khr {
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = "* [`PIPELINE_BINARY_MISSING_KHR`][2]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
+            #[doc = "[2]: Result::PIPELINE_BINARY_MISSING_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreatePipelineBinariesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
+            #[doc = "[2]: Result::PIPELINE_BINARY_MISSING_KHR"]
             pub unsafe fn create_pipeline_binaries(
                 &self,
                 create_info: &PipelineBinaryCreateInfoKHR<'_>,
@@ -9113,6 +9606,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyPipelineBinaryKHR.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_pipeline_binary(
                 &self,
                 pipeline_binary: PipelineBinaryKHR,
@@ -9128,10 +9622,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPipelineKeyKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_pipeline_key(
                 &self,
                 pipeline_create_info: Option<&PipelineCreateInfoKHR<'_>>,
@@ -9148,10 +9646,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPipelineBinaryDataKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_pipeline_binary_data_len(
                 &self,
                 info: &PipelineBinaryDataInfoKHR<'_>,
@@ -9174,10 +9676,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPipelineBinaryDataKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_pipeline_binary_data(
                 &self,
                 info: &PipelineBinaryDataInfoKHR<'_>,
@@ -9198,10 +9704,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkReleaseCapturedPipelineDataKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn release_captured_pipeline_data(
                 &self,
                 info: &ReleaseCapturedPipelineDataInfoKHR<'_>,
@@ -9314,10 +9824,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkReleaseSwapchainImagesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn release_swapchain_images(
                 &self,
                 release_info: &ReleaseSwapchainImagesInfoKHR<'_>,
@@ -9428,10 +9942,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_cooperative_matrix_properties_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -9454,10 +9974,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_cooperative_matrix_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -9674,10 +10200,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceCalibrateableTimeDomainsKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_calibrateable_time_domains_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -9698,10 +10230,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceCalibrateableTimeDomainsKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_calibrateable_time_domains(
                 &self,
                 physical_device: PhysicalDevice,
@@ -9719,10 +10257,14 @@ pub mod khr {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetCalibratedTimestampsKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_calibrated_timestamps(
                 &self,
                 timestamp_infos: &[CalibratedTimestampInfoKHR<'_>],
@@ -9879,6 +10421,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyMemoryIndirectKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_copy_memory_indirect(
                 &self,
                 command_buffer: CommandBuffer,
@@ -9895,6 +10438,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyMemoryToImageIndirectKHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_copy_memory_to_image_indirect(
                 &self,
                 command_buffer: CommandBuffer,
@@ -10048,10 +10592,18 @@ pub mod khr {
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = "* [`TIMEOUT`][2]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
+            #[doc = "[2]: Result::TIMEOUT"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceFaultReportsKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
+            #[doc = "[2]: Result::TIMEOUT"]
             pub unsafe fn get_device_fault_reports_len(
                 &self,
                 timeout: u64,
@@ -10078,10 +10630,18 @@ pub mod khr {
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
             #[doc = "* [`TIMEOUT`][2]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
+            #[doc = "[2]: Result::TIMEOUT"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceFaultReportsKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
+            #[doc = "[2]: Result::TIMEOUT"]
             pub unsafe fn get_device_fault_reports(
                 &self,
                 timeout: u64,
@@ -10105,10 +10665,16 @@ pub mod khr {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceFaultDebugInfoKHR.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_device_fault_debug_info(
                 &self,
                 debug_info: &mut DeviceFaultDebugInfoKHR<'_>,
@@ -10253,6 +10819,7 @@ pub mod khr {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEndRendering2KHR.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_end_rendering2(
                 &self,
                 command_buffer: CommandBuffer,
@@ -10411,6 +10978,8 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateDebugReportCallbackEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_debug_report_callback(
                 &self,
                 create_info: &DebugReportCallbackCreateInfoEXT<'_>,
@@ -10431,6 +11000,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyDebugReportCallbackEXT.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_debug_report_callback(
                 &self,
                 callback: DebugReportCallbackEXT,
@@ -10448,6 +11018,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDebugReportMessageEXT.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn debug_report_message(
                 &self,
@@ -10651,10 +11222,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDebugMarkerSetObjectTagEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn debug_marker_set_object_tag(
                 &self,
                 tag_info: &DebugMarkerObjectTagInfoEXT<'_>,
@@ -10666,10 +11241,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDebugMarkerSetObjectNameEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn debug_marker_set_object_name(
                 &self,
                 name_info: &DebugMarkerObjectNameInfoEXT<'_>,
@@ -10683,6 +11262,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDebugMarkerBeginEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_debug_marker_begin(
                 &self,
                 command_buffer: CommandBuffer,
@@ -10694,6 +11274,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDebugMarkerEndEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_debug_marker_end(&self, command_buffer: CommandBuffer) {
                 unsafe { (self.fp.cmd_debug_marker_end_ext)(command_buffer) }
             }
@@ -10701,6 +11282,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDebugMarkerInsertEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_debug_marker_insert(
                 &self,
                 command_buffer: CommandBuffer,
@@ -10926,6 +11508,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindTransformFeedbackBuffersEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_bind_transform_feedback_buffers(
                 &self,
                 command_buffer: CommandBuffer,
@@ -10959,6 +11542,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginTransformFeedbackEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_begin_transform_feedback(
                 &self,
                 command_buffer: CommandBuffer,
@@ -10986,6 +11570,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEndTransformFeedbackEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_end_transform_feedback(
                 &self,
                 command_buffer: CommandBuffer,
@@ -11013,6 +11598,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginQueryIndexedEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_begin_query_indexed(
                 &self,
                 command_buffer: CommandBuffer,
@@ -11035,6 +11621,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEndQueryIndexedEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_end_query_indexed(
                 &self,
                 command_buffer: CommandBuffer,
@@ -11050,6 +11637,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawIndirectByteCountEXT.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_draw_indirect_byte_count(
                 &self,
@@ -11227,6 +11815,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginConditionalRenderingEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_begin_conditional_rendering(
                 &self,
                 command_buffer: CommandBuffer,
@@ -11243,6 +11832,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEndConditionalRenderingEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_end_conditional_rendering(&self, command_buffer: CommandBuffer) {
                 unsafe { (self.fp.cmd_end_conditional_rendering_ext)(command_buffer) }
             }
@@ -11336,6 +11926,8 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkReleaseDisplayEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn release_display(
                 &self,
                 physical_device: PhysicalDevice,
@@ -11465,6 +12057,8 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkAcquireXlibDisplayEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn acquire_xlib_display(
                 &self,
                 physical_device: PhysicalDevice,
@@ -11482,6 +12076,8 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetRandROutputDisplayEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_rand_routput_display(
                 &self,
                 physical_device: PhysicalDevice,
@@ -11597,6 +12193,8 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSurfaceCapabilities2EXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_physical_device_surface_capabilities2(
                 &self,
                 physical_device: PhysicalDevice,
@@ -11772,10 +12370,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDisplayPowerControlEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn display_power_control(
                 &self,
                 display: DisplayKHR,
@@ -11788,10 +12390,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkRegisterDeviceEventEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn register_device_event(
                 &self,
                 device_event_info: &DeviceEventInfoEXT<'_>,
@@ -11810,10 +12416,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkRegisterDisplayEventEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn register_display_event(
                 &self,
                 display: DisplayKHR,
@@ -11834,10 +12444,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetSwapchainCounterEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_swapchain_counter(
                 &self,
                 swapchain: SwapchainKHR,
@@ -11992,6 +12606,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDiscardRectangleEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_discard_rectangle(
                 &self,
                 command_buffer: CommandBuffer,
@@ -12015,6 +12630,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDiscardRectangleEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_discard_rectangle_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -12031,6 +12647,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDiscardRectangleModeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_discard_rectangle_mode(
                 &self,
                 command_buffer: CommandBuffer,
@@ -12151,6 +12768,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkSetHdrMetadataEXT.html>"]
+            #[doc = r""]
             pub unsafe fn set_hdr_metadata(
                 &self,
                 swapchains: &[SwapchainKHR],
@@ -12492,6 +13110,8 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkSetDebugUtilsObjectNameEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn set_debug_utils_object_name(
                 &self,
                 device: crate::vk::Device,
@@ -12508,6 +13128,8 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkSetDebugUtilsObjectTagEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn set_debug_utils_object_tag(
                 &self,
                 device: crate::vk::Device,
@@ -12522,6 +13144,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkQueueBeginDebugUtilsLabelEXT.html>"]
+            #[doc = r""]
             pub unsafe fn queue_begin_debug_utils_label(
                 &self,
                 queue: Queue,
@@ -12533,6 +13156,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkQueueEndDebugUtilsLabelEXT.html>"]
+            #[doc = r""]
             pub unsafe fn queue_end_debug_utils_label(&self, queue: Queue) {
                 unsafe { (self.fp.queue_end_debug_utils_label_ext)(queue) }
             }
@@ -12540,6 +13164,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkQueueInsertDebugUtilsLabelEXT.html>"]
+            #[doc = r""]
             pub unsafe fn queue_insert_debug_utils_label(
                 &self,
                 queue: Queue,
@@ -12551,6 +13176,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginDebugUtilsLabelEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_begin_debug_utils_label(
                 &self,
                 command_buffer: CommandBuffer,
@@ -12562,6 +13188,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEndDebugUtilsLabelEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_end_debug_utils_label(&self, command_buffer: CommandBuffer) {
                 unsafe { (self.fp.cmd_end_debug_utils_label_ext)(command_buffer) }
             }
@@ -12569,6 +13196,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdInsertDebugUtilsLabelEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_insert_debug_utils_label(
                 &self,
                 command_buffer: CommandBuffer,
@@ -12582,6 +13210,8 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateDebugUtilsMessengerEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_debug_utils_messenger(
                 &self,
                 create_info: &DebugUtilsMessengerCreateInfoEXT<'_>,
@@ -12602,6 +13232,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyDebugUtilsMessengerEXT.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_debug_utils_messenger(
                 &self,
                 messenger: DebugUtilsMessengerEXT,
@@ -12619,6 +13250,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkSubmitDebugUtilsMessageEXT.html>"]
+            #[doc = r""]
             pub unsafe fn submit_debug_utils_message(
                 &self,
                 message_severity: DebugUtilsMessageSeverityFlagsEXT,
@@ -12925,10 +13557,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkWriteSamplerDescriptorsEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn write_sampler_descriptors(
                 &self,
                 samplers: &[SamplerCreateInfo<'_>],
@@ -12954,10 +13590,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkWriteResourceDescriptorsEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn write_resource_descriptors(
                 &self,
                 resources: &[ResourceDescriptorInfoEXT<'_>],
@@ -12985,6 +13625,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindSamplerHeapEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_bind_sampler_heap(
                 &self,
                 command_buffer: CommandBuffer,
@@ -12996,6 +13637,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindResourceHeapEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_bind_resource_heap(
                 &self,
                 command_buffer: CommandBuffer,
@@ -13007,6 +13649,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdPushDataEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_push_data(
                 &self,
                 command_buffer: CommandBuffer,
@@ -13016,10 +13659,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetImageOpaqueCaptureDataEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_image_opaque_capture_data(
                 &self,
                 images: &[Image],
@@ -13043,6 +13690,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceDescriptorSizeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_physical_device_descriptor_size(
                 &self,
                 physical_device: PhysicalDevice,
@@ -13059,10 +13707,14 @@ pub mod ext {
             #[doc = "* VK_EXT_custom_border_color"]
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkRegisterCustomBorderColorEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn register_custom_border_color(
                 &self,
                 border_color: &SamplerCustomBorderColorCreateInfoEXT<'_>,
@@ -13085,6 +13737,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkUnregisterCustomBorderColorEXT.html>"]
+            #[doc = r""]
             pub unsafe fn unregister_custom_border_color(&self, index: u32) {
                 unsafe { (self.fp.unregister_custom_border_color_ext)(self.handle, index) }
             }
@@ -13092,10 +13745,14 @@ pub mod ext {
             #[doc = "* VK_ARM_tensors"]
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetTensorOpaqueCaptureDataARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_tensor_opaque_capture_data_arm(
                 &self,
                 tensors: &[TensorARM],
@@ -13246,6 +13903,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetSampleLocationsEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_sample_locations(
                 &self,
                 command_buffer: CommandBuffer,
@@ -13259,6 +13917,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceMultisamplePropertiesEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_physical_device_multisample_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -13379,10 +14038,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetImageDrmFormatModifierPropertiesEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_image_drm_format_modifier_properties(
                 &self,
                 image: Image,
@@ -13559,10 +14222,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateValidationCacheEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_validation_cache(
                 &self,
                 create_info: &ValidationCacheCreateInfoEXT<'_>,
@@ -13583,6 +14250,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyValidationCacheEXT.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_validation_cache(
                 &self,
                 validation_cache: ValidationCacheEXT,
@@ -13598,10 +14266,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkMergeValidationCachesEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn merge_validation_caches(
                 &self,
                 dst_cache: ValidationCacheEXT,
@@ -13624,10 +14296,16 @@ pub mod ext {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetValidationCacheDataEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_validation_cache_data_len(
                 &self,
                 validation_cache: ValidationCacheEXT,
@@ -13649,10 +14327,16 @@ pub mod ext {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetValidationCacheDataEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_validation_cache_data(
                 &self,
                 validation_cache: ValidationCacheEXT,
@@ -13791,10 +14475,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMemoryHostPointerPropertiesEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_memory_host_pointer_properties(
                 &self,
                 handle_type: ExternalMemoryHandleTypeFlags,
@@ -13931,6 +14619,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceCalibrateableTimeDomainsEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_physical_device_calibrateable_time_domains_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -13952,6 +14641,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceCalibrateableTimeDomainsEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_physical_device_calibrateable_time_domains(
                 &self,
                 physical_device: PhysicalDevice,
@@ -13971,6 +14661,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetCalibratedTimestampsEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_calibrated_timestamps(
                 &self,
                 timestamp_infos: &[CalibratedTimestampInfoKHR<'_>],
@@ -14169,10 +14860,16 @@ pub mod ext {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`NOT_READY`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::NOT_READY"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkSetSwapchainPresentTimingQueueSizeEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::NOT_READY"]
             pub unsafe fn set_swapchain_present_timing_queue_size(
                 &self,
                 swapchain: SwapchainKHR,
@@ -14190,10 +14887,16 @@ pub mod ext {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`NOT_READY`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::NOT_READY"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetSwapchainTimingPropertiesEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::NOT_READY"]
             pub unsafe fn get_swapchain_timing_properties(
                 &self,
                 swapchain: SwapchainKHR,
@@ -14213,10 +14916,16 @@ pub mod ext {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetSwapchainTimeDomainPropertiesEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_swapchain_time_domain_properties(
                 &self,
                 swapchain: SwapchainKHR,
@@ -14236,10 +14945,16 @@ pub mod ext {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPastPresentationTimingEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_past_presentation_timing(
                 &self,
                 past_presentation_timing_info: &PastPresentationTimingInfoEXT<'_>,
@@ -14357,6 +15072,8 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateMetalSurfaceEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_metal_surface(
                 &self,
                 create_info: &MetalSurfaceCreateInfoEXT<'_>,
@@ -14506,6 +15223,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetBufferDeviceAddressEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_buffer_device_address(
                 &self,
                 info: &BufferDeviceAddressInfo<'_>,
@@ -14717,10 +15435,16 @@ pub mod ext {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSurfacePresentModes2EXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_surface_present_modes2_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -14743,10 +15467,16 @@ pub mod ext {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSurfacePresentModes2EXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_surface_present_modes2(
                 &self,
                 physical_device: PhysicalDevice,
@@ -14766,10 +15496,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkAcquireFullScreenExclusiveModeEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn acquire_full_screen_exclusive_mode(
                 &self,
                 swapchain: SwapchainKHR,
@@ -14781,10 +15515,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkReleaseFullScreenExclusiveModeEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn release_full_screen_exclusive_mode(
                 &self,
                 swapchain: SwapchainKHR,
@@ -14799,10 +15537,14 @@ pub mod ext {
             #[doc = "* VK_VERSION_1_1"]
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceGroupSurfacePresentModes2EXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_device_group_surface_present_modes2(
                 &self,
                 surface_info: &PhysicalDeviceSurfaceInfo2KHR<'_>,
@@ -14915,6 +15657,8 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateHeadlessSurfaceEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_headless_surface(
                 &self,
                 create_info: &HeadlessSurfaceCreateInfoEXT<'_>,
@@ -15020,6 +15764,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetLineStippleEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_line_stipple(
                 &self,
                 command_buffer: CommandBuffer,
@@ -15194,6 +15939,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkReleaseSwapchainImagesEXT.html>"]
+            #[doc = r""]
             pub unsafe fn release_swapchain_images(
                 &self,
                 release_info: &ReleaseSwapchainImagesInfoKHR<'_>,
@@ -15312,6 +16058,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthBias2EXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_depth_bias2(
                 &self,
                 command_buffer: CommandBuffer,
@@ -15438,6 +16185,8 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkAcquireDrmDisplayEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn acquire_drm_display(
                 &self,
                 physical_device: PhysicalDevice,
@@ -15455,6 +16204,8 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDrmDisplayEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_drm_display(
                 &self,
                 physical_device: PhysicalDevice,
@@ -15603,6 +16354,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkExportMetalObjectsEXT.html>"]
+            #[doc = r""]
             pub unsafe fn export_metal_objects(
                 &self,
                 metal_objects_info: &mut ExportMetalObjectsInfoEXT<'_>,
@@ -15934,6 +16686,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDescriptorSetLayoutSizeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_descriptor_set_layout_size(
                 &self,
                 layout: DescriptorSetLayout,
@@ -15952,6 +16705,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDescriptorSetLayoutBindingOffsetEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_descriptor_set_layout_binding_offset(
                 &self,
                 layout: DescriptorSetLayout,
@@ -15972,6 +16726,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDescriptorEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_descriptor(
                 &self,
                 descriptor_info: &DescriptorGetInfoEXT<'_>,
@@ -15991,6 +16746,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindDescriptorBuffersEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_bind_descriptor_buffers(
                 &self,
                 command_buffer: CommandBuffer,
@@ -16012,6 +16768,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDescriptorBufferOffsetsEXT.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_set_descriptor_buffer_offsets(
                 &self,
@@ -16046,6 +16803,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindDescriptorBufferEmbeddedSamplersEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_bind_descriptor_buffer_embedded_samplers(
                 &self,
                 command_buffer: CommandBuffer,
@@ -16064,10 +16822,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetBufferOpaqueCaptureDescriptorDataEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_buffer_opaque_capture_descriptor_data(
                 &self,
                 info: &BufferCaptureDescriptorDataInfoEXT<'_>,
@@ -16084,10 +16846,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetImageOpaqueCaptureDescriptorDataEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_image_opaque_capture_descriptor_data(
                 &self,
                 info: &ImageCaptureDescriptorDataInfoEXT<'_>,
@@ -16104,10 +16870,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetImageViewOpaqueCaptureDescriptorDataEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_image_view_opaque_capture_descriptor_data(
                 &self,
                 info: &ImageViewCaptureDescriptorDataInfoEXT<'_>,
@@ -16124,10 +16894,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetSamplerOpaqueCaptureDescriptorDataEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_sampler_opaque_capture_descriptor_data(
                 &self,
                 info: &SamplerCaptureDescriptorDataInfoEXT<'_>,
@@ -16147,10 +16921,14 @@ pub mod ext {
             #[doc = "* VK_NV_ray_tracing"]
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetAccelerationStructureOpaqueCaptureDescriptorDataEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_acceleration_structure_opaque_capture_descriptor_data(
                 &self,
                 info: &AccelerationStructureCaptureDescriptorDataInfoEXT<'_>,
@@ -16318,6 +17096,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawMeshTasksEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_draw_mesh_tasks(
                 &self,
                 command_buffer: CommandBuffer,
@@ -16338,6 +17117,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawMeshTasksIndirectEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_draw_mesh_tasks_indirect(
                 &self,
                 command_buffer: CommandBuffer,
@@ -16364,6 +17144,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawMeshTasksIndirectCountEXT.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_draw_mesh_tasks_indirect_count(
                 &self,
@@ -16505,6 +17286,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetImageSubresourceLayout2EXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_image_subresource_layout2(
                 &self,
                 image: Image,
@@ -16622,10 +17404,16 @@ pub mod ext {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceFaultInfoEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_device_fault_info(
                 &self,
                 fault_counts: &mut DeviceFaultCountsEXT<'_>,
@@ -16767,6 +17555,8 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateDirectFBSurfaceEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_direct_fbsurface(
                 &self,
                 create_info: &DirectFBSurfaceCreateInfoEXT<'_>,
@@ -16787,6 +17577,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceDirectFBPresentationSupportEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_physical_device_direct_fbpresentation_support(
                 &self,
                 physical_device: PhysicalDevice,
@@ -16899,6 +17690,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetVertexInputEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_vertex_input(
                 &self,
                 command_buffer: CommandBuffer,
@@ -17046,10 +17838,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPipelinePropertiesEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_pipeline_properties(
                 &self,
                 pipeline_info: &PipelineInfoKHR<'_>,
@@ -17183,6 +17979,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetColorWriteEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_color_write_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -17335,6 +18132,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawMultiEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_draw_multi(
                 &self,
                 command_buffer: CommandBuffer,
@@ -17362,6 +18160,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawMultiIndexedEXT.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_draw_multi_indexed(
                 &self,
@@ -17762,10 +18561,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateMicromapEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_micromap(
                 &self,
                 create_info: &MicromapCreateInfoEXT<'_>,
@@ -17786,6 +18589,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyMicromapEXT.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_micromap(
                 &self,
                 micromap: MicromapEXT,
@@ -17797,6 +18601,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBuildMicromapsEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_build_micromaps(
                 &self,
                 command_buffer: CommandBuffer,
@@ -17818,10 +18623,18 @@ pub mod ext {
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
             #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkBuildMicromapsEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             pub unsafe fn build_micromaps(
                 &self,
                 deferred_operation: DeferredOperationKHR,
@@ -17849,10 +18662,18 @@ pub mod ext {
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
             #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCopyMicromapEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             pub unsafe fn copy_micromap(
                 &self,
                 deferred_operation: DeferredOperationKHR,
@@ -17870,10 +18691,18 @@ pub mod ext {
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
             #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCopyMicromapToMemoryEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             pub unsafe fn copy_micromap_to_memory(
                 &self,
                 deferred_operation: DeferredOperationKHR,
@@ -17892,10 +18721,18 @@ pub mod ext {
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`OPERATION_DEFERRED_KHR`][1]"]
             #[doc = "* [`OPERATION_NOT_DEFERRED_KHR`][2]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCopyMemoryToMicromapEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::OPERATION_DEFERRED_KHR"]
+            #[doc = "[2]: Result::OPERATION_NOT_DEFERRED_KHR"]
             pub unsafe fn copy_memory_to_micromap(
                 &self,
                 deferred_operation: DeferredOperationKHR,
@@ -17912,10 +18749,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkWriteMicromapsPropertiesEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn write_micromaps_properties(
                 &self,
                 micromaps: &[MicromapEXT],
@@ -17945,6 +18786,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyMicromapEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_copy_micromap(
                 &self,
                 command_buffer: CommandBuffer,
@@ -17956,6 +18798,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyMicromapToMemoryEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_copy_micromap_to_memory(
                 &self,
                 command_buffer: CommandBuffer,
@@ -17967,6 +18810,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyMemoryToMicromapEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_copy_memory_to_micromap(
                 &self,
                 command_buffer: CommandBuffer,
@@ -17978,6 +18822,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdWriteMicromapsPropertiesEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_write_micromaps_properties(
                 &self,
                 command_buffer: CommandBuffer,
@@ -18005,6 +18850,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceMicromapCompatibilityEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_device_micromap_compatibility(
                 &self,
                 version_info: &MicromapVersionInfoEXT<'_>,
@@ -18023,6 +18869,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMicromapBuildSizesEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_micromap_build_sizes(
                 &self,
                 build_type: AccelerationStructureBuildTypeKHR,
@@ -18145,6 +18992,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkSetDeviceMemoryPriorityEXT.html>"]
+            #[doc = r""]
             pub unsafe fn set_device_memory_priority(&self, memory: DeviceMemory, priority: f32) {
                 unsafe { (self.fp.set_device_memory_priority_ext)(self.handle, memory, priority) }
             }
@@ -18928,6 +19776,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthClampEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_depth_clamp_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -18944,6 +19793,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetPolygonModeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_polygon_mode(
                 &self,
                 command_buffer: CommandBuffer,
@@ -18955,6 +19805,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetRasterizationSamplesEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_rasterization_samples(
                 &self,
                 command_buffer: CommandBuffer,
@@ -18971,6 +19822,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetSampleMaskEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_sample_mask(
                 &self,
                 command_buffer: CommandBuffer,
@@ -18991,6 +19843,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetAlphaToCoverageEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_alpha_to_coverage_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19007,6 +19860,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetAlphaToOneEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_alpha_to_one_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19023,6 +19877,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetLogicOpEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_logic_op_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19036,6 +19891,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetColorBlendEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_color_blend_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19059,6 +19915,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetColorBlendEquationEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_color_blend_equation(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19082,6 +19939,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetColorWriteMaskEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_color_write_mask(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19108,6 +19966,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetTessellationDomainOriginEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_tessellation_domain_origin(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19123,6 +19982,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetRasterizationStreamEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_rasterization_stream(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19138,6 +19998,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetConservativeRasterizationModeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_conservative_rasterization_mode(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19156,6 +20017,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetExtraPrimitiveOverestimationSizeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_extra_primitive_overestimation_size(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19174,6 +20036,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthClipEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_depth_clip_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19192,6 +20055,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetSampleLocationsEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_sample_locations_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19210,6 +20074,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetColorBlendAdvancedEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_color_blend_advanced(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19235,6 +20100,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetProvokingVertexModeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_provoking_vertex_mode(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19253,6 +20119,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetLineRasterizationModeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_line_rasterization_mode(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19271,6 +20138,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetLineStippleEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_line_stipple_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19289,6 +20157,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthClipNegativeOneToOneEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_depth_clip_negative_one_to_one(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19307,6 +20176,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetViewportWScalingEnableNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_viewport_wscaling_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19325,6 +20195,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetViewportSwizzleNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_viewport_swizzle_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19350,6 +20221,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCoverageToColorEnableNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_coverage_to_color_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19368,6 +20240,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCoverageToColorLocationNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_coverage_to_color_location_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19386,6 +20259,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCoverageModulationModeNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_coverage_modulation_mode_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19404,6 +20278,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCoverageModulationTableEnableNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_coverage_modulation_table_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19422,6 +20297,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCoverageModulationTableNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_coverage_modulation_table_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19445,6 +20321,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetShadingRateImageEnableNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_shading_rate_image_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19463,6 +20340,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetRepresentativeFragmentTestEnableNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_representative_fragment_test_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19481,6 +20359,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCoverageReductionModeNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_coverage_reduction_mode_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -19617,6 +20496,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetShaderModuleIdentifierEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_shader_module_identifier(
                 &self,
                 shader_module: ShaderModule,
@@ -19634,6 +20514,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetShaderModuleCreateInfoIdentifierEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_shader_module_create_info_identifier(
                 &self,
                 create_info: &ShaderModuleCreateInfo<'_>,
@@ -20860,10 +21741,16 @@ pub mod ext {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPATIBLE_SHADER_BINARY_EXT`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPATIBLE_SHADER_BINARY_EXT"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateShadersEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPATIBLE_SHADER_BINARY_EXT"]
             pub unsafe fn create_shaders(
                 &self,
                 create_infos: &[ShaderCreateInfoEXT<'_>],
@@ -20892,6 +21779,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyShaderEXT.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_shader(
                 &self,
                 shader: ShaderEXT,
@@ -20902,10 +21790,16 @@ pub mod ext {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetShaderBinaryDataEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_shader_binary_data_len(
                 &self,
                 shader: ShaderEXT,
@@ -20927,10 +21821,16 @@ pub mod ext {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetShaderBinaryDataEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_shader_binary_data(
                 &self,
                 shader: ShaderEXT,
@@ -20951,6 +21851,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindShadersEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_bind_shaders(
                 &self,
                 command_buffer: CommandBuffer,
@@ -20976,6 +21877,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCullModeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_cull_mode(
                 &self,
                 command_buffer: CommandBuffer,
@@ -20987,6 +21889,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetFrontFaceEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_front_face(
                 &self,
                 command_buffer: CommandBuffer,
@@ -20998,6 +21901,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetPrimitiveTopologyEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_primitive_topology(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21009,6 +21913,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetViewportWithCountEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_viewport_with_count(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21030,6 +21935,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetScissorWithCountEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_scissor_with_count(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21051,6 +21957,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindVertexBuffers2EXT.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_bind_vertex_buffers2(
                 &self,
@@ -21089,6 +21996,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthTestEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_depth_test_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21102,6 +22010,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthWriteEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_depth_write_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21118,6 +22027,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthCompareOpEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_depth_compare_op(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21129,6 +22039,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthBoundsTestEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_depth_bounds_test_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21145,6 +22056,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetStencilTestEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_stencil_test_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21161,6 +22073,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetStencilOpEXT.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_set_stencil_op(
                 &self,
@@ -21186,6 +22099,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetVertexInputEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_vertex_input(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21214,6 +22128,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetPatchControlPointsEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_patch_control_points(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21227,6 +22142,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetRasterizerDiscardEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_rasterizer_discard_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21243,6 +22159,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthBiasEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_depth_bias_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21256,6 +22173,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetLogicOpEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_logic_op(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21267,6 +22185,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetPrimitiveRestartEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_primitive_restart_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21283,6 +22202,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetTessellationDomainOriginEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_tessellation_domain_origin(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21296,6 +22216,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthClampEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_depth_clamp_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21312,6 +22233,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetPolygonModeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_polygon_mode(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21323,6 +22245,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetRasterizationSamplesEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_rasterization_samples(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21339,6 +22262,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetSampleMaskEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_sample_mask(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21359,6 +22283,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetAlphaToCoverageEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_alpha_to_coverage_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21375,6 +22300,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetAlphaToOneEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_alpha_to_one_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21391,6 +22317,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetLogicOpEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_logic_op_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21404,6 +22331,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetColorBlendEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_color_blend_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21427,6 +22355,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetColorBlendEquationEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_color_blend_equation(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21450,6 +22379,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetColorWriteMaskEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_color_write_mask(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21475,6 +22405,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetRasterizationStreamEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_rasterization_stream(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21490,6 +22421,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetConservativeRasterizationModeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_conservative_rasterization_mode(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21508,6 +22440,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetExtraPrimitiveOverestimationSizeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_extra_primitive_overestimation_size(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21526,6 +22459,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthClipEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_depth_clip_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21544,6 +22478,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetSampleLocationsEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_sample_locations_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21562,6 +22497,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetColorBlendAdvancedEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_color_blend_advanced(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21587,6 +22523,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetProvokingVertexModeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_provoking_vertex_mode(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21605,6 +22542,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetLineRasterizationModeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_line_rasterization_mode(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21623,6 +22561,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetLineStippleEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_line_stipple_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21641,6 +22580,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthClipNegativeOneToOneEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_depth_clip_negative_one_to_one(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21659,6 +22599,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetViewportWScalingEnableNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_viewport_wscaling_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21677,6 +22618,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetViewportSwizzleNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_viewport_swizzle_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21702,6 +22644,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCoverageToColorEnableNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_coverage_to_color_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21720,6 +22663,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCoverageToColorLocationNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_coverage_to_color_location_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21738,6 +22682,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCoverageModulationModeNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_coverage_modulation_mode_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21756,6 +22701,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCoverageModulationTableEnableNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_coverage_modulation_table_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21774,6 +22720,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCoverageModulationTableNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_coverage_modulation_table_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21797,6 +22744,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetShadingRateImageEnableNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_shading_rate_image_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21815,6 +22763,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetRepresentativeFragmentTestEnableNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_representative_fragment_test_enable_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21833,6 +22782,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCoverageReductionModeNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_coverage_reduction_mode_nv(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21851,6 +22801,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthClampRangeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_depth_clamp_range(
                 &self,
                 command_buffer: CommandBuffer,
@@ -21990,6 +22941,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetAttachmentFeedbackLoopEnableEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_attachment_feedback_loop_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -22120,6 +23072,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDecompressMemoryEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_decompress_memory(
                 &self,
                 command_buffer: CommandBuffer,
@@ -22133,6 +23086,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDecompressMemoryIndirectCountEXT.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_decompress_memory_indirect_count(
                 &self,
@@ -22443,6 +23397,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetGeneratedCommandsMemoryRequirementsEXT.html>"]
+            #[doc = r""]
             pub unsafe fn get_generated_commands_memory_requirements(
                 &self,
                 info: &GeneratedCommandsMemoryRequirementsInfoEXT<'_>,
@@ -22460,6 +23415,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdPreprocessGeneratedCommandsEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_preprocess_generated_commands(
                 &self,
                 command_buffer: CommandBuffer,
@@ -22478,6 +23434,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdExecuteGeneratedCommandsEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_execute_generated_commands(
                 &self,
                 command_buffer: CommandBuffer,
@@ -22494,10 +23451,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateIndirectCommandsLayoutEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_indirect_commands_layout(
                 &self,
                 create_info: &IndirectCommandsLayoutCreateInfoEXT<'_>,
@@ -22521,6 +23482,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyIndirectCommandsLayoutEXT.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_indirect_commands_layout(
                 &self,
                 indirect_commands_layout: IndirectCommandsLayoutEXT,
@@ -22536,10 +23498,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateIndirectExecutionSetEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_indirect_execution_set(
                 &self,
                 create_info: &IndirectExecutionSetCreateInfoEXT<'_>,
@@ -22560,6 +23526,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyIndirectExecutionSetEXT.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_indirect_execution_set(
                 &self,
                 indirect_execution_set: IndirectExecutionSetEXT,
@@ -22577,6 +23544,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkUpdateIndirectExecutionSetPipelineEXT.html>"]
+            #[doc = r""]
             pub unsafe fn update_indirect_execution_set_pipeline(
                 &self,
                 indirect_execution_set: IndirectExecutionSetEXT,
@@ -22599,6 +23567,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkUpdateIndirectExecutionSetShaderEXT.html>"]
+            #[doc = r""]
             pub unsafe fn update_indirect_execution_set_shader(
                 &self,
                 indirect_execution_set: IndirectExecutionSetEXT,
@@ -22718,6 +23687,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthClampRangeEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_depth_clamp_range(
                 &self,
                 command_buffer: CommandBuffer,
@@ -22848,10 +23818,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMemoryMetalHandleEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_memory_metal_handle(
                 &self,
                 get_metal_handle_info: &MemoryGetMetalHandleInfoEXT<'_>,
@@ -22868,10 +23842,14 @@ pub mod ext {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMemoryMetalHandlePropertiesEXT.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_memory_metal_handle_properties(
                 &self,
                 handle_type: ExternalMemoryHandleTypeFlags,
@@ -22987,6 +23965,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEndRendering2EXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_end_rendering2(
                 &self,
                 command_buffer: CommandBuffer,
@@ -23105,6 +24084,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginCustomResolveEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_begin_custom_resolve(
                 &self,
                 command_buffer: CommandBuffer,
@@ -23229,6 +24209,7 @@ pub mod ext {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetPrimitiveRestartIndexEXT.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_primitive_restart_index(
                 &self,
                 command_buffer: CommandBuffer,
@@ -23371,6 +24352,8 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceExternalImageFormatPropertiesNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn get_physical_device_external_image_format_properties(
                 &self,
@@ -23501,10 +24484,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMemoryWin32HandleNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_memory_win32_handle(
                 &self,
                 memory: DeviceMemory,
@@ -23618,6 +24605,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetViewportWScalingNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_viewport_wscaling(
                 &self,
                 command_buffer: CommandBuffer,
@@ -23826,6 +24814,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindShadingRateImageNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_bind_shading_rate_image(
                 &self,
                 command_buffer: CommandBuffer,
@@ -23844,6 +24833,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetViewportShadingRatePaletteNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_viewport_shading_rate_palette(
                 &self,
                 command_buffer: CommandBuffer,
@@ -23867,6 +24857,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCoarseSampleOrderNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_coarse_sample_order(
                 &self,
                 command_buffer: CommandBuffer,
@@ -24241,10 +25232,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateAccelerationStructureNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_acceleration_structure(
                 &self,
                 create_info: &AccelerationStructureCreateInfoNV<'_>,
@@ -24265,6 +25260,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyAccelerationStructureNV.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_acceleration_structure(
                 &self,
                 acceleration_structure: AccelerationStructureNV,
@@ -24282,6 +25278,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetAccelerationStructureMemoryRequirementsNV.html>"]
+            #[doc = r""]
             pub unsafe fn get_acceleration_structure_memory_requirements(
                 &self,
                 info: &AccelerationStructureMemoryRequirementsInfoNV<'_>,
@@ -24297,10 +25294,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkBindAccelerationStructureMemoryNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn bind_acceleration_structure_memory(
                 &self,
                 bind_infos: &[BindAccelerationStructureMemoryInfoNV<'_>],
@@ -24322,6 +25323,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBuildAccelerationStructureNV.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_build_acceleration_structure(
                 &self,
@@ -24353,6 +25355,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyAccelerationStructureNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_copy_acceleration_structure(
                 &self,
                 command_buffer: CommandBuffer,
@@ -24368,6 +25371,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdTraceRaysNV.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_trace_rays(
                 &self,
@@ -24410,10 +25414,16 @@ pub mod nv {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`PIPELINE_COMPILE_REQUIRED_EXT`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::PIPELINE_COMPILE_REQUIRED_EXT"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateRayTracingPipelinesNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::PIPELINE_COMPILE_REQUIRED_EXT"]
             pub unsafe fn create_ray_tracing_pipelines(
                 &self,
                 pipeline_cache: PipelineCache,
@@ -24444,6 +25454,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetRayTracingShaderGroupHandlesNV.html>"]
+            #[doc = r""]
             pub unsafe fn get_ray_tracing_shader_group_handles(
                 &self,
                 pipeline: Pipeline,
@@ -24466,10 +25477,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetAccelerationStructureHandleNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_acceleration_structure_handle(
                 &self,
                 acceleration_structure: AccelerationStructureNV,
@@ -24490,6 +25505,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdWriteAccelerationStructuresPropertiesNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_write_acceleration_structures_properties(
                 &self,
                 command_buffer: CommandBuffer,
@@ -24515,10 +25531,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCompileDeferredNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn compile_deferred(
                 &self,
                 pipeline: Pipeline,
@@ -24691,6 +25711,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawMeshTasksNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_draw_mesh_tasks(
                 &self,
                 command_buffer: CommandBuffer,
@@ -24703,6 +25724,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawMeshTasksIndirectNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_draw_mesh_tasks_indirect(
                 &self,
                 command_buffer: CommandBuffer,
@@ -24729,6 +25751,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawMeshTasksIndirectCountNV.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_draw_mesh_tasks_indirect_count(
                 &self,
@@ -24883,6 +25906,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetExclusiveScissorEnableNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_exclusive_scissor_enable(
                 &self,
                 command_buffer: CommandBuffer,
@@ -24906,6 +25930,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetExclusiveScissorNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_exclusive_scissor(
                 &self,
                 command_buffer: CommandBuffer,
@@ -25062,6 +26087,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCheckpointNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_checkpoint(
                 &self,
                 command_buffer: CommandBuffer,
@@ -25073,6 +26099,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetQueueCheckpointDataNV.html>"]
+            #[doc = r""]
             pub unsafe fn get_queue_checkpoint_data_len(&self, queue: Queue) -> u32 {
                 unsafe {
                     let mut checkpoint_data_count = ::core::mem::MaybeUninit::uninit();
@@ -25088,6 +26115,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetQueueCheckpointDataNV.html>"]
+            #[doc = r""]
             pub unsafe fn get_queue_checkpoint_data(
                 &self,
                 queue: Queue,
@@ -25105,6 +26133,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetQueueCheckpointData2NV.html>"]
+            #[doc = r""]
             pub unsafe fn get_queue_checkpoint_data2_len(&self, queue: Queue) -> u32 {
                 unsafe {
                     let mut checkpoint_data_count = ::core::mem::MaybeUninit::uninit();
@@ -25123,6 +26152,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetQueueCheckpointData2NV.html>"]
+            #[doc = r""]
             pub unsafe fn get_queue_checkpoint_data2(
                 &self,
                 queue: Queue,
@@ -25234,10 +26264,16 @@ pub mod nv {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceCooperativeMatrixPropertiesNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_cooperative_matrix_properties_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -25258,10 +26294,16 @@ pub mod nv {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceCooperativeMatrixPropertiesNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_cooperative_matrix_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -25368,10 +26410,16 @@ pub mod nv {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_supported_framebuffer_mixed_samples_combinations_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -25394,10 +26442,16 @@ pub mod nv {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_supported_framebuffer_mixed_samples_combinations(
                 &self,
                 physical_device: PhysicalDevice,
@@ -25622,6 +26676,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetGeneratedCommandsMemoryRequirementsNV.html>"]
+            #[doc = r""]
             pub unsafe fn get_generated_commands_memory_requirements(
                 &self,
                 info: &GeneratedCommandsMemoryRequirementsInfoNV<'_>,
@@ -25639,6 +26694,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdPreprocessGeneratedCommandsNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_preprocess_generated_commands(
                 &self,
                 command_buffer: CommandBuffer,
@@ -25655,6 +26711,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdExecuteGeneratedCommandsNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_execute_generated_commands(
                 &self,
                 command_buffer: CommandBuffer,
@@ -25673,6 +26730,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindPipelineShaderGroupNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_bind_pipeline_shader_group(
                 &self,
                 command_buffer: CommandBuffer,
@@ -25691,10 +26749,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateIndirectCommandsLayoutNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_indirect_commands_layout(
                 &self,
                 create_info: &IndirectCommandsLayoutCreateInfoNV<'_>,
@@ -25718,6 +26780,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyIndirectCommandsLayoutNV.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_indirect_commands_layout(
                 &self,
                 indirect_commands_layout: IndirectCommandsLayoutNV,
@@ -25948,10 +27011,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateCudaModuleNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_cuda_module(
                 &self,
                 create_info: &CudaModuleCreateInfoNV<'_>,
@@ -25971,10 +27038,16 @@ pub mod nv {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetCudaModuleCacheNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_cuda_module_cache_len(
                 &self,
                 module: CudaModuleNV,
@@ -25996,10 +27069,16 @@ pub mod nv {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetCudaModuleCacheNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_cuda_module_cache(
                 &self,
                 module: CudaModuleNV,
@@ -26018,10 +27097,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateCudaFunctionNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_cuda_function(
                 &self,
                 create_info: &CudaFunctionCreateInfoNV<'_>,
@@ -26042,6 +27125,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyCudaModuleNV.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_cuda_module(
                 &self,
                 module: CudaModuleNV,
@@ -26053,6 +27137,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyCudaFunctionNV.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_cuda_function(
                 &self,
                 function: CudaFunctionNV,
@@ -26066,6 +27151,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCudaLaunchKernelNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_cuda_launch_kernel(
                 &self,
                 command_buffer: CommandBuffer,
@@ -26174,6 +27260,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetFragmentShadingRateEnumNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_fragment_shading_rate_enum(
                 &self,
                 command_buffer: CommandBuffer,
@@ -26301,10 +27388,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkAcquireWinrtDisplayNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn acquire_winrt_display(
                 &self,
                 physical_device: PhysicalDevice,
@@ -26317,10 +27408,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetWinrtDisplayNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_winrt_display(
                 &self,
                 physical_device: PhysicalDevice,
@@ -26429,10 +27524,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMemoryRemoteAddressNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_memory_remote_address(
                 &self,
                 memory_get_remote_address_info: &MemoryGetRemoteAddressInfoNV<'_>,
@@ -26668,10 +27767,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetFenceSciSyncFenceNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_fence_sci_sync_fence(
                 &self,
                 get_sci_sync_handle_info: &FenceGetSciSyncInfoNV<'_>,
@@ -26688,10 +27791,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetFenceSciSyncObjNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_fence_sci_sync_obj(
                 &self,
                 get_sci_sync_handle_info: &FenceGetSciSyncInfoNV<'_>,
@@ -26708,10 +27815,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkImportFenceSciSyncFenceNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn import_fence_sci_sync_fence(
                 &self,
                 import_fence_sci_sync_info: &ImportFenceSciSyncInfoNV<'_>,
@@ -26726,10 +27837,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkImportFenceSciSyncObjNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn import_fence_sci_sync_obj(
                 &self,
                 import_fence_sci_sync_info: &ImportFenceSciSyncInfoNV<'_>,
@@ -26741,10 +27856,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSciSyncAttributesNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_physical_device_sci_sync_attributes(
                 &self,
                 physical_device: PhysicalDevice,
@@ -26762,10 +27881,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetSemaphoreSciSyncObjNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_semaphore_sci_sync_obj(
                 &self,
                 get_sci_sync_info: &SemaphoreGetSciSyncInfoNV<'_>,
@@ -26782,10 +27905,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkImportSemaphoreSciSyncObjNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn import_semaphore_sci_sync_obj(
                 &self,
                 import_semaphore_sci_sync_info: &ImportSemaphoreSciSyncInfoNV<'_>,
@@ -26936,10 +28063,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMemorySciBufNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_memory_sci_buf(
                 &self,
                 get_sci_buf_info: &MemoryGetSciBufInfoNV<'_>,
@@ -26956,10 +28087,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceExternalMemorySciBufPropertiesNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_physical_device_external_memory_sci_buf_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -26981,10 +28116,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSciBufAttributesNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_physical_device_sci_buf_attributes(
                 &self,
                 physical_device: PhysicalDevice,
@@ -27123,6 +28262,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyMemoryIndirectNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_copy_memory_indirect(
                 &self,
                 command_buffer: CommandBuffer,
@@ -27143,6 +28283,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyMemoryToImageIndirectNV.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_copy_memory_to_image_indirect(
                 &self,
@@ -27286,6 +28427,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDecompressMemoryNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_decompress_memory(
                 &self,
                 command_buffer: CommandBuffer,
@@ -27307,6 +28449,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDecompressMemoryIndirectCountNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_decompress_memory_indirect_count(
                 &self,
                 command_buffer: CommandBuffer,
@@ -27462,6 +28605,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPipelineIndirectMemoryRequirementsNV.html>"]
+            #[doc = r""]
             pub unsafe fn get_pipeline_indirect_memory_requirements(
                 &self,
                 create_info: &ComputePipelineCreateInfo<'_>,
@@ -27479,6 +28623,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdUpdatePipelineIndirectBufferNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_update_pipeline_indirect_buffer(
                 &self,
                 command_buffer: CommandBuffer,
@@ -27497,6 +28642,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPipelineIndirectDeviceAddressNV.html>"]
+            #[doc = r""]
             pub unsafe fn get_pipeline_indirect_device_address(
                 &self,
                 info: &PipelineIndirectDeviceAddressInfoNV<'_>,
@@ -27702,10 +28848,16 @@ pub mod nv {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceOpticalFlowImageFormatsNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_optical_flow_image_formats_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -27728,10 +28880,16 @@ pub mod nv {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceOpticalFlowImageFormatsNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_optical_flow_image_formats(
                 &self,
                 physical_device: PhysicalDevice,
@@ -27751,10 +28909,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateOpticalFlowSessionNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_optical_flow_session(
                 &self,
                 create_info: &OpticalFlowSessionCreateInfoNV<'_>,
@@ -27775,6 +28937,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyOpticalFlowSessionNV.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_optical_flow_session(
                 &self,
                 session: OpticalFlowSessionNV,
@@ -27790,10 +28953,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkBindOpticalFlowSessionImageNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn bind_optical_flow_session_image(
                 &self,
                 session: OpticalFlowSessionNV,
@@ -27816,6 +28983,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdOpticalFlowExecuteNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_optical_flow_execute(
                 &self,
                 command_buffer: CommandBuffer,
@@ -28049,10 +29217,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateSemaphoreSciSyncPoolNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_semaphore_sci_sync_pool(
                 &self,
                 create_info: &SemaphoreSciSyncPoolCreateInfoNV<'_>,
@@ -28073,6 +29245,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroySemaphoreSciSyncPoolNV.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_semaphore_sci_sync_pool(
                 &self,
                 semaphore_pool: SemaphoreSciSyncPoolNV,
@@ -28088,10 +29261,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetFenceSciSyncFenceNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_fence_sci_sync_fence(
                 &self,
                 get_sci_sync_handle_info: &FenceGetSciSyncInfoNV<'_>,
@@ -28108,10 +29285,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetFenceSciSyncObjNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_fence_sci_sync_obj(
                 &self,
                 get_sci_sync_handle_info: &FenceGetSciSyncInfoNV<'_>,
@@ -28128,10 +29309,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkImportFenceSciSyncFenceNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn import_fence_sci_sync_fence(
                 &self,
                 import_fence_sci_sync_info: &ImportFenceSciSyncInfoNV<'_>,
@@ -28146,10 +29331,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkImportFenceSciSyncObjNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn import_fence_sci_sync_obj(
                 &self,
                 import_fence_sci_sync_info: &ImportFenceSciSyncInfoNV<'_>,
@@ -28161,10 +29350,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceSciSyncAttributesNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_physical_device_sci_sync_attributes(
                 &self,
                 physical_device: PhysicalDevice,
@@ -28324,10 +29517,16 @@ pub mod nv {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceCooperativeVectorPropertiesNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_cooperative_vector_properties_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -28348,10 +29547,16 @@ pub mod nv {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceCooperativeVectorPropertiesNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_cooperative_vector_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -28370,10 +29575,16 @@ pub mod nv {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkConvertCooperativeVectorMatrixNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn convert_cooperative_vector_matrix(
                 &self,
                 info: &ConvertCooperativeVectorMatrixInfoNV<'_>,
@@ -28387,6 +29598,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdConvertCooperativeVectorMatrixNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_convert_cooperative_vector_matrix(
                 &self,
                 command_buffer: CommandBuffer,
@@ -28580,10 +29792,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkSetLatencySleepModeNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn set_latency_sleep_mode(
                 &self,
                 swapchain: SwapchainKHR,
@@ -28596,10 +29812,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkLatencySleepNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn latency_sleep(
                 &self,
                 swapchain: SwapchainKHR,
@@ -28614,6 +29834,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkSetLatencyMarkerNV.html>"]
+            #[doc = r""]
             pub unsafe fn set_latency_marker(
                 &self,
                 swapchain: SwapchainKHR,
@@ -28627,6 +29848,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetLatencyTimingsNV.html>"]
+            #[doc = r""]
             pub unsafe fn get_latency_timings(
                 &self,
                 swapchain: SwapchainKHR,
@@ -28640,6 +29862,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkQueueNotifyOutOfBandNV.html>"]
+            #[doc = r""]
             pub unsafe fn queue_notify_out_of_band(
                 &self,
                 queue: Queue,
@@ -28809,10 +30032,14 @@ pub mod nv {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateExternalComputeQueueNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_external_compute_queue(
                 &self,
                 create_info: &ExternalComputeQueueCreateInfoNV<'_>,
@@ -28833,6 +30060,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyExternalComputeQueueNV.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_external_compute_queue(
                 &self,
                 external_queue: ExternalComputeQueueNV,
@@ -28850,6 +30078,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetExternalComputeQueueDataNV.html>"]
+            #[doc = r""]
             pub unsafe fn get_external_compute_queue_data(
                 &self,
                 external_queue: ExternalComputeQueueNV,
@@ -29001,6 +30230,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetClusterAccelerationStructureBuildSizesNV.html>"]
+            #[doc = r""]
             pub unsafe fn get_cluster_acceleration_structure_build_sizes(
                 &self,
                 info: &ClusterAccelerationStructureInputInfoNV<'_>,
@@ -29018,6 +30248,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBuildClusterAccelerationStructureIndirectNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_build_cluster_acceleration_structure_indirect(
                 &self,
                 command_buffer: CommandBuffer,
@@ -29148,6 +30379,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPartitionedAccelerationStructuresBuildSizesNV.html>"]
+            #[doc = r""]
             pub unsafe fn get_partitioned_acceleration_structures_build_sizes(
                 &self,
                 info: &PartitionedAccelerationStructureInstancesInputNV<'_>,
@@ -29167,6 +30399,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBuildPartitionedAccelerationStructuresNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_build_partitioned_acceleration_structures(
                 &self,
                 command_buffer: CommandBuffer,
@@ -29276,10 +30509,16 @@ pub mod nv {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_cooperative_matrix_flexible_dimensions_properties_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -29302,10 +30541,16 @@ pub mod nv {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_cooperative_matrix_flexible_dimensions_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -29423,6 +30668,7 @@ pub mod nv {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetComputeOccupancyPriorityNV.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_compute_occupancy_priority(
                 &self,
                 command_buffer: CommandBuffer,
@@ -29604,6 +30850,7 @@ pub mod amd {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawIndirectCountAMD.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_draw_indirect_count(
                 &self,
@@ -29631,6 +30878,7 @@ pub mod amd {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawIndexedIndirectCountAMD.html>"]
+            #[doc = r""]
             #[allow(clippy::too_many_arguments)]
             pub unsafe fn cmd_draw_indexed_indirect_count(
                 &self,
@@ -29769,10 +31017,16 @@ pub mod amd {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetShaderInfoAMD.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_shader_info_len(
                 &self,
                 pipeline: Pipeline,
@@ -29798,10 +31052,16 @@ pub mod amd {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetShaderInfoAMD.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_shader_info(
                 &self,
                 pipeline: Pipeline,
@@ -29967,6 +31227,7 @@ pub mod amd {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdWriteBufferMarkerAMD.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_write_buffer_marker(
                 &self,
                 command_buffer: CommandBuffer,
@@ -29992,6 +31253,7 @@ pub mod amd {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdWriteBufferMarker2AMD.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_write_buffer_marker2(
                 &self,
                 command_buffer: CommandBuffer,
@@ -30122,6 +31384,7 @@ pub mod amd {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkSetLocalDimmingAMD.html>"]
+            #[doc = r""]
             pub unsafe fn set_local_dimming(
                 &self,
                 swap_chain: SwapchainKHR,
@@ -30241,6 +31504,7 @@ pub mod amd {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkAntiLagUpdateAMD.html>"]
+            #[doc = r""]
             pub unsafe fn anti_lag_update(&self, data: &AntiLagDataAMD<'_>) {
                 unsafe { (self.fp.anti_lag_update_amd)(self.handle, data) }
             }
@@ -30419,10 +31683,14 @@ pub mod nvx {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateCuModuleNVX.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_cu_module(
                 &self,
                 create_info: &CuModuleCreateInfoNVX<'_>,
@@ -30441,10 +31709,14 @@ pub mod nvx {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateCuFunctionNVX.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_cu_function(
                 &self,
                 create_info: &CuFunctionCreateInfoNVX<'_>,
@@ -30465,6 +31737,7 @@ pub mod nvx {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyCuModuleNVX.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_cu_module(
                 &self,
                 module: CuModuleNVX,
@@ -30476,6 +31749,7 @@ pub mod nvx {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyCuFunctionNVX.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_cu_function(
                 &self,
                 function: CuFunctionNVX,
@@ -30489,6 +31763,7 @@ pub mod nvx {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCuLaunchKernelNVX.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_cu_launch_kernel(
                 &self,
                 command_buffer: CommandBuffer,
@@ -30654,6 +31929,7 @@ pub mod nvx {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetImageViewHandleNVX.html>"]
+            #[doc = r""]
             pub unsafe fn get_image_view_handle(&self, info: &ImageViewHandleInfoNVX<'_>) -> u32 {
                 unsafe { (self.fp.get_image_view_handle_nvx)(self.handle, info) }
             }
@@ -30661,15 +31937,20 @@ pub mod nvx {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetImageViewHandle64NVX.html>"]
+            #[doc = r""]
             pub unsafe fn get_image_view_handle64(&self, info: &ImageViewHandleInfoNVX<'_>) -> u64 {
                 unsafe { (self.fp.get_image_view_handle64_nvx)(self.handle, info) }
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetImageViewAddressNVX.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_image_view_address(
                 &self,
                 image_view: ImageView,
@@ -30684,6 +31965,7 @@ pub mod nvx {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceCombinedImageSamplerIndexNVX.html>"]
+            #[doc = r""]
             pub unsafe fn get_device_combined_image_sampler_index(
                 &self,
                 image_view_index: u64,
@@ -30804,6 +32086,8 @@ pub mod ggp {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateStreamDescriptorSurfaceGGP.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_stream_descriptor_surface(
                 &self,
                 create_info: &StreamDescriptorSurfaceCreateInfoGGP<'_>,
@@ -30921,6 +32205,8 @@ pub mod nn {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateViSurfaceNN.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_vi_surface(
                 &self,
                 create_info: &ViSurfaceCreateInfoNN<'_>,
@@ -31056,10 +32342,14 @@ pub mod google {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetRefreshCycleDurationGOOGLE.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_refresh_cycle_duration(
                 &self,
                 swapchain: SwapchainKHR,
@@ -31080,10 +32370,16 @@ pub mod google {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPastPresentationTimingGOOGLE.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_past_presentation_timing_len(
                 &self,
                 swapchain: SwapchainKHR,
@@ -31105,10 +32401,16 @@ pub mod google {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPastPresentationTimingGOOGLE.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_past_presentation_timing(
                 &self,
                 swapchain: SwapchainKHR,
@@ -31249,6 +32551,8 @@ pub mod mvk {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateIOSSurfaceMVK.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_iossurface(
                 &self,
                 create_info: &IOSSurfaceCreateInfoMVK<'_>,
@@ -31362,6 +32666,8 @@ pub mod mvk {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateMacOSSurfaceMVK.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_mac_ossurface(
                 &self,
                 create_info: &MacOSSurfaceCreateInfoMVK<'_>,
@@ -31498,10 +32804,14 @@ pub mod android {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetAndroidHardwareBufferPropertiesANDROID.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_android_hardware_buffer_properties(
                 &self,
                 buffer: &AHardwareBuffer,
@@ -31518,10 +32828,14 @@ pub mod android {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMemoryAndroidHardwareBufferANDROID.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_memory_android_hardware_buffer(
                 &self,
                 info: &MemoryGetAndroidHardwareBufferInfoANDROID<'_>,
@@ -31780,10 +33094,16 @@ pub mod amdx {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`PIPELINE_COMPILE_REQUIRED_EXT`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::PIPELINE_COMPILE_REQUIRED_EXT"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateExecutionGraphPipelinesAMDX.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::PIPELINE_COMPILE_REQUIRED_EXT"]
             pub unsafe fn create_execution_graph_pipelines(
                 &self,
                 pipeline_cache: PipelineCache,
@@ -31812,10 +33132,14 @@ pub mod amdx {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetExecutionGraphPipelineScratchSizeAMDX.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_execution_graph_pipeline_scratch_size(
                 &self,
                 execution_graph: Pipeline,
@@ -31832,10 +33156,14 @@ pub mod amdx {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetExecutionGraphPipelineNodeIndexAMDX.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_execution_graph_pipeline_node_index(
                 &self,
                 execution_graph: Pipeline,
@@ -31856,6 +33184,7 @@ pub mod amdx {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdInitializeGraphScratchMemoryAMDX.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_initialize_graph_scratch_memory(
                 &self,
                 command_buffer: CommandBuffer,
@@ -31876,6 +33205,7 @@ pub mod amdx {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDispatchGraphAMDX.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_dispatch_graph(
                 &self,
                 command_buffer: CommandBuffer,
@@ -31896,6 +33226,7 @@ pub mod amdx {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDispatchGraphIndirectAMDX.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_dispatch_graph_indirect(
                 &self,
                 command_buffer: CommandBuffer,
@@ -31916,6 +33247,7 @@ pub mod amdx {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDispatchGraphIndirectCountAMDX.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_dispatch_graph_indirect_count(
                 &self,
                 command_buffer: CommandBuffer,
@@ -32056,10 +33388,14 @@ pub mod qcom {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkQueueSetPerfHintQCOM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn queue_set_perf_hint(
                 &self,
                 queue: Queue,
@@ -32205,6 +33541,7 @@ pub mod qcom {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDispatchTileQCOM.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_dispatch_tile(
                 &self,
                 command_buffer: CommandBuffer,
@@ -32216,6 +33553,7 @@ pub mod qcom {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginPerTileExecutionQCOM.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_begin_per_tile_execution(
                 &self,
                 command_buffer: CommandBuffer,
@@ -32229,6 +33567,7 @@ pub mod qcom {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEndPerTileExecutionQCOM.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_end_per_tile_execution(
                 &self,
                 command_buffer: CommandBuffer,
@@ -32374,10 +33713,16 @@ pub mod qcom {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetFramebufferTilePropertiesQCOM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_framebuffer_tile_properties_len(
                 &self,
                 framebuffer: Framebuffer,
@@ -32399,10 +33744,16 @@ pub mod qcom {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetFramebufferTilePropertiesQCOM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_framebuffer_tile_properties(
                 &self,
                 framebuffer: Framebuffer,
@@ -32421,10 +33772,14 @@ pub mod qcom {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDynamicRenderingTilePropertiesQCOM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_dynamic_rendering_tile_properties(
                 &self,
                 rendering_info: &RenderingInfo<'_>,
@@ -32568,6 +33923,7 @@ pub mod qcom {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindTileMemoryQCOM.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_bind_tile_memory(
                 &self,
                 command_buffer: CommandBuffer,
@@ -32857,10 +34213,14 @@ pub mod intel {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkInitializePerformanceApiINTEL.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn initialize_performance_api(
                 &self,
                 initialize_info: &InitializePerformanceApiInfoINTEL<'_>,
@@ -32874,15 +34234,20 @@ pub mod intel {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkUninitializePerformanceApiINTEL.html>"]
+            #[doc = r""]
             pub unsafe fn uninitialize_performance_api(&self) {
                 unsafe { (self.fp.uninitialize_performance_api_intel)(self.handle) }
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetPerformanceMarkerINTEL.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn cmd_set_performance_marker(
                 &self,
                 command_buffer: CommandBuffer,
@@ -32895,10 +34260,14 @@ pub mod intel {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetPerformanceStreamMarkerINTEL.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn cmd_set_performance_stream_marker(
                 &self,
                 command_buffer: CommandBuffer,
@@ -32911,10 +34280,14 @@ pub mod intel {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetPerformanceOverrideINTEL.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn cmd_set_performance_override(
                 &self,
                 command_buffer: CommandBuffer,
@@ -32927,10 +34300,14 @@ pub mod intel {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkAcquirePerformanceConfigurationINTEL.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn acquire_performance_configuration(
                 &self,
                 acquire_info: &PerformanceConfigurationAcquireInfoINTEL<'_>,
@@ -32947,10 +34324,14 @@ pub mod intel {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkReleasePerformanceConfigurationINTEL.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn release_performance_configuration(
                 &self,
                 configuration: PerformanceConfigurationINTEL,
@@ -32962,10 +34343,14 @@ pub mod intel {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkQueueSetPerformanceConfigurationINTEL.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn queue_set_performance_configuration(
                 &self,
                 queue: Queue,
@@ -32978,10 +34363,14 @@ pub mod intel {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPerformanceParameterINTEL.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_performance_parameter(
                 &self,
                 parameter: PerformanceParameterTypeINTEL,
@@ -33097,6 +34486,8 @@ pub mod fuchsia {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateImagePipeSurfaceFUCHSIA.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_image_pipe_surface(
                 &self,
                 create_info: &ImagePipeSurfaceCreateInfoFUCHSIA<'_>,
@@ -33230,10 +34621,14 @@ pub mod fuchsia {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMemoryZirconHandleFUCHSIA.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_memory_zircon_handle(
                 &self,
                 get_zircon_handle_info: &MemoryGetZirconHandleInfoFUCHSIA<'_>,
@@ -33250,10 +34645,14 @@ pub mod fuchsia {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMemoryZirconHandlePropertiesFUCHSIA.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_memory_zircon_handle_properties(
                 &self,
                 handle_type: ExternalMemoryHandleTypeFlags,
@@ -33384,10 +34783,14 @@ pub mod fuchsia {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkImportSemaphoreZirconHandleFUCHSIA.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn import_semaphore_zircon_handle(
                 &self,
                 import_semaphore_zircon_handle_info: &ImportSemaphoreZirconHandleInfoFUCHSIA<'_>,
@@ -33402,10 +34805,14 @@ pub mod fuchsia {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetSemaphoreZirconHandleFUCHSIA.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_semaphore_zircon_handle(
                 &self,
                 get_zircon_handle_info: &SemaphoreGetZirconHandleInfoFUCHSIA<'_>,
@@ -33605,10 +35012,14 @@ pub mod fuchsia {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateBufferCollectionFUCHSIA.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_buffer_collection(
                 &self,
                 create_info: &BufferCollectionCreateInfoFUCHSIA<'_>,
@@ -33627,10 +35038,14 @@ pub mod fuchsia {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkSetBufferCollectionImageConstraintsFUCHSIA.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn set_buffer_collection_image_constraints(
                 &self,
                 collection: BufferCollectionFUCHSIA,
@@ -33647,10 +35062,14 @@ pub mod fuchsia {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkSetBufferCollectionBufferConstraintsFUCHSIA.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn set_buffer_collection_buffer_constraints(
                 &self,
                 collection: BufferCollectionFUCHSIA,
@@ -33669,6 +35088,7 @@ pub mod fuchsia {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyBufferCollectionFUCHSIA.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_buffer_collection(
                 &self,
                 collection: BufferCollectionFUCHSIA,
@@ -33684,10 +35104,14 @@ pub mod fuchsia {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetBufferCollectionPropertiesFUCHSIA.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_buffer_collection_properties(
                 &self,
                 collection: BufferCollectionFUCHSIA,
@@ -33811,6 +35235,7 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDispatchParametersARM.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_set_dispatch_parameters(
                 &self,
                 command_buffer: CommandBuffer,
@@ -34123,10 +35548,14 @@ pub mod arm {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateTensorARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_tensor(
                 &self,
                 create_info: &TensorCreateInfoARM<'_>,
@@ -34147,6 +35576,7 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyTensorARM.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_tensor(
                 &self,
                 tensor: TensorARM,
@@ -34156,10 +35586,14 @@ pub mod arm {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateTensorViewARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_tensor_view(
                 &self,
                 create_info: &TensorViewCreateInfoARM<'_>,
@@ -34180,6 +35614,7 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyTensorViewARM.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_tensor_view(
                 &self,
                 tensor_view: TensorViewARM,
@@ -34193,6 +35628,7 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetTensorMemoryRequirementsARM.html>"]
+            #[doc = r""]
             pub unsafe fn get_tensor_memory_requirements(
                 &self,
                 info: &TensorMemoryRequirementsInfoARM<'_>,
@@ -34208,10 +35644,14 @@ pub mod arm {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkBindTensorMemoryARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn bind_tensor_memory(
                 &self,
                 bind_infos: &[BindTensorMemoryInfoARM<'_>],
@@ -34233,6 +35673,7 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceTensorMemoryRequirementsARM.html>"]
+            #[doc = r""]
             pub unsafe fn get_device_tensor_memory_requirements(
                 &self,
                 info: &DeviceTensorMemoryRequirementsARM<'_>,
@@ -34250,6 +35691,7 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyTensorARM.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_copy_tensor(
                 &self,
                 command_buffer: CommandBuffer,
@@ -34261,6 +35703,7 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceExternalTensorPropertiesARM.html>"]
+            #[doc = r""]
             pub unsafe fn get_physical_device_external_tensor_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -34279,10 +35722,14 @@ pub mod arm {
             #[doc = "* VK_EXT_descriptor_buffer"]
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetTensorOpaqueCaptureDescriptorDataARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_tensor_opaque_capture_descriptor_data(
                 &self,
                 info: &TensorCaptureDescriptorDataInfoARM<'_>,
@@ -34301,10 +35748,14 @@ pub mod arm {
             #[doc = "* VK_EXT_descriptor_buffer"]
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetTensorViewOpaqueCaptureDescriptorDataARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_tensor_view_opaque_capture_descriptor_data(
                 &self,
                 info: &TensorViewCaptureDescriptorDataInfoARM<'_>,
@@ -34654,10 +36105,16 @@ pub mod arm {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`PIPELINE_COMPILE_REQUIRED_EXT`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::PIPELINE_COMPILE_REQUIRED_EXT"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateDataGraphPipelinesARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::PIPELINE_COMPILE_REQUIRED_EXT"]
             pub unsafe fn create_data_graph_pipelines(
                 &self,
                 deferred_operation: DeferredOperationKHR,
@@ -34688,10 +36145,14 @@ pub mod arm {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateDataGraphPipelineSessionARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_data_graph_pipeline_session(
                 &self,
                 create_info: &DataGraphPipelineSessionCreateInfoARM<'_>,
@@ -34711,10 +36172,16 @@ pub mod arm {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDataGraphPipelineSessionBindPointRequirementsARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_data_graph_pipeline_session_bind_point_requirements_len(
                 &self,
                 info: &DataGraphPipelineSessionBindPointRequirementsInfoARM<'_>,
@@ -34738,10 +36205,16 @@ pub mod arm {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDataGraphPipelineSessionBindPointRequirementsARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_data_graph_pipeline_session_bind_point_requirements(
                 &self,
                 info: &DataGraphPipelineSessionBindPointRequirementsInfoARM<'_>,
@@ -34764,6 +36237,7 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDataGraphPipelineSessionMemoryRequirementsARM.html>"]
+            #[doc = r""]
             pub unsafe fn get_data_graph_pipeline_session_memory_requirements(
                 &self,
                 info: &DataGraphPipelineSessionMemoryRequirementsInfoARM<'_>,
@@ -34781,10 +36255,14 @@ pub mod arm {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkBindDataGraphPipelineSessionMemoryARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn bind_data_graph_pipeline_session_memory(
                 &self,
                 bind_infos: &[BindDataGraphPipelineSessionMemoryInfoARM<'_>],
@@ -34806,6 +36284,7 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyDataGraphPipelineSessionARM.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_data_graph_pipeline_session(
                 &self,
                 session: DataGraphPipelineSessionARM,
@@ -34823,6 +36302,7 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDispatchDataGraphARM.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_dispatch_data_graph(
                 &self,
                 command_buffer: CommandBuffer,
@@ -34836,10 +36316,16 @@ pub mod arm {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDataGraphPipelineAvailablePropertiesARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_data_graph_pipeline_available_properties_len(
                 &self,
                 pipeline_info: &DataGraphPipelineInfoARM<'_>,
@@ -34861,10 +36347,16 @@ pub mod arm {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDataGraphPipelineAvailablePropertiesARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_data_graph_pipeline_available_properties(
                 &self,
                 pipeline_info: &DataGraphPipelineInfoARM<'_>,
@@ -34884,10 +36376,16 @@ pub mod arm {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDataGraphPipelinePropertiesARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_data_graph_pipeline_properties(
                 &self,
                 pipeline_info: &DataGraphPipelineInfoARM<'_>,
@@ -34907,10 +36405,16 @@ pub mod arm {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceQueueFamilyDataGraphPropertiesARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_queue_family_data_graph_properties_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -34936,10 +36440,16 @@ pub mod arm {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceQueueFamilyDataGraphPropertiesARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_queue_family_data_graph_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -34963,6 +36473,7 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceQueueFamilyDataGraphProcessingEnginePropertiesARM.html>"]
+            #[doc = r""]
             pub unsafe fn get_physical_device_queue_family_data_graph_processing_engine_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -35064,10 +36575,14 @@ pub mod arm {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceQueueFamilyDataGraphEngineOperationPropertiesARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_physical_device_queue_family_data_graph_engine_operation_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -35178,10 +36693,16 @@ pub mod arm {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkEnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn enumerate_physical_device_queue_family_performance_counters_by_region_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -35207,10 +36728,16 @@ pub mod arm {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkEnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn enumerate_physical_device_queue_family_performance_counters_by_region(
                 &self,
                 physical_device: PhysicalDevice,
@@ -35461,10 +36988,16 @@ pub mod arm {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkEnumeratePhysicalDeviceShaderInstrumentationMetricsARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn enumerate_physical_device_shader_instrumentation_metrics_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -35487,10 +37020,16 @@ pub mod arm {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkEnumeratePhysicalDeviceShaderInstrumentationMetricsARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn enumerate_physical_device_shader_instrumentation_metrics(
                 &self,
                 physical_device: PhysicalDevice,
@@ -35510,10 +37049,14 @@ pub mod arm {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateShaderInstrumentationARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_shader_instrumentation(
                 &self,
                 create_info: &ShaderInstrumentationCreateInfoARM<'_>,
@@ -35534,6 +37077,7 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyShaderInstrumentationARM.html>"]
+            #[doc = r""]
             pub unsafe fn destroy_shader_instrumentation(
                 &self,
                 instrumentation: ShaderInstrumentationARM,
@@ -35551,6 +37095,7 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginShaderInstrumentationARM.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_begin_shader_instrumentation(
                 &self,
                 command_buffer: CommandBuffer,
@@ -35564,16 +37109,23 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEndShaderInstrumentationARM.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_end_shader_instrumentation(&self, command_buffer: CommandBuffer) {
                 unsafe { (self.fp.cmd_end_shader_instrumentation_arm)(command_buffer) }
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetShaderInstrumentationValuesARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_shader_instrumentation_values(
                 &self,
                 instrumentation: ShaderInstrumentationARM,
@@ -35598,6 +37150,7 @@ pub mod arm {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkClearShaderInstrumentationMetricsARM.html>"]
+            #[doc = r""]
             pub unsafe fn clear_shader_instrumentation_metrics(
                 &self,
                 instrumentation: ShaderInstrumentationARM,
@@ -35726,10 +37279,16 @@ pub mod arm {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_queue_family_data_graph_optical_flow_image_formats_len(
                 &self,
                 physical_device: PhysicalDevice,
@@ -35745,10 +37304,16 @@ pub mod arm {
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
             #[doc = "* [`INCOMPLETE`][1]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = "[1]: Result::INCOMPLETE"]
             pub unsafe fn get_physical_device_queue_family_data_graph_optical_flow_image_formats(
                 &self,
                 physical_device: PhysicalDevice,
@@ -35764,10 +37329,14 @@ pub mod arm {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceQueueFamilyDataGraphEngineOperationPropertiesARM.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_physical_device_queue_family_data_graph_engine_operation_properties(
                 &self,
                 physical_device: PhysicalDevice,
@@ -35912,6 +37481,7 @@ pub mod valve {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDescriptorSetLayoutHostMappingInfoVALVE.html>"]
+            #[doc = r""]
             pub unsafe fn get_descriptor_set_layout_host_mapping_info(
                 &self,
                 binding_reference: &DescriptorSetBindingReferenceVALVE<'_>,
@@ -35929,6 +37499,7 @@ pub mod valve {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDescriptorSetHostMappingVALVE.html>"]
+            #[doc = r""]
             pub unsafe fn get_descriptor_set_host_mapping(
                 &self,
                 descriptor_set: DescriptorSet,
@@ -36072,10 +37643,14 @@ pub mod huawei {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_device_subpass_shading_max_workgroup_size(
                 &self,
                 renderpass: RenderPass,
@@ -36094,6 +37669,7 @@ pub mod huawei {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSubpassShadingHUAWEI.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_subpass_shading(&self, command_buffer: CommandBuffer) {
                 unsafe { (self.fp.cmd_subpass_shading_huawei)(command_buffer) }
             }
@@ -36192,6 +37768,7 @@ pub mod huawei {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindInvocationMaskHUAWEI.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_bind_invocation_mask(
                 &self,
                 command_buffer: CommandBuffer,
@@ -36323,6 +37900,7 @@ pub mod huawei {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawClusterHUAWEI.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_draw_cluster(
                 &self,
                 command_buffer: CommandBuffer,
@@ -36343,6 +37921,7 @@ pub mod huawei {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawClusterIndirectHUAWEI.html>"]
+            #[doc = r""]
             pub unsafe fn cmd_draw_cluster_indirect(
                 &self,
                 command_buffer: CommandBuffer,
@@ -36482,6 +38061,8 @@ pub mod qnx {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateScreenSurfaceQNX.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_screen_surface(
                 &self,
                 create_info: &ScreenSurfaceCreateInfoQNX<'_>,
@@ -36502,6 +38083,7 @@ pub mod qnx {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceScreenPresentationSupportQNX.html>"]
+            #[doc = r""]
             pub unsafe fn get_physical_device_screen_presentation_support(
                 &self,
                 physical_device: PhysicalDevice,
@@ -36609,10 +38191,14 @@ pub mod qnx {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetScreenBufferPropertiesQNX.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_screen_buffer_properties(
                 &self,
                 buffer: &_screen_buffer,
@@ -36741,10 +38327,14 @@ pub mod ohos {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetNativeBufferPropertiesOHOS.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_native_buffer_properties(
                 &self,
                 buffer: &OH_NativeBuffer,
@@ -36757,10 +38347,14 @@ pub mod ohos {
             }
             #[doc = "# Success codes"]
             #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             #[doc = r" # Safety"]
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetMemoryNativeBufferOHOS.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn get_memory_native_buffer(
                 &self,
                 info: &MemoryGetNativeBufferInfoOHOS<'_>,
@@ -36863,6 +38457,8 @@ pub mod ohos {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateSurfaceOHOS.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_surface(
                 &self,
                 create_info: &SurfaceCreateInfoOHOS<'_>,
@@ -37023,6 +38619,8 @@ pub mod sec {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateUbmSurfaceSEC.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_ubm_surface(
                 &self,
                 create_info: &UbmSurfaceCreateInfoSEC<'_>,
@@ -37043,6 +38641,7 @@ pub mod sec {
             #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
             #[doc = r" # Vulkan docs"]
             #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceUbmPresentationSupportSEC.html>"]
+            #[doc = r""]
             pub unsafe fn get_physical_device_ubm_presentation_support(
                 &self,
                 physical_device: PhysicalDevice,

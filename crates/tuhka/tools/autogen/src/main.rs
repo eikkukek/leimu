@@ -105,7 +105,7 @@ struct BitmaskBits {
 struct Variant {
     name: String,
     value: syn::LitInt,
-    doc: Option<String>,
+    _doc: Option<String>,
     alias: Option<String>,
     deprecated: Option<String>
 }
@@ -136,10 +136,10 @@ impl EnumVariants {
         &mut self,
         name: String,
         value: syn::LitInt,
-        doc: Option<String>
+        _doc: Option<String>
     ) {
         self.variants.insert(Variant {
-            name, value, doc, alias: None,
+            name, value, _doc, alias: None,
             deprecated: None,
         });
     }
@@ -150,7 +150,7 @@ impl EnumVariants {
         offset: u32,
         extnumber: u32,
         dir: Option<&String>,
-        doc: Option<String>,
+        _doc: Option<String>,
     ) {
         let mut value = format!("1{:06}{:03}", extnumber - 1, offset);
         if let Some(dir) = dir {
@@ -162,7 +162,7 @@ impl EnumVariants {
                 &value,
                 Span::call_site()
             ),
-            doc,
+            _doc,
             alias: None,
             deprecated: None,
         });
@@ -177,7 +177,7 @@ impl EnumVariants {
         self.variants.insert(Variant {
             name,
             value: syn::LitInt::new("0", Span::call_site()),
-            doc: None,
+            _doc: None,
             alias: Some(alias),
             deprecated,
         });
@@ -1784,7 +1784,7 @@ fn main() -> std::io::Result<()> {
         let mut var_names = vec![];
         let variants = variants
             .variants
-            .iter().map(|Variant { name, value, doc, alias, deprecated, }| {
+            .iter().map(|Variant { name, value, _doc, alias, deprecated, }| {
                 let mut name_str = name
                     .trim_start_matches(replace)
                     .trim_start_matches("VK_")
@@ -1793,7 +1793,7 @@ fn main() -> std::io::Result<()> {
                     name_str.insert_str(0, "TYPE_")
                 }
                 let name = Ident::new(&name_str, Span::call_site());
-                let doc = doc.as_ref().map(|doc| quote! { #[doc = #doc] });
+                //let doc = doc.as_ref().map(|doc| quote! { #[doc = #doc] });
                 var_names.push(name.clone());
                 let deprecated = deprecated
                     .as_ref()
@@ -1814,7 +1814,6 @@ fn main() -> std::io::Result<()> {
                     quote! { Self(#value) }
                 };
                 quote! {
-                    #doc
                     #deprecated
                     pub const #name: Self = #value;
                 }
@@ -2208,6 +2207,9 @@ fn main() -> std::io::Result<()> {
                 };
             let doc = member.comment
                 .as_ref()
+                .and_then(|comment| {
+                    (!comment.contains("{")).then_some(comment)
+                })
                 .map(|comment| {
                     quote! {#[doc = #comment]}
                 });
@@ -2341,7 +2343,7 @@ fn main() -> std::io::Result<()> {
                         ///
                         /// # Safety
                         /// A struct implementing this trait *must* adhere to the memory layout of
-                        /// [`BaseOutStrucutre`].
+                        /// [`BaseOutStructure`].
                     };
                     extends_trait = Some(quote! {
                         #doc
@@ -3339,12 +3341,16 @@ fn main() -> std::io::Result<()> {
                                 #success_doc
                                 #fn_safety
                                 #link
+                                ///
+                                #(#[doc = #success_doc_links])*
                             }
                         } else {
                             quote! {
                                 #success_doc
                                 #fn_safety
                                 #link
+                                ///
+                                #(#[doc = #success_doc_links])*
                             }
                         };
                         let command = cmd;
@@ -3520,6 +3526,8 @@ fn main() -> std::io::Result<()> {
                             Some(quote! {
                                 #[doc = "# Success codes"]
                                 #(#[doc = #success_doc])*
+                                ///
+                                #(#[doc = #success_doc_links])*
                             })
                         } else { None };
                         let doc = if !command.depends_on.is_empty() {
@@ -3539,12 +3547,16 @@ fn main() -> std::io::Result<()> {
                                 #success_doc
                                 #fn_safety
                                 #link
+                                ///
+                                #(#[doc = #success_doc_links])*
                             }
                         } else {
                             quote! {
                                 #success_doc
                                 #fn_safety
                                 #link
+                                ///
+                                #(#[doc = #success_doc_links])*
                             }
                         };
                         let command = cmd;

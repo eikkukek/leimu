@@ -456,7 +456,7 @@ pub struct ApplicationInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsApplicationInfo: Chainable {}
 impl<'a> ApplicationInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::APPLICATION_INFO;
@@ -610,7 +610,7 @@ pub struct DeviceQueueCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDeviceQueueCreateInfo: Chainable {}
 impl<'a> DeviceQueueCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::DEVICE_QUEUE_CREATE_INFO;
@@ -704,7 +704,7 @@ pub struct DeviceCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDeviceCreateInfo: Chainable {}
 impl<'a> DeviceCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::DEVICE_CREATE_INFO;
@@ -809,7 +809,7 @@ pub struct InstanceCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsInstanceCreateInfo: Chainable {}
 impl<'a> InstanceCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::INSTANCE_CREATE_INFO;
@@ -983,7 +983,7 @@ pub struct MemoryAllocateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsMemoryAllocateInfo: Chainable {}
 impl<'a> MemoryAllocateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::MEMORY_ALLOCATE_INFO;
@@ -1382,11 +1382,8 @@ pub struct WriteDescriptorSet<'a> {
     pub descriptor_count: u32,
     #[doc = "Descriptor type to write (determines which members of the array pointed by pDescriptors are going to be used)"]
     pub descriptor_type: DescriptorType,
-    #[doc = "Sampler, image view, and layout for SAMPLER, COMBINED_IMAGE_SAMPLER, {SAMPLED,STORAGE}_IMAGE, and INPUT_ATTACHMENT descriptor types."]
     pub p_image_info: *const DescriptorImageInfo,
-    #[doc = "Raw buffer, size, and offset for {UNIFORM,STORAGE}_BUFFER[_DYNAMIC] descriptor types."]
     pub p_buffer_info: *const DescriptorBufferInfo,
-    #[doc = "Buffer view to write to the descriptor for {UNIFORM,STORAGE}_TEXEL_BUFFER descriptor types."]
     pub p_texel_buffer_view: *const BufferView,
     pub _marker: PhantomData<&'a ()>,
 }
@@ -1394,7 +1391,7 @@ pub struct WriteDescriptorSet<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsWriteDescriptorSet: Chainable {}
 impl<'a> WriteDescriptorSet<'a> {
     pub const S_TYPE: StructureType = StructureType::WRITE_DESCRIPTOR_SET;
@@ -1655,7 +1652,7 @@ pub struct BufferCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsBufferCreateInfo: Chainable {}
 impl<'a> BufferCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::BUFFER_CREATE_INFO;
@@ -1758,7 +1755,7 @@ pub struct BufferViewCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsBufferViewCreateInfo: Chainable {}
 impl<'a> BufferViewCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::BUFFER_VIEW_CREATE_INFO;
@@ -2009,7 +2006,7 @@ pub struct BufferMemoryBarrier<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsBufferMemoryBarrier: Chainable {}
 impl<'a> BufferMemoryBarrier<'a> {
     pub const S_TYPE: StructureType = StructureType::BUFFER_MEMORY_BARRIER;
@@ -2126,7 +2123,7 @@ pub struct ImageMemoryBarrier<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsImageMemoryBarrier: Chainable {}
 impl<'a> ImageMemoryBarrier<'a> {
     pub const S_TYPE: StructureType = StructureType::IMAGE_MEMORY_BARRIER;
@@ -2252,7 +2249,7 @@ pub struct ImageCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsImageCreateInfo: Chainable {}
 impl<'a> ImageCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::IMAGE_CREATE_INFO;
@@ -2437,7 +2434,7 @@ pub struct ImageViewCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsImageViewCreateInfo: Chainable {}
 impl<'a> ImageViewCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::IMAGE_VIEW_CREATE_INFO;
@@ -2735,7 +2732,7 @@ pub struct BindSparseInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsBindSparseInfo: Chainable {}
 impl<'a> BindSparseInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::BIND_SPARSE_INFO;
@@ -3272,7 +3269,7 @@ pub struct ShaderModuleCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsShaderModuleCreateInfo: Chainable {}
 impl<'a> ShaderModuleCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::SHADER_MODULE_CREATE_INFO;
@@ -3400,7 +3397,7 @@ pub struct DescriptorSetLayoutCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDescriptorSetLayoutCreateInfo: Chainable {}
 impl<'a> DescriptorSetLayoutCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -3500,7 +3497,7 @@ pub struct DescriptorPoolCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDescriptorPoolCreateInfo: Chainable {}
 impl<'a> DescriptorPoolCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::DESCRIPTOR_POOL_CREATE_INFO;
@@ -3586,7 +3583,7 @@ pub struct DescriptorSetAllocateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDescriptorSetAllocateInfo: Chainable {}
 impl<'a> DescriptorSetAllocateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -3736,7 +3733,7 @@ pub struct PipelineShaderStageCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPipelineShaderStageCreateInfo: Chainable {}
 impl<'a> PipelineShaderStageCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -3834,7 +3831,7 @@ pub struct ComputePipelineCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsComputePipelineCreateInfo: Chainable {}
 impl<'a> ComputePipelineCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::COMPUTE_PIPELINE_CREATE_INFO;
@@ -4104,7 +4101,7 @@ pub struct PipelineVertexInputStateCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPipelineVertexInputStateCreateInfo: Chainable {}
 impl<'a> PipelineVertexInputStateCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -4261,7 +4258,7 @@ pub struct PipelineTessellationStateCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPipelineTessellationStateCreateInfo: Chainable {}
 impl<'a> PipelineTessellationStateCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::PIPELINE_TESSELLATION_STATE_CREATE_INFO;
@@ -4337,7 +4334,7 @@ pub struct PipelineViewportStateCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPipelineViewportStateCreateInfo: Chainable {}
 impl<'a> PipelineViewportStateCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -4438,7 +4435,7 @@ pub struct PipelineRasterizationStateCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPipelineRasterizationStateCreateInfo: Chainable {}
 impl<'a> PipelineRasterizationStateCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -4574,7 +4571,7 @@ pub struct PipelineMultisampleStateCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPipelineMultisampleStateCreateInfo: Chainable {}
 impl<'a> PipelineMultisampleStateCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -4737,7 +4734,7 @@ pub struct PipelineColorBlendStateCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPipelineColorBlendStateCreateInfo: Chainable {}
 impl<'a> PipelineColorBlendStateCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -5073,7 +5070,7 @@ pub struct GraphicsPipelineCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsGraphicsPipelineCreateInfo: Chainable {}
 impl<'a> GraphicsPipelineCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::GRAPHICS_PIPELINE_CREATE_INFO;
@@ -5965,7 +5962,7 @@ pub struct SamplerCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsSamplerCreateInfo: Chainable {}
 impl<'a> SamplerCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::SAMPLER_CREATE_INFO;
@@ -6123,7 +6120,7 @@ pub struct CommandPoolCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsCommandPoolCreateInfo: Chainable {}
 impl<'a> CommandPoolCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::COMMAND_POOL_CREATE_INFO;
@@ -6265,7 +6262,7 @@ pub struct CommandBufferInheritanceInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsCommandBufferInheritanceInfo: Chainable {}
 impl<'a> CommandBufferInheritanceInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::COMMAND_BUFFER_INHERITANCE_INFO;
@@ -6364,7 +6361,7 @@ pub struct CommandBufferBeginInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsCommandBufferBeginInfo: Chainable {}
 impl<'a> CommandBufferBeginInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::COMMAND_BUFFER_BEGIN_INFO;
@@ -6443,7 +6440,7 @@ pub struct RenderPassBeginInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsRenderPassBeginInfo: Chainable {}
 impl<'a> RenderPassBeginInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::RENDER_PASS_BEGIN_INFO;
@@ -6788,7 +6785,7 @@ pub struct RenderPassCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsRenderPassCreateInfo: Chainable {}
 impl<'a> RenderPassCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::RENDER_PASS_CREATE_INFO;
@@ -6891,7 +6888,7 @@ pub struct EventCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsEventCreateInfo: Chainable {}
 impl<'a> EventCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::EVENT_CREATE_INFO;
@@ -6958,7 +6955,7 @@ pub struct FenceCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsFenceCreateInfo: Chainable {}
 impl<'a> FenceCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::FENCE_CREATE_INFO;
@@ -8333,7 +8330,7 @@ pub struct SemaphoreCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsSemaphoreCreateInfo: Chainable {}
 impl<'a> SemaphoreCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::SEMAPHORE_CREATE_INFO;
@@ -8403,7 +8400,7 @@ pub struct QueryPoolCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsQueryPoolCreateInfo: Chainable {}
 impl<'a> QueryPoolCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::QUERY_POOL_CREATE_INFO;
@@ -8493,7 +8490,7 @@ pub struct FramebufferCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsFramebufferCreateInfo: Chainable {}
 impl<'a> FramebufferCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::FRAMEBUFFER_CREATE_INFO;
@@ -8738,7 +8735,7 @@ pub struct SubmitInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsSubmitInfo: Chainable {}
 impl<'a> SubmitInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::SUBMIT_INFO;
@@ -9092,7 +9089,7 @@ pub struct DisplaySurfaceCreateInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDisplaySurfaceCreateInfoKHR: Chainable {}
 impl<'a> DisplaySurfaceCreateInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::DISPLAY_SURFACE_CREATE_INFO_KHR;
@@ -10072,7 +10069,7 @@ pub struct SwapchainCreateInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsSwapchainCreateInfoKHR: Chainable {}
 impl<'a> SwapchainCreateInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::SWAPCHAIN_CREATE_INFO_KHR;
@@ -10239,7 +10236,7 @@ pub struct PresentInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPresentInfoKHR: Chainable {}
 impl<'a> PresentInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::PRESENT_INFO_KHR;
@@ -13278,7 +13275,7 @@ pub struct IndirectCommandsLayoutTokenNV<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsIndirectCommandsLayoutTokenNV: Chainable {}
 impl<'a> IndirectCommandsLayoutTokenNV<'a> {
     pub const S_TYPE: StructureType = StructureType::INDIRECT_COMMANDS_LAYOUT_TOKEN_NV;
@@ -13760,7 +13757,7 @@ pub struct PhysicalDeviceFeatures2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPhysicalDeviceFeatures2: Chainable {}
 impl<'a> PhysicalDeviceFeatures2<'a> {
     pub const S_TYPE: StructureType = StructureType::PHYSICAL_DEVICE_FEATURES_2;
@@ -13827,7 +13824,7 @@ pub struct PhysicalDeviceProperties2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPhysicalDeviceProperties2: Chainable {}
 impl<'a> PhysicalDeviceProperties2<'a> {
     pub const S_TYPE: StructureType = StructureType::PHYSICAL_DEVICE_PROPERTIES_2;
@@ -13893,7 +13890,7 @@ pub struct FormatProperties2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsFormatProperties2: Chainable {}
 impl<'a> FormatProperties2<'a> {
     pub const S_TYPE: StructureType = StructureType::FORMAT_PROPERTIES_2;
@@ -13959,7 +13956,7 @@ pub struct ImageFormatProperties2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsImageFormatProperties2: Chainable {}
 impl<'a> ImageFormatProperties2<'a> {
     pub const S_TYPE: StructureType = StructureType::IMAGE_FORMAT_PROPERTIES_2;
@@ -14029,7 +14026,7 @@ pub struct PhysicalDeviceImageFormatInfo2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPhysicalDeviceImageFormatInfo2: Chainable {}
 impl<'a> PhysicalDeviceImageFormatInfo2<'a> {
     pub const S_TYPE: StructureType = StructureType::PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2;
@@ -14119,7 +14116,7 @@ pub struct QueueFamilyProperties2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsQueueFamilyProperties2: Chainable {}
 impl<'a> QueueFamilyProperties2<'a> {
     pub const S_TYPE: StructureType = StructureType::QUEUE_FAMILY_PROPERTIES_2;
@@ -14185,7 +14182,7 @@ pub struct PhysicalDeviceMemoryProperties2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPhysicalDeviceMemoryProperties2: Chainable {}
 impl<'a> PhysicalDeviceMemoryProperties2<'a> {
     pub const S_TYPE: StructureType = StructureType::PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
@@ -14824,7 +14821,7 @@ pub struct PhysicalDeviceExternalBufferInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPhysicalDeviceExternalBufferInfo: Chainable {}
 impl<'a> PhysicalDeviceExternalBufferInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::PHYSICAL_DEVICE_EXTERNAL_BUFFER_INFO;
@@ -15934,7 +15931,7 @@ pub struct PhysicalDeviceExternalSemaphoreInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPhysicalDeviceExternalSemaphoreInfo: Chainable {}
 impl<'a> PhysicalDeviceExternalSemaphoreInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO;
@@ -18321,7 +18318,7 @@ pub struct BindBufferMemoryInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsBindBufferMemoryInfo: Chainable {}
 impl<'a> BindBufferMemoryInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::BIND_BUFFER_MEMORY_INFO;
@@ -18455,7 +18452,7 @@ pub struct BindImageMemoryInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsBindImageMemoryInfo: Chainable {}
 impl<'a> BindImageMemoryInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::BIND_IMAGE_MEMORY_INFO;
@@ -20466,7 +20463,7 @@ pub struct HdrMetadataEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsHdrMetadataEXT: Chainable {}
 impl<'a> HdrMetadataEXT<'a> {
     pub const S_TYPE: StructureType = StructureType::HDR_METADATA_EXT;
@@ -21453,7 +21450,7 @@ pub struct PhysicalDeviceSurfaceInfo2KHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPhysicalDeviceSurfaceInfo2KHR: Chainable {}
 impl<'a> PhysicalDeviceSurfaceInfo2KHR<'a> {
     pub const S_TYPE: StructureType = StructureType::PHYSICAL_DEVICE_SURFACE_INFO_2_KHR;
@@ -21519,7 +21516,7 @@ pub struct SurfaceCapabilities2KHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsSurfaceCapabilities2KHR: Chainable {}
 impl<'a> SurfaceCapabilities2KHR<'a> {
     pub const S_TYPE: StructureType = StructureType::SURFACE_CAPABILITIES_2_KHR;
@@ -21585,7 +21582,7 @@ pub struct SurfaceFormat2KHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsSurfaceFormat2KHR: Chainable {}
 impl<'a> SurfaceFormat2KHR<'a> {
     pub const S_TYPE: StructureType = StructureType::SURFACE_FORMAT_2_KHR;
@@ -21743,7 +21740,7 @@ pub struct DisplayModeProperties2KHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDisplayModeProperties2KHR: Chainable {}
 impl<'a> DisplayModeProperties2KHR<'a> {
     pub const S_TYPE: StructureType = StructureType::DISPLAY_MODE_PROPERTIES_2_KHR;
@@ -22294,7 +22291,7 @@ pub struct ImageMemoryRequirementsInfo2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsImageMemoryRequirementsInfo2: Chainable {}
 impl<'a> ImageMemoryRequirementsInfo2<'a> {
     pub const S_TYPE: StructureType = StructureType::IMAGE_MEMORY_REQUIREMENTS_INFO_2;
@@ -22459,7 +22456,7 @@ pub struct MemoryRequirements2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsMemoryRequirements2: Chainable {}
 impl<'a> MemoryRequirements2<'a> {
     pub const S_TYPE: StructureType = StructureType::MEMORY_REQUIREMENTS_2;
@@ -22935,7 +22932,7 @@ pub struct SamplerYcbcrConversionCreateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsSamplerYcbcrConversionCreateInfo: Chainable {}
 impl<'a> SamplerYcbcrConversionCreateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::SAMPLER_YCBCR_CONVERSION_CREATE_INFO;
@@ -25457,7 +25454,7 @@ pub struct PhysicalDeviceLayeredApiPropertiesKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPhysicalDeviceLayeredApiPropertiesKHR: Chainable {}
 impl<'a> PhysicalDeviceLayeredApiPropertiesKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::PHYSICAL_DEVICE_LAYERED_API_PROPERTIES_KHR;
@@ -25987,7 +25984,7 @@ pub struct DescriptorSetLayoutSupport<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDescriptorSetLayoutSupport: Chainable {}
 impl<'a> DescriptorSetLayoutSupport<'a> {
     pub const S_TYPE: StructureType = StructureType::DESCRIPTOR_SET_LAYOUT_SUPPORT;
@@ -26913,7 +26910,7 @@ pub struct DebugUtilsMessengerCallbackDataEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDebugUtilsMessengerCallbackDataEXT: Chainable {}
 impl<'a> DebugUtilsMessengerCallbackDataEXT<'a> {
     pub const S_TYPE: StructureType = StructureType::DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT;
@@ -27498,7 +27495,7 @@ pub struct CalibratedTimestampInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsCalibratedTimestampInfoKHR: Chainable {}
 impl<'a> CalibratedTimestampInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::CALIBRATED_TIMESTAMP_INFO_KHR;
@@ -28474,7 +28471,7 @@ pub struct AttachmentDescription2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsAttachmentDescription2: Chainable {}
 impl<'a> AttachmentDescription2<'a> {
     pub const S_TYPE: StructureType = StructureType::ATTACHMENT_DESCRIPTION_2;
@@ -28590,7 +28587,7 @@ pub struct AttachmentReference2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsAttachmentReference2: Chainable {}
 impl<'a> AttachmentReference2<'a> {
     pub const S_TYPE: StructureType = StructureType::ATTACHMENT_REFERENCE_2;
@@ -28678,7 +28675,7 @@ pub struct SubpassDescription2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsSubpassDescription2: Chainable {}
 impl<'a> SubpassDescription2<'a> {
     pub const S_TYPE: StructureType = StructureType::SUBPASS_DESCRIPTION_2;
@@ -28814,7 +28811,7 @@ pub struct SubpassDependency2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsSubpassDependency2: Chainable {}
 impl<'a> SubpassDependency2<'a> {
     pub const S_TYPE: StructureType = StructureType::SUBPASS_DEPENDENCY_2;
@@ -28930,7 +28927,7 @@ pub struct RenderPassCreateInfo2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsRenderPassCreateInfo2: Chainable {}
 impl<'a> RenderPassCreateInfo2<'a> {
     pub const S_TYPE: StructureType = StructureType::RENDER_PASS_CREATE_INFO_2;
@@ -29089,7 +29086,7 @@ pub struct SubpassEndInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsSubpassEndInfo: Chainable {}
 impl<'a> SubpassEndInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::SUBPASS_END_INFO;
@@ -29842,7 +29839,7 @@ pub struct AndroidHardwareBufferPropertiesANDROID<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsAndroidHardwareBufferPropertiesANDROID: Chainable {}
 impl<'a> AndroidHardwareBufferPropertiesANDROID<'a> {
     pub const S_TYPE: StructureType = StructureType::ANDROID_HARDWARE_BUFFER_PROPERTIES_ANDROID;
@@ -33115,7 +33112,7 @@ pub struct RayTracingPipelineCreateInfoNV<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsRayTracingPipelineCreateInfoNV: Chainable {}
 impl<'a> RayTracingPipelineCreateInfoNV<'a> {
     pub const S_TYPE: StructureType = StructureType::RAY_TRACING_PIPELINE_CREATE_INFO_NV;
@@ -33245,7 +33242,7 @@ pub struct RayTracingPipelineCreateInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsRayTracingPipelineCreateInfoKHR: Chainable {}
 impl<'a> RayTracingPipelineCreateInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
@@ -33724,7 +33721,7 @@ pub struct AccelerationStructureCreateInfoNV<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsAccelerationStructureCreateInfoNV: Chainable {}
 impl<'a> AccelerationStructureCreateInfoNV<'a> {
     pub const S_TYPE: StructureType = StructureType::ACCELERATION_STRUCTURE_CREATE_INFO_NV;
@@ -42995,7 +42992,7 @@ pub struct AccelerationStructureGeometryTrianglesDataKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsAccelerationStructureGeometryTrianglesDataKHR: Chainable {}
 impl<'a> AccelerationStructureGeometryTrianglesDataKHR<'a> {
     pub const S_TYPE: StructureType =
@@ -43435,7 +43432,7 @@ pub struct AccelerationStructureGeometryKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsAccelerationStructureGeometryKHR: Chainable {}
 impl<'a> AccelerationStructureGeometryKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::ACCELERATION_STRUCTURE_GEOMETRY_KHR;
@@ -43658,7 +43655,7 @@ pub struct AccelerationStructureCreateInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsAccelerationStructureCreateInfoKHR: Chainable {}
 impl<'a> AccelerationStructureCreateInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
@@ -45367,7 +45364,7 @@ pub struct PartitionedAccelerationStructureInstancesInputNV<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPartitionedAccelerationStructureInstancesInputNV: Chainable {}
 impl<'a> PartitionedAccelerationStructureInstancesInputNV<'a> {
     pub const S_TYPE: StructureType =
@@ -46294,7 +46291,7 @@ pub struct PhysicalDeviceClusterCullingShaderFeaturesHUAWEI<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPhysicalDeviceClusterCullingShaderFeaturesHUAWEI: Chainable {}
 impl<'a> PhysicalDeviceClusterCullingShaderFeaturesHUAWEI<'a> {
     pub const S_TYPE: StructureType =
@@ -46568,7 +46565,7 @@ pub struct ImageBlit2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsImageBlit2: Chainable {}
 impl<'a> ImageBlit2<'a> {
     pub const S_TYPE: StructureType = StructureType::IMAGE_BLIT_2;
@@ -46661,7 +46658,7 @@ pub struct BufferImageCopy2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsBufferImageCopy2: Chainable {}
 impl<'a> BufferImageCopy2<'a> {
     pub const S_TYPE: StructureType = StructureType::BUFFER_IMAGE_COPY_2;
@@ -46985,7 +46982,7 @@ pub struct BlitImageInfo2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsBlitImageInfo2: Chainable {}
 impl<'a> BlitImageInfo2<'a> {
     pub const S_TYPE: StructureType = StructureType::BLIT_IMAGE_INFO_2;
@@ -47240,7 +47237,7 @@ pub struct ResolveImageInfo2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsResolveImageInfo2: Chainable {}
 impl<'a> ResolveImageInfo2<'a> {
     pub const S_TYPE: StructureType = StructureType::RESOLVE_IMAGE_INFO_2;
@@ -49092,7 +49089,7 @@ pub struct GeneratedCommandsMemoryRequirementsInfoEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsGeneratedCommandsMemoryRequirementsInfoEXT: Chainable {}
 impl<'a> GeneratedCommandsMemoryRequirementsInfoEXT<'a> {
     pub const S_TYPE: StructureType =
@@ -49429,7 +49426,7 @@ pub struct GeneratedCommandsInfoEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsGeneratedCommandsInfoEXT: Chainable {}
 impl<'a> GeneratedCommandsInfoEXT<'a> {
     pub const S_TYPE: StructureType = StructureType::GENERATED_COMMANDS_INFO_EXT;
@@ -49660,7 +49657,7 @@ pub struct IndirectCommandsLayoutCreateInfoEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsIndirectCommandsLayoutCreateInfoEXT: Chainable {}
 impl<'a> IndirectCommandsLayoutCreateInfoEXT<'a> {
     pub const S_TYPE: StructureType = StructureType::INDIRECT_COMMANDS_LAYOUT_CREATE_INFO_EXT;
@@ -49758,7 +49755,7 @@ pub struct IndirectCommandsLayoutTokenEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsIndirectCommandsLayoutTokenEXT: Chainable {}
 impl<'a> IndirectCommandsLayoutTokenEXT<'a> {
     pub const S_TYPE: StructureType = StructureType::INDIRECT_COMMANDS_LAYOUT_TOKEN_EXT;
@@ -50602,7 +50599,7 @@ pub struct ImageMemoryBarrier2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsImageMemoryBarrier2: Chainable {}
 impl<'a> ImageMemoryBarrier2<'a> {
     pub const S_TYPE: StructureType = StructureType::IMAGE_MEMORY_BARRIER_2;
@@ -50730,7 +50727,7 @@ pub struct BufferMemoryBarrier2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsBufferMemoryBarrier2: Chainable {}
 impl<'a> BufferMemoryBarrier2<'a> {
     pub const S_TYPE: StructureType = StructureType::BUFFER_MEMORY_BARRIER_2;
@@ -50907,7 +50904,7 @@ pub struct DependencyInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDependencyInfo: Chainable {}
 impl<'a> DependencyInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::DEPENDENCY_INFO;
@@ -51080,7 +51077,7 @@ pub struct CommandBufferSubmitInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsCommandBufferSubmitInfo: Chainable {}
 impl<'a> CommandBufferSubmitInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::COMMAND_BUFFER_SUBMIT_INFO;
@@ -51158,7 +51155,7 @@ pub struct SubmitInfo2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsSubmitInfo2: Chainable {}
 impl<'a> SubmitInfo2<'a> {
     pub const S_TYPE: StructureType = StructureType::SUBMIT_INFO_2;
@@ -52740,7 +52737,7 @@ pub struct PhysicalDeviceVideoFormatInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPhysicalDeviceVideoFormatInfoKHR: Chainable {}
 impl<'a> PhysicalDeviceVideoFormatInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::PHYSICAL_DEVICE_VIDEO_FORMAT_INFO_KHR;
@@ -52811,7 +52808,7 @@ pub struct VideoFormatPropertiesKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoFormatPropertiesKHR: Chainable {}
 impl<'a> VideoFormatPropertiesKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::VIDEO_FORMAT_PROPERTIES_KHR;
@@ -53271,7 +53268,7 @@ pub struct VideoProfileInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoProfileInfoKHR: Chainable {}
 impl<'a> VideoProfileInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::VIDEO_PROFILE_INFO_KHR;
@@ -53364,7 +53361,7 @@ pub struct VideoCapabilitiesKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoCapabilitiesKHR: Chainable {}
 impl<'a> VideoCapabilitiesKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::VIDEO_CAPABILITIES_KHR;
@@ -53672,7 +53669,7 @@ pub struct VideoReferenceSlotInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoReferenceSlotInfoKHR: Chainable {}
 impl<'a> VideoReferenceSlotInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::VIDEO_REFERENCE_SLOT_INFO_KHR;
@@ -53849,7 +53846,7 @@ pub struct VideoDecodeInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoDecodeInfoKHR: Chainable {}
 impl<'a> VideoDecodeInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::VIDEO_DECODE_INFO_KHR;
@@ -55533,7 +55530,7 @@ pub struct VideoSessionCreateInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoSessionCreateInfoKHR: Chainable {}
 impl<'a> VideoSessionCreateInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::VIDEO_SESSION_CREATE_INFO_KHR;
@@ -55649,7 +55646,7 @@ pub struct VideoSessionParametersCreateInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoSessionParametersCreateInfoKHR: Chainable {}
 impl<'a> VideoSessionParametersCreateInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::VIDEO_SESSION_PARAMETERS_CREATE_INFO_KHR;
@@ -55730,7 +55727,7 @@ pub struct VideoSessionParametersUpdateInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoSessionParametersUpdateInfoKHR: Chainable {}
 impl<'a> VideoSessionParametersUpdateInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::VIDEO_SESSION_PARAMETERS_UPDATE_INFO_KHR;
@@ -55796,7 +55793,7 @@ pub struct VideoEncodeSessionParametersGetInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoEncodeSessionParametersGetInfoKHR: Chainable {}
 impl<'a> VideoEncodeSessionParametersGetInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::VIDEO_ENCODE_SESSION_PARAMETERS_GET_INFO_KHR;
@@ -55862,7 +55859,7 @@ pub struct VideoEncodeSessionParametersFeedbackInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoEncodeSessionParametersFeedbackInfoKHR: Chainable {}
 impl<'a> VideoEncodeSessionParametersFeedbackInfoKHR<'a> {
     pub const S_TYPE: StructureType =
@@ -55933,7 +55930,7 @@ pub struct VideoBeginCodingInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoBeginCodingInfoKHR: Chainable {}
 impl<'a> VideoBeginCodingInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::VIDEO_BEGIN_CODING_INFO_KHR;
@@ -56069,7 +56066,7 @@ pub struct VideoCodingControlInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoCodingControlInfoKHR: Chainable {}
 impl<'a> VideoCodingControlInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::VIDEO_CODING_CONTROL_INFO_KHR;
@@ -56205,7 +56202,7 @@ pub struct VideoEncodeInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoEncodeInfoKHR: Chainable {}
 impl<'a> VideoEncodeInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::VIDEO_ENCODE_INFO_KHR;
@@ -56633,7 +56630,7 @@ pub struct VideoEncodeQualityLevelPropertiesKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoEncodeQualityLevelPropertiesKHR: Chainable {}
 impl<'a> VideoEncodeQualityLevelPropertiesKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::VIDEO_ENCODE_QUALITY_LEVEL_PROPERTIES_KHR;
@@ -56794,7 +56791,7 @@ pub struct VideoEncodeRateControlLayerInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsVideoEncodeRateControlLayerInfoKHR: Chainable {}
 impl<'a> VideoEncodeRateControlLayerInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::VIDEO_ENCODE_RATE_CONTROL_LAYER_INFO_KHR;
@@ -60803,7 +60800,7 @@ pub struct CuModuleCreateInfoNVX<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsCuModuleCreateInfoNVX: Chainable {}
 impl<'a> CuModuleCreateInfoNVX<'a> {
     pub const S_TYPE: StructureType = StructureType::CU_MODULE_CREATE_INFO_NVX;
@@ -61563,7 +61560,7 @@ pub struct DescriptorBufferBindingInfoEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDescriptorBufferBindingInfoEXT: Chainable {}
 impl<'a> DescriptorBufferBindingInfoEXT<'a> {
     pub const S_TYPE: StructureType = StructureType::DESCRIPTOR_BUFFER_BINDING_INFO_EXT;
@@ -61687,7 +61684,7 @@ pub struct DescriptorGetInfoEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDescriptorGetInfoEXT: Chainable {}
 impl<'a> DescriptorGetInfoEXT<'a> {
     pub const S_TYPE: StructureType = StructureType::DESCRIPTOR_GET_INFO_EXT;
@@ -64468,7 +64465,7 @@ pub struct RenderingInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsRenderingInfo: Chainable {}
 impl<'a> RenderingInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::RENDERING_INFO;
@@ -64575,7 +64572,7 @@ pub struct RenderingEndInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsRenderingEndInfoKHR: Chainable {}
 impl<'a> RenderingEndInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::RENDERING_END_INFO_KHR;
@@ -64642,7 +64639,7 @@ pub struct RenderingAttachmentInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsRenderingAttachmentInfo: Chainable {}
 impl<'a> RenderingAttachmentInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::RENDERING_ATTACHMENT_INFO;
@@ -66446,7 +66443,7 @@ pub struct SubresourceLayout2<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsSubresourceLayout2: Chainable {}
 impl<'a> SubresourceLayout2<'a> {
     pub const S_TYPE: StructureType = StructureType::SUBRESOURCE_LAYOUT_2;
@@ -68046,7 +68043,7 @@ pub struct ExportMetalObjectsInfoEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsExportMetalObjectsInfoEXT: Chainable {}
 impl<'a> ExportMetalObjectsInfoEXT<'a> {
     pub const S_TYPE: StructureType = StructureType::EXPORT_METAL_OBJECTS_INFO_EXT;
@@ -69950,7 +69947,7 @@ pub struct OpticalFlowSessionCreateInfoNV<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsOpticalFlowSessionCreateInfoNV: Chainable {}
 impl<'a> OpticalFlowSessionCreateInfoNV<'a> {
     pub const S_TYPE: StructureType = StructureType::OPTICAL_FLOW_SESSION_CREATE_INFO_NV;
@@ -70406,7 +70403,7 @@ pub struct DeviceFaultDebugInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDeviceFaultDebugInfoKHR: Chainable {}
 impl<'a> DeviceFaultDebugInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::DEVICE_FAULT_DEBUG_INFO_KHR;
@@ -70880,7 +70877,7 @@ pub struct DepthBiasInfoEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDepthBiasInfoEXT: Chainable {}
 impl<'a> DepthBiasInfoEXT<'a> {
     pub const S_TYPE: StructureType = StructureType::DEPTH_BIAS_INFO_EXT;
@@ -72966,7 +72963,7 @@ pub struct MemoryMapInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsMemoryMapInfo: Chainable {}
 impl<'a> MemoryMapInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::MEMORY_MAP_INFO;
@@ -73216,7 +73213,7 @@ pub struct ShaderCreateInfoEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsShaderCreateInfoEXT: Chainable {}
 impl<'a> ShaderCreateInfoEXT<'a> {
     pub const S_TYPE: StructureType = StructureType::SHADER_CREATE_INFO_EXT;
@@ -73526,7 +73523,7 @@ pub struct ScreenBufferPropertiesQNX<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsScreenBufferPropertiesQNX: Chainable {}
 impl<'a> ScreenBufferPropertiesQNX<'a> {
     pub const S_TYPE: StructureType = StructureType::SCREEN_BUFFER_PROPERTIES_QNX;
@@ -74219,7 +74216,7 @@ pub struct ExecutionGraphPipelineCreateInfoAMDX<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsExecutionGraphPipelineCreateInfoAMDX: Chainable {}
 impl<'a> ExecutionGraphPipelineCreateInfoAMDX<'a> {
     pub const S_TYPE: StructureType = StructureType::EXECUTION_GRAPH_PIPELINE_CREATE_INFO_AMDX;
@@ -74918,7 +74915,7 @@ pub struct BindDescriptorSetsInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsBindDescriptorSetsInfo: Chainable {}
 impl<'a> BindDescriptorSetsInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::BIND_DESCRIPTOR_SETS_INFO;
@@ -75024,7 +75021,7 @@ pub struct PushConstantsInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPushConstantsInfo: Chainable {}
 impl<'a> PushConstantsInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::PUSH_CONSTANTS_INFO;
@@ -75118,7 +75115,7 @@ pub struct PushDescriptorSetInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPushDescriptorSetInfo: Chainable {}
 impl<'a> PushDescriptorSetInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::PUSH_DESCRIPTOR_SET_INFO;
@@ -75211,7 +75208,7 @@ pub struct PushDescriptorSetWithTemplateInfo<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPushDescriptorSetWithTemplateInfo: Chainable {}
 impl<'a> PushDescriptorSetWithTemplateInfo<'a> {
     pub const S_TYPE: StructureType = StructureType::PUSH_DESCRIPTOR_SET_WITH_TEMPLATE_INFO;
@@ -75300,7 +75297,7 @@ pub struct SetDescriptorBufferOffsetsInfoEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsSetDescriptorBufferOffsetsInfoEXT: Chainable {}
 impl<'a> SetDescriptorBufferOffsetsInfoEXT<'a> {
     pub const S_TYPE: StructureType = StructureType::SET_DESCRIPTOR_BUFFER_OFFSETS_INFO_EXT;
@@ -75398,7 +75395,7 @@ pub struct BindDescriptorBufferEmbeddedSamplersInfoEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsBindDescriptorBufferEmbeddedSamplersInfoEXT: Chainable {}
 impl<'a> BindDescriptorBufferEmbeddedSamplersInfoEXT<'a> {
     pub const S_TYPE: StructureType =
@@ -79075,7 +79072,7 @@ pub struct AccelerationStructureDenseGeometryFormatTrianglesDataAMDX<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsAccelerationStructureDenseGeometryFormatTrianglesDataAMDX:
     Chainable
 {
@@ -80720,7 +80717,7 @@ pub struct TensorCreateInfoARM<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsTensorCreateInfoARM: Chainable {}
 impl<'a> TensorCreateInfoARM<'a> {
     pub const S_TYPE: StructureType = StructureType::TENSOR_CREATE_INFO_ARM;
@@ -80812,7 +80809,7 @@ pub struct TensorViewCreateInfoARM<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsTensorViewCreateInfoARM: Chainable {}
 impl<'a> TensorViewCreateInfoARM<'a> {
     pub const S_TYPE: StructureType = StructureType::TENSOR_VIEW_CREATE_INFO_ARM;
@@ -82420,7 +82417,7 @@ pub struct DataGraphPipelineConstantARM<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDataGraphPipelineConstantARM: Chainable {}
 impl<'a> DataGraphPipelineConstantARM<'a> {
     pub const S_TYPE: StructureType = StructureType::DATA_GRAPH_PIPELINE_CONSTANT_ARM;
@@ -82494,7 +82491,7 @@ pub struct DataGraphPipelineResourceInfoARM<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDataGraphPipelineResourceInfoARM: Chainable {}
 impl<'a> DataGraphPipelineResourceInfoARM<'a> {
     pub const S_TYPE: StructureType = StructureType::DATA_GRAPH_PIPELINE_RESOURCE_INFO_ARM;
@@ -82677,7 +82674,7 @@ pub struct DataGraphPipelineCreateInfoARM<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDataGraphPipelineCreateInfoARM: Chainable {}
 impl<'a> DataGraphPipelineCreateInfoARM<'a> {
     pub const S_TYPE: StructureType = StructureType::DATA_GRAPH_PIPELINE_CREATE_INFO_ARM;
@@ -83313,7 +83310,7 @@ pub struct DataGraphPipelineDispatchInfoARM<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDataGraphPipelineDispatchInfoARM: Chainable {}
 impl<'a> DataGraphPipelineDispatchInfoARM<'a> {
     pub const S_TYPE: StructureType = StructureType::DATA_GRAPH_PIPELINE_DISPATCH_INFO_ARM;
@@ -84224,7 +84221,7 @@ pub struct NativeBufferPropertiesOHOS<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsNativeBufferPropertiesOHOS: Chainable {}
 impl<'a> NativeBufferPropertiesOHOS<'a> {
     pub const S_TYPE: StructureType = StructureType::NATIVE_BUFFER_PROPERTIES_OHOS;
@@ -85465,7 +85462,7 @@ pub struct ResourceDescriptorInfoEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsResourceDescriptorInfoEXT: Chainable {}
 impl<'a> ResourceDescriptorInfoEXT<'a> {
     pub const S_TYPE: StructureType = StructureType::RESOURCE_DESCRIPTOR_INFO_EXT;
@@ -85598,7 +85595,7 @@ pub struct PushDataInfoEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsPushDataInfoEXT: Chainable {}
 impl<'a> PushDataInfoEXT<'a> {
     pub const S_TYPE: StructureType = StructureType::PUSH_DATA_INFO_EXT;
@@ -86045,7 +86042,7 @@ pub struct DescriptorSetAndBindingMappingEXT<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDescriptorSetAndBindingMappingEXT: Chainable {}
 impl<'a> DescriptorSetAndBindingMappingEXT<'a> {
     pub const S_TYPE: StructureType = StructureType::DESCRIPTOR_SET_AND_BINDING_MAPPING_EXT;
@@ -87146,7 +87143,7 @@ pub struct DeviceMemoryImageCopyKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsDeviceMemoryImageCopyKHR: Chainable {}
 impl<'a> DeviceMemoryImageCopyKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::DEVICE_MEMORY_IMAGE_COPY_KHR;
@@ -87315,7 +87312,7 @@ pub struct MemoryRangeBarriersInfoKHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsMemoryRangeBarriersInfoKHR: Chainable {}
 impl<'a> MemoryRangeBarriersInfoKHR<'a> {
     pub const S_TYPE: StructureType = StructureType::MEMORY_RANGE_BARRIERS_INFO_KHR;
@@ -87601,7 +87598,7 @@ pub struct AccelerationStructureCreateInfo2KHR<'a> {
 #[doc = r""]
 #[doc = r" # Safety"]
 #[doc = r" A struct implementing this trait *must* adhere to the memory layout of"]
-#[doc = r" [`BaseOutStrucutre`]."]
+#[doc = r" [`BaseOutStructure`]."]
 pub unsafe trait ExtendsAccelerationStructureCreateInfo2KHR: Chainable {}
 impl<'a> AccelerationStructureCreateInfo2KHR<'a> {
     pub const S_TYPE: StructureType = StructureType::ACCELERATION_STRUCTURE_CREATE_INFO_2_KHR;

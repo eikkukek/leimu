@@ -9,3 +9,5 @@ quote = "1.0.45"
 proc-macro2 = "1.0.106"
 syn = "2.0.117"
 indexmap = "2.14.0"
+
+[workspace]

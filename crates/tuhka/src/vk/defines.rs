@@ -9,25 +9,25 @@ pub const fn make_api_version(
     (variant << 29) | (major << 22) | (minor << 12) | patch
 }
 
-/// https://docs.vulkan.org/refpages/latest/refpages/source/VK_API_VERSION_VARIANT.html
+/// <https://docs.vulkan.org/refpages/latest/refpages/source/VK_API_VERSION_VARIANT.html>
 #[inline]
 pub const fn api_version_variant(version: u32) -> u32 {
     version >> 29
 }
 
-/// https://docs.vulkan.org/refpages/latest/refpages/source/VK_API_VERSION_MAJOR.html
+/// <https://docs.vulkan.org/refpages/latest/refpages/source/VK_API_VERSION_MAJOR.html>
 #[inline]
 pub const fn api_version_major(version: u32) -> u32 {
     (version >> 22) & 0x7f
 }
 
-/// https://docs.vulkan.org/refpages/latest/refpages/source/VK_API_VERSION_MINOR.html
+/// <https://docs.vulkan.org/refpages/latest/refpages/source/VK_API_VERSION_MINOR.html>
 #[inline]
 pub const fn api_version_minor(version: u32) -> u32 {
     (version >> 12) & 0x3ff
 }
 
-/// https://docs.vulkan.org/refpages/latest/refpages/source/VK_API_VERSION_PATCH.html
+/// <https://docs.vulkan.org/refpages/latest/refpages/source/VK_API_VERSION_PATCH.html>
 #[inline]
 pub const fn api_version_patch(version: u32) -> u32 {
     version & 0xfff
