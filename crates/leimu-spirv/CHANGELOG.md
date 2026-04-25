@@ -1,6 +1,10 @@
 # Cangelog
 All changes to this project will be documented in this file.
 
+## [0.3.1] - 2026-04-25
+### Added
+- License
+
 ## [0.3.0] - 2026-04-11
 
 ### Changed
