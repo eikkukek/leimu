@@ -1,7 +1,7 @@
 //! New up-to-date Vulkan bindings.
 //!
 //! # Usage
-//! ```
+//! ``` rust
 //! use tuhka::{vk, Library, Instance};
 //! let library = unsafe {
 //!      Library::load()
@@ -17,7 +17,7 @@
 //!     ..Default::default()
 //! };
 //! let create_info = vk::InstanceCreateInfo {
-//! p_application_info: &application_info,
+//!     p_application_info: &application_info,
 //!     ..Default::default()
 //! };
 //! let instance: Instance = unsafe {
