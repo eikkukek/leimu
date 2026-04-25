@@ -3,6 +3,8 @@ New up-to-date Vulkan bindings used by [leimu].
 
 Follows mostly the same structure as [ash], but differs in some areas.
 
+## Usage
+
 ``` rust
 use tuhka::{vk, Library, Instance};
 let library = unsafe {
