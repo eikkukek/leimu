@@ -1072,16 +1072,29 @@ fn main() -> std::io::Result<()> {
                                     });
                                 } else if let Some(value) = find_attribute("value")
                                 {
-                                    let variants = enum_variants
-                                        .get_mut(extends)
-                                        .unwrap();
                                     let doc = find_attribute("comment")
                                         .map(|attr| attr.value.clone());
-                                    variants.add(
-                                        name,
-                                        syn::LitInt::new(&value.value, Span::call_site()),
-                                        doc
-                                    );
+                                    if extends.contains("FlagBits") {
+                                        let bits = bitmask_bits
+                                            .get_mut(extends)
+                                            .unwrap();
+                                        bits.bits.insert(Bit {
+                                            name,
+                                            bit: str::parse(&value.value).unwrap(),
+                                            doc,
+                                            alias: None,
+                                            deprecated: None,
+                                        });
+                                    } else {
+                                        let variants = enum_variants
+                                            .get_mut(extends)
+                                            .unwrap();
+                                        variants.add(
+                                            name,
+                                            syn::LitInt::new(&value.value, Span::call_site()),
+                                            doc
+                                        );
+                                    } 
                                 }
                             } else if name.local_name == "deprecate" {
                                 *parsing_deprecated = Some(reader.depth);
@@ -1856,7 +1869,7 @@ fn main() -> std::io::Result<()> {
     for (requires, bits) in &bitmask_bits {
         let requires = requires.trim_start_matches("Vk");
         let name = requires.replace("FlagBits", "Flags");
-        let doc = doc_link(&name)
+        let doc = doc_link(&format!("Vk{name}"))
             .map(|link| quote! { #[doc = #link] });
         let name = Ident::new(&name, Span::call_site());
         let ty = match bits.flag_type {

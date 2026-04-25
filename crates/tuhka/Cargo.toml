@@ -1,6 +1,6 @@
 [package]
 name = "tuhka"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 description = "New up-to-date Vulkan bindings for Rust"
 license = "MIT or Apache-2.0"

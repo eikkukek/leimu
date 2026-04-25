@@ -11588,7 +11588,7 @@ impl fmt::Display for AccelerationStructureMotionInstanceTypeNV {
         }
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/FramebufferCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkFramebufferCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FramebufferCreateFlags(Flags);
@@ -11605,7 +11605,7 @@ impl fmt::Display for FramebufferCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/QueryPoolCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkQueryPoolCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct QueryPoolCreateFlags(Flags);
@@ -11622,7 +11622,7 @@ impl fmt::Display for QueryPoolCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/RenderPassCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkRenderPassCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct RenderPassCreateFlags(Flags);
@@ -11643,7 +11643,7 @@ impl fmt::Display for RenderPassCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SamplerCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSamplerCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SamplerCreateFlags(Flags);
@@ -11670,7 +11670,7 @@ impl fmt::Display for SamplerCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineLayoutCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineLayoutCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineLayoutCreateFlags(Flags);
@@ -11687,7 +11687,7 @@ impl fmt::Display for PipelineLayoutCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineCacheCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineCacheCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineCacheCreateFlags(Flags);
@@ -11708,7 +11708,7 @@ impl fmt::Display for PipelineCacheCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineDepthStencilStateCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineDepthStencilStateCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineDepthStencilStateCreateFlags(Flags);
@@ -11729,7 +11729,7 @@ impl fmt::Display for PipelineDepthStencilStateCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineDynamicStateCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineDynamicStateCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineDynamicStateCreateFlags(Flags);
@@ -11744,7 +11744,7 @@ impl fmt::Display for PipelineDynamicStateCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineColorBlendStateCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineColorBlendStateCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineColorBlendStateCreateFlags(Flags);
@@ -11761,7 +11761,7 @@ impl fmt::Display for PipelineColorBlendStateCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineMultisampleStateCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineMultisampleStateCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineMultisampleStateCreateFlags(Flags);
@@ -11776,7 +11776,7 @@ impl fmt::Display for PipelineMultisampleStateCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineRasterizationStateCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineRasterizationStateCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineRasterizationStateCreateFlags(Flags);
@@ -11791,7 +11791,7 @@ impl fmt::Display for PipelineRasterizationStateCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineViewportStateCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineViewportStateCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineViewportStateCreateFlags(Flags);
@@ -11806,7 +11806,7 @@ impl fmt::Display for PipelineViewportStateCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineTessellationStateCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineTessellationStateCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineTessellationStateCreateFlags(Flags);
@@ -11821,7 +11821,7 @@ impl fmt::Display for PipelineTessellationStateCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineInputAssemblyStateCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineInputAssemblyStateCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineInputAssemblyStateCreateFlags(Flags);
@@ -11836,7 +11836,7 @@ impl fmt::Display for PipelineInputAssemblyStateCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineVertexInputStateCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineVertexInputStateCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineVertexInputStateCreateFlags(Flags);
@@ -11851,7 +11851,7 @@ impl fmt::Display for PipelineVertexInputStateCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineShaderStageCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineShaderStageCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineShaderStageCreateFlags(Flags);
@@ -11872,7 +11872,7 @@ impl fmt::Display for PipelineShaderStageCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DescriptorSetLayoutCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDescriptorSetLayoutCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DescriptorSetLayoutCreateFlags(Flags);
@@ -11903,7 +11903,7 @@ impl fmt::Display for DescriptorSetLayoutCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/BufferViewCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkBufferViewCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BufferViewCreateFlags(Flags);
@@ -11918,7 +11918,7 @@ impl fmt::Display for BufferViewCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/InstanceCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkInstanceCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct InstanceCreateFlags(Flags);
@@ -11935,7 +11935,7 @@ impl fmt::Display for InstanceCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DeviceCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDeviceCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DeviceCreateFlags(Flags);
@@ -11950,7 +11950,7 @@ impl fmt::Display for DeviceCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DeviceQueueCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDeviceQueueCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DeviceQueueCreateFlags(Flags);
@@ -11969,7 +11969,7 @@ impl fmt::Display for DeviceQueueCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/QueueFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkQueueFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct QueueFlags(Flags);
@@ -12009,7 +12009,7 @@ impl fmt::Display for QueueFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/MemoryPropertyFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkMemoryPropertyFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MemoryPropertyFlags(Flags);
@@ -12050,7 +12050,7 @@ impl fmt::Display for MemoryPropertyFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/MemoryHeapFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkMemoryHeapFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MemoryHeapFlags(Flags);
@@ -12075,7 +12075,7 @@ impl fmt::Display for MemoryHeapFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/AccessFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkAccessFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AccessFlags(Flags);
@@ -12115,6 +12115,7 @@ impl AccessFlags {
     pub const MEMORY_READ: Self = Self(0x8000);
     #[doc = "Controls coherency of memory writes"]
     pub const MEMORY_WRITE: Self = Self(0x10000);
+    pub const NONE: Self = Self(0x0);
     pub const TRANSFORM_FEEDBACK_WRITE_EXT: Self = Self(0x2000000);
     pub const TRANSFORM_FEEDBACK_COUNTER_READ_EXT: Self = Self(0x4000000);
     pub const TRANSFORM_FEEDBACK_COUNTER_WRITE_EXT: Self = Self(0x8000000);
@@ -12166,7 +12167,7 @@ impl fmt::Display for AccessFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/BufferUsageFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkBufferUsageFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BufferUsageFlags(Flags);
@@ -12252,7 +12253,7 @@ impl fmt::Display for BufferUsageFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/BufferCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkBufferCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BufferCreateFlags(Flags);
@@ -12287,7 +12288,7 @@ impl fmt::Display for BufferCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ShaderStageFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkShaderStageFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ShaderStageFlags(Flags);
@@ -12340,7 +12341,7 @@ impl fmt::Display for ShaderStageFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ImageUsageFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkImageUsageFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ImageUsageFlags(Flags);
@@ -12415,7 +12416,7 @@ impl fmt::Display for ImageUsageFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ImageCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkImageCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ImageCreateFlags(Flags);
@@ -12481,7 +12482,7 @@ impl fmt::Display for ImageCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ImageViewCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkImageViewCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ImageViewCreateFlags(Flags);
@@ -12504,7 +12505,7 @@ impl fmt::Display for ImageViewCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineCreateFlags(Flags);
@@ -12586,7 +12587,7 @@ impl fmt::Display for PipelineCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ColorComponentFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkColorComponentFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ColorComponentFlags(Flags);
@@ -12606,7 +12607,7 @@ impl fmt::Display for ColorComponentFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/FenceCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkFenceCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FenceCreateFlags(Flags);
@@ -12623,7 +12624,7 @@ impl fmt::Display for FenceCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SemaphoreCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSemaphoreCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SemaphoreCreateFlags(Flags);
@@ -12638,7 +12639,7 @@ impl fmt::Display for SemaphoreCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/FormatFeatureFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkFormatFeatureFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FormatFeatureFlags(Flags);
@@ -12748,7 +12749,7 @@ impl fmt::Display for FormatFeatureFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/QueryControlFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkQueryControlFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct QueryControlFlags(Flags);
@@ -12766,7 +12767,7 @@ impl fmt::Display for QueryControlFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/QueryResultFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkQueryResultFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct QueryResultFlags(Flags);
@@ -12797,7 +12798,7 @@ impl fmt::Display for QueryResultFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ShaderModuleCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkShaderModuleCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ShaderModuleCreateFlags(Flags);
@@ -12812,7 +12813,7 @@ impl fmt::Display for ShaderModuleCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/EventCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkEventCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct EventCreateFlags(Flags);
@@ -12829,7 +12830,7 @@ impl fmt::Display for EventCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/CommandPoolCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkCommandPoolCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CommandPoolCreateFlags(Flags);
@@ -12855,7 +12856,7 @@ impl fmt::Display for CommandPoolCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/CommandPoolResetFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkCommandPoolResetFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CommandPoolResetFlags(Flags);
@@ -12873,7 +12874,7 @@ impl fmt::Display for CommandPoolResetFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/CommandBufferResetFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkCommandBufferResetFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CommandBufferResetFlags(Flags);
@@ -12891,7 +12892,7 @@ impl fmt::Display for CommandBufferResetFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/CommandBufferUsageFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkCommandBufferUsageFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CommandBufferUsageFlags(Flags);
@@ -12915,7 +12916,7 @@ impl fmt::Display for CommandBufferUsageFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/QueryPipelineStatisticFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkQueryPipelineStatisticFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct QueryPipelineStatisticFlags(Flags);
@@ -12971,7 +12972,7 @@ impl fmt::Display for QueryPipelineStatisticFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/MemoryMapFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkMemoryMapFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MemoryMapFlags(Flags);
@@ -12988,7 +12989,7 @@ impl fmt::Display for MemoryMapFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/MemoryUnmapFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkMemoryUnmapFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MemoryUnmapFlags(Flags);
@@ -13005,7 +13006,7 @@ impl fmt::Display for MemoryUnmapFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ImageAspectFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkImageAspectFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ImageAspectFlags(Flags);
@@ -13018,6 +13019,7 @@ impl ImageAspectFlags {
     pub const PLANE_0: Self = Self(0x10);
     pub const PLANE_1: Self = Self(0x20);
     pub const PLANE_2: Self = Self(0x40);
+    pub const NONE: Self = Self(0x0);
     pub const MEMORY_PLANE_0_EXT: Self = Self(0x80);
     pub const MEMORY_PLANE_1_EXT: Self = Self(0x100);
     pub const MEMORY_PLANE_2_EXT: Self = Self(0x200);
@@ -13044,7 +13046,7 @@ impl fmt::Display for ImageAspectFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SparseMemoryBindFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSparseMemoryBindFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SparseMemoryBindFlags(Flags);
@@ -13062,7 +13064,7 @@ impl fmt::Display for SparseMemoryBindFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SparseImageFormatFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSparseImageFormatFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SparseImageFormatFlags(Flags);
@@ -13088,7 +13090,7 @@ impl fmt::Display for SparseImageFormatFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SubpassDescriptionFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSubpassDescriptionFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SubpassDescriptionFlags(Flags);
@@ -13123,7 +13125,7 @@ impl fmt::Display for SubpassDescriptionFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineStageFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineStageFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineStageFlags(Flags);
@@ -13163,6 +13165,7 @@ impl PipelineStageFlags {
     pub const ALL_GRAPHICS: Self = Self(0x8000);
     #[doc = "All stages supported on the queue"]
     pub const ALL_COMMANDS: Self = Self(0x10000);
+    pub const NONE: Self = Self(0x0);
     pub const TRANSFORM_FEEDBACK_EXT: Self = Self(0x1000000);
     #[doc = "A pipeline stage for conditional rendering predicate fetch"]
     pub const CONDITIONAL_RENDERING_EXT: Self = Self(0x40000);
@@ -13210,7 +13213,7 @@ impl fmt::Display for PipelineStageFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SampleCountFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSampleCountFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SampleCountFlags(Flags);
@@ -13248,7 +13251,7 @@ impl fmt::Display for SampleCountFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/AttachmentDescriptionFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkAttachmentDescriptionFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AttachmentDescriptionFlags(Flags);
@@ -13272,7 +13275,7 @@ impl fmt::Display for AttachmentDescriptionFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/StencilFaceFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkStencilFaceFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct StencilFaceFlags(Flags);
@@ -13296,7 +13299,7 @@ impl fmt::Display for StencilFaceFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/CullModeFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkCullModeFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CullModeFlags(Flags);
@@ -13316,7 +13319,7 @@ impl fmt::Display for CullModeFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DescriptorPoolCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDescriptorPoolCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DescriptorPoolCreateFlags(Flags);
@@ -13344,7 +13347,7 @@ impl fmt::Display for DescriptorPoolCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DescriptorPoolResetFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDescriptorPoolResetFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DescriptorPoolResetFlags(Flags);
@@ -13359,7 +13362,7 @@ impl fmt::Display for DescriptorPoolResetFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DependencyFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDependencyFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DependencyFlags(Flags);
@@ -13391,7 +13394,7 @@ impl fmt::Display for DependencyFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SubgroupFeatureFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSubgroupFeatureFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SubgroupFeatureFlags(Flags);
@@ -13438,7 +13441,7 @@ impl fmt::Display for SubgroupFeatureFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/IndirectCommandsLayoutUsageFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkIndirectCommandsLayoutUsageFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct IndirectCommandsLayoutUsageFlagsNV(Flags);
@@ -13461,7 +13464,7 @@ impl fmt::Display for IndirectCommandsLayoutUsageFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/IndirectStateFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkIndirectStateFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct IndirectStateFlagsNV(Flags);
@@ -13478,7 +13481,7 @@ impl fmt::Display for IndirectStateFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/GeometryFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkGeometryFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct GeometryFlagsKHR(Flags);
@@ -13499,7 +13502,7 @@ impl fmt::Display for GeometryFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/GeometryInstanceFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkGeometryInstanceFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct GeometryInstanceFlagsKHR(Flags);
@@ -13529,7 +13532,7 @@ impl fmt::Display for GeometryInstanceFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ClusterAccelerationStructureGeometryFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkClusterAccelerationStructureGeometryFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ClusterAccelerationStructureGeometryFlagsNV(Flags);
@@ -13552,7 +13555,7 @@ impl fmt::Display for ClusterAccelerationStructureGeometryFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ClusterAccelerationStructureClusterFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkClusterAccelerationStructureClusterFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ClusterAccelerationStructureClusterFlagsNV(Flags);
@@ -13569,7 +13572,7 @@ impl fmt::Display for ClusterAccelerationStructureClusterFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ClusterAccelerationStructureAddressResolutionFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkClusterAccelerationStructureAddressResolutionFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ClusterAccelerationStructureAddressResolutionFlagsNV(Flags);
@@ -13599,7 +13602,7 @@ impl fmt::Display for ClusterAccelerationStructureAddressResolutionFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/BuildAccelerationStructureFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkBuildAccelerationStructureFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BuildAccelerationStructureFlagsKHR(Flags);
@@ -13640,7 +13643,7 @@ impl fmt::Display for BuildAccelerationStructureFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PrivateDataSlotCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPrivateDataSlotCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PrivateDataSlotCreateFlags(Flags);
@@ -13655,7 +13658,7 @@ impl fmt::Display for PrivateDataSlotCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/AccelerationStructureCreateFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkAccelerationStructureCreateFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AccelerationStructureCreateFlagsKHR(Flags);
@@ -13678,7 +13681,7 @@ impl fmt::Display for AccelerationStructureCreateFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DescriptorUpdateTemplateCreateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDescriptorUpdateTemplateCreateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DescriptorUpdateTemplateCreateFlags(Flags);
@@ -13693,7 +13696,7 @@ impl fmt::Display for DescriptorUpdateTemplateCreateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineCreationFeedbackFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineCreationFeedbackFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineCreationFeedbackFlags(Flags);
@@ -13716,7 +13719,7 @@ impl fmt::Display for PipelineCreationFeedbackFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PerformanceCounterDescriptionFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPerformanceCounterDescriptionFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PerformanceCounterDescriptionFlagsKHR(Flags);
@@ -13737,7 +13740,7 @@ impl fmt::Display for PerformanceCounterDescriptionFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/AcquireProfilingLockFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkAcquireProfilingLockFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AcquireProfilingLockFlagsKHR(Flags);
@@ -13752,7 +13755,7 @@ impl fmt::Display for AcquireProfilingLockFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SemaphoreWaitFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSemaphoreWaitFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SemaphoreWaitFlags(Flags);
@@ -13769,7 +13772,7 @@ impl fmt::Display for SemaphoreWaitFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineCompilerControlFlagsAMD.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineCompilerControlFlagsAMD.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineCompilerControlFlagsAMD(Flags);
@@ -13784,7 +13787,7 @@ impl fmt::Display for PipelineCompilerControlFlagsAMD {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ShaderCorePropertiesFlagsAMD.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkShaderCorePropertiesFlagsAMD.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ShaderCorePropertiesFlagsAMD(Flags);
@@ -13799,7 +13802,7 @@ impl fmt::Display for ShaderCorePropertiesFlagsAMD {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DeviceDiagnosticsConfigFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDeviceDiagnosticsConfigFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DeviceDiagnosticsConfigFlagsNV(Flags);
@@ -13824,7 +13827,7 @@ impl fmt::Display for DeviceDiagnosticsConfigFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/RefreshObjectFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkRefreshObjectFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct RefreshObjectFlagsKHR(Flags);
@@ -13839,7 +13842,7 @@ impl fmt::Display for RefreshObjectFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/AccessFlags2.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkAccessFlags2.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AccessFlags2(Flags64);
@@ -13958,7 +13961,7 @@ impl fmt::Display for AccessFlags2 {
         flag_display(self.0, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineStageFlags2.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineStageFlags2.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineStageFlags2(Flags64);
@@ -14068,7 +14071,7 @@ impl fmt::Display for PipelineStageFlags2 {
         flag_display(self.0, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/AccelerationStructureMotionInfoFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkAccelerationStructureMotionInfoFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AccelerationStructureMotionInfoFlagsNV(Flags);
@@ -14083,7 +14086,7 @@ impl fmt::Display for AccelerationStructureMotionInfoFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/AccelerationStructureMotionInstanceFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkAccelerationStructureMotionInstanceFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AccelerationStructureMotionInstanceFlagsNV(Flags);
@@ -14098,7 +14101,7 @@ impl fmt::Display for AccelerationStructureMotionInstanceFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/FormatFeatureFlags2.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkFormatFeatureFlags2.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FormatFeatureFlags2(Flags64);
@@ -14247,7 +14250,7 @@ impl fmt::Display for FormatFeatureFlags2 {
         flag_display(self.0, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/RenderingFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkRenderingFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct RenderingFlags(Flags);
@@ -14283,7 +14286,7 @@ impl fmt::Display for RenderingFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/MemoryDecompressionMethodFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkMemoryDecompressionMethodFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MemoryDecompressionMethodFlagsEXT(Flags64);
@@ -14301,7 +14304,7 @@ impl fmt::Display for MemoryDecompressionMethodFlagsEXT {
         flag_display(self.0, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DeviceFaultFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDeviceFaultFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DeviceFaultFlagsKHR(Flags);
@@ -14330,7 +14333,7 @@ impl fmt::Display for DeviceFaultFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/BuildMicromapFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkBuildMicromapFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BuildMicromapFlagsEXT(Flags);
@@ -14353,7 +14356,7 @@ impl fmt::Display for BuildMicromapFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/MicromapCreateFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkMicromapCreateFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MicromapCreateFlagsEXT(Flags);
@@ -14370,7 +14373,7 @@ impl fmt::Display for MicromapCreateFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/IndirectCommandsLayoutUsageFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkIndirectCommandsLayoutUsageFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct IndirectCommandsLayoutUsageFlagsEXT(Flags);
@@ -14391,7 +14394,7 @@ impl fmt::Display for IndirectCommandsLayoutUsageFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/IndirectCommandsInputModeFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkIndirectCommandsInputModeFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct IndirectCommandsInputModeFlagsEXT(Flags);
@@ -14412,7 +14415,7 @@ impl fmt::Display for IndirectCommandsInputModeFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DirectDriverLoadingFlagsLUNARG.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDirectDriverLoadingFlagsLUNARG.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DirectDriverLoadingFlagsLUNARG(Flags);
@@ -14427,7 +14430,7 @@ impl fmt::Display for DirectDriverLoadingFlagsLUNARG {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineCreateFlags2.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineCreateFlags2.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineCreateFlags2(Flags64);
@@ -14532,7 +14535,7 @@ impl fmt::Display for PipelineCreateFlags2 {
         flag_display(self.0, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/BufferUsageFlags2.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkBufferUsageFlags2.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BufferUsageFlags2(Flags64);
@@ -14616,7 +14619,7 @@ impl fmt::Display for BufferUsageFlags2 {
         flag_display(self.0, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/AddressCopyFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkAddressCopyFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AddressCopyFlagsKHR(Flags);
@@ -14639,7 +14642,7 @@ impl fmt::Display for AddressCopyFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/TensorCreateFlagsARM.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkTensorCreateFlagsARM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TensorCreateFlagsARM(Flags64);
@@ -14664,7 +14667,7 @@ impl fmt::Display for TensorCreateFlagsARM {
         flag_display(self.0, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/TensorUsageFlagsARM.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkTensorUsageFlagsARM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TensorUsageFlagsARM(Flags64);
@@ -14695,7 +14698,7 @@ impl fmt::Display for TensorUsageFlagsARM {
         flag_display(self.0, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/TensorViewCreateFlagsARM.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkTensorViewCreateFlagsARM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TensorViewCreateFlagsARM(Flags64);
@@ -14712,7 +14715,7 @@ impl fmt::Display for TensorViewCreateFlagsARM {
         flag_display(self.0, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DataGraphPipelineSessionCreateFlagsARM.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDataGraphPipelineSessionCreateFlagsARM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DataGraphPipelineSessionCreateFlagsARM(Flags64);
@@ -14730,7 +14733,7 @@ impl fmt::Display for DataGraphPipelineSessionCreateFlagsARM {
         flag_display(self.0, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DataGraphPipelineDispatchFlagsARM.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDataGraphPipelineDispatchFlagsARM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DataGraphPipelineDispatchFlagsARM(Flags64);
@@ -14745,7 +14748,7 @@ impl fmt::Display for DataGraphPipelineDispatchFlagsARM {
         flag_display(self.0, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeRgbModelConversionFlagsVALVE.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeRgbModelConversionFlagsVALVE.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeRgbModelConversionFlagsVALVE(Flags);
@@ -14772,7 +14775,7 @@ impl fmt::Display for VideoEncodeRgbModelConversionFlagsVALVE {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeRgbRangeCompressionFlagsVALVE.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeRgbRangeCompressionFlagsVALVE.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeRgbRangeCompressionFlagsVALVE(Flags);
@@ -14790,7 +14793,7 @@ impl fmt::Display for VideoEncodeRgbRangeCompressionFlagsVALVE {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeRgbChromaOffsetFlagsVALVE.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeRgbChromaOffsetFlagsVALVE.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeRgbChromaOffsetFlagsVALVE(Flags);
@@ -14808,7 +14811,7 @@ impl fmt::Display for VideoEncodeRgbChromaOffsetFlagsVALVE {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SpirvResourceTypeFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSpirvResourceTypeFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SpirvResourceTypeFlagsEXT(Flags);
@@ -14847,7 +14850,7 @@ impl fmt::Display for SpirvResourceTypeFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/AddressCommandFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkAddressCommandFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AddressCommandFlagsKHR(Flags);
@@ -14876,7 +14879,7 @@ impl fmt::Display for AddressCommandFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/CompositeAlphaFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkCompositeAlphaFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CompositeAlphaFlagsKHR(Flags);
@@ -14901,7 +14904,7 @@ impl fmt::Display for CompositeAlphaFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DisplayPlaneAlphaFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDisplayPlaneAlphaFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DisplayPlaneAlphaFlagsKHR(Flags);
@@ -14926,7 +14929,7 @@ impl fmt::Display for DisplayPlaneAlphaFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SurfaceTransformFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSurfaceTransformFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SurfaceTransformFlagsKHR(Flags);
@@ -14961,7 +14964,7 @@ impl fmt::Display for SurfaceTransformFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SwapchainCreateFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSwapchainCreateFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SwapchainCreateFlagsKHR(Flags);
@@ -14996,7 +14999,7 @@ impl fmt::Display for SwapchainCreateFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DisplayModeCreateFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDisplayModeCreateFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DisplayModeCreateFlagsKHR(Flags);
@@ -15011,7 +15014,7 @@ impl fmt::Display for DisplayModeCreateFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DisplaySurfaceCreateFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDisplaySurfaceCreateFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DisplaySurfaceCreateFlagsKHR(Flags);
@@ -15026,7 +15029,7 @@ impl fmt::Display for DisplaySurfaceCreateFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/AndroidSurfaceCreateFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkAndroidSurfaceCreateFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AndroidSurfaceCreateFlagsKHR(Flags);
@@ -15041,7 +15044,7 @@ impl fmt::Display for AndroidSurfaceCreateFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ViSurfaceCreateFlagsNN.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkViSurfaceCreateFlagsNN.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ViSurfaceCreateFlagsNN(Flags);
@@ -15056,7 +15059,7 @@ impl fmt::Display for ViSurfaceCreateFlagsNN {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/WaylandSurfaceCreateFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkWaylandSurfaceCreateFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WaylandSurfaceCreateFlagsKHR(Flags);
@@ -15071,7 +15074,7 @@ impl fmt::Display for WaylandSurfaceCreateFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/UbmSurfaceCreateFlagsSEC.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkUbmSurfaceCreateFlagsSEC.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UbmSurfaceCreateFlagsSEC(Flags);
@@ -15086,7 +15089,7 @@ impl fmt::Display for UbmSurfaceCreateFlagsSEC {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/Win32SurfaceCreateFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkWin32SurfaceCreateFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Win32SurfaceCreateFlagsKHR(Flags);
@@ -15101,7 +15104,7 @@ impl fmt::Display for Win32SurfaceCreateFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/XlibSurfaceCreateFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkXlibSurfaceCreateFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct XlibSurfaceCreateFlagsKHR(Flags);
@@ -15116,7 +15119,7 @@ impl fmt::Display for XlibSurfaceCreateFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/XcbSurfaceCreateFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkXcbSurfaceCreateFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct XcbSurfaceCreateFlagsKHR(Flags);
@@ -15131,7 +15134,7 @@ impl fmt::Display for XcbSurfaceCreateFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DirectFBSurfaceCreateFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDirectFBSurfaceCreateFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DirectFBSurfaceCreateFlagsEXT(Flags);
@@ -15146,7 +15149,7 @@ impl fmt::Display for DirectFBSurfaceCreateFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/IOSSurfaceCreateFlagsMVK.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkIOSSurfaceCreateFlagsMVK.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct IOSSurfaceCreateFlagsMVK(Flags);
@@ -15161,7 +15164,7 @@ impl fmt::Display for IOSSurfaceCreateFlagsMVK {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/MacOSSurfaceCreateFlagsMVK.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkMacOSSurfaceCreateFlagsMVK.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MacOSSurfaceCreateFlagsMVK(Flags);
@@ -15176,7 +15179,7 @@ impl fmt::Display for MacOSSurfaceCreateFlagsMVK {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/MetalSurfaceCreateFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkMetalSurfaceCreateFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MetalSurfaceCreateFlagsEXT(Flags);
@@ -15191,7 +15194,7 @@ impl fmt::Display for MetalSurfaceCreateFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ImagePipeSurfaceCreateFlagsFUCHSIA.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkImagePipeSurfaceCreateFlagsFUCHSIA.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ImagePipeSurfaceCreateFlagsFUCHSIA(Flags);
@@ -15206,7 +15209,7 @@ impl fmt::Display for ImagePipeSurfaceCreateFlagsFUCHSIA {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/StreamDescriptorSurfaceCreateFlagsGGP.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkStreamDescriptorSurfaceCreateFlagsGGP.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct StreamDescriptorSurfaceCreateFlagsGGP(Flags);
@@ -15221,7 +15224,7 @@ impl fmt::Display for StreamDescriptorSurfaceCreateFlagsGGP {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/HeadlessSurfaceCreateFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkHeadlessSurfaceCreateFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct HeadlessSurfaceCreateFlagsEXT(Flags);
@@ -15236,7 +15239,7 @@ impl fmt::Display for HeadlessSurfaceCreateFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ScreenSurfaceCreateFlagsQNX.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkScreenSurfaceCreateFlagsQNX.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ScreenSurfaceCreateFlagsQNX(Flags);
@@ -15251,7 +15254,7 @@ impl fmt::Display for ScreenSurfaceCreateFlagsQNX {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PeerMemoryFeatureFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPeerMemoryFeatureFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PeerMemoryFeatureFlags(Flags);
@@ -15280,7 +15283,7 @@ impl fmt::Display for PeerMemoryFeatureFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/MemoryAllocateFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkMemoryAllocateFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MemoryAllocateFlags(Flags);
@@ -15306,7 +15309,7 @@ impl fmt::Display for MemoryAllocateFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DeviceGroupPresentModeFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDeviceGroupPresentModeFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DeviceGroupPresentModeFlagsKHR(Flags);
@@ -15335,7 +15338,7 @@ impl fmt::Display for DeviceGroupPresentModeFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DebugReportFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDebugReportFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DebugReportFlagsEXT(Flags);
@@ -15362,7 +15365,7 @@ impl fmt::Display for DebugReportFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/CommandPoolTrimFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkCommandPoolTrimFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CommandPoolTrimFlags(Flags);
@@ -15377,7 +15380,7 @@ impl fmt::Display for CommandPoolTrimFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ExternalMemoryHandleTypeFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkExternalMemoryHandleTypeFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ExternalMemoryHandleTypeFlagsNV(Flags);
@@ -15402,7 +15405,7 @@ impl fmt::Display for ExternalMemoryHandleTypeFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ClusterAccelerationStructureIndexFormatFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkClusterAccelerationStructureIndexFormatFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ClusterAccelerationStructureIndexFormatFlagsNV(Flags);
@@ -15425,7 +15428,7 @@ impl fmt::Display for ClusterAccelerationStructureIndexFormatFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ExternalMemoryFeatureFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkExternalMemoryFeatureFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ExternalMemoryFeatureFlagsNV(Flags);
@@ -15448,7 +15451,7 @@ impl fmt::Display for ExternalMemoryFeatureFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ExternalMemoryHandleTypeFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkExternalMemoryHandleTypeFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ExternalMemoryHandleTypeFlags(Flags);
@@ -15503,7 +15506,7 @@ impl fmt::Display for ExternalMemoryHandleTypeFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ExternalMemoryFeatureFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkExternalMemoryFeatureFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ExternalMemoryFeatureFlags(Flags);
@@ -15526,7 +15529,7 @@ impl fmt::Display for ExternalMemoryFeatureFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ExternalSemaphoreHandleTypeFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkExternalSemaphoreHandleTypeFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ExternalSemaphoreHandleTypeFlags(Flags);
@@ -15558,7 +15561,7 @@ impl fmt::Display for ExternalSemaphoreHandleTypeFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ExternalSemaphoreFeatureFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkExternalSemaphoreFeatureFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ExternalSemaphoreFeatureFlags(Flags);
@@ -15576,7 +15579,7 @@ impl fmt::Display for ExternalSemaphoreFeatureFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SemaphoreImportFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSemaphoreImportFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SemaphoreImportFlags(Flags);
@@ -15593,7 +15596,7 @@ impl fmt::Display for SemaphoreImportFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ExternalFenceHandleTypeFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkExternalFenceHandleTypeFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ExternalFenceHandleTypeFlags(Flags);
@@ -15622,7 +15625,7 @@ impl fmt::Display for ExternalFenceHandleTypeFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ExternalFenceFeatureFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkExternalFenceFeatureFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ExternalFenceFeatureFlags(Flags);
@@ -15640,7 +15643,7 @@ impl fmt::Display for ExternalFenceFeatureFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/FenceImportFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkFenceImportFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FenceImportFlags(Flags);
@@ -15657,7 +15660,7 @@ impl fmt::Display for FenceImportFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SurfaceCounterFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSurfaceCounterFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SurfaceCounterFlagsEXT(Flags);
@@ -15674,7 +15677,7 @@ impl fmt::Display for SurfaceCounterFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineViewportSwizzleStateCreateFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineViewportSwizzleStateCreateFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineViewportSwizzleStateCreateFlagsNV(Flags);
@@ -15689,7 +15692,7 @@ impl fmt::Display for PipelineViewportSwizzleStateCreateFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineDiscardRectangleStateCreateFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineDiscardRectangleStateCreateFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineDiscardRectangleStateCreateFlagsEXT(Flags);
@@ -15704,7 +15707,7 @@ impl fmt::Display for PipelineDiscardRectangleStateCreateFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineCoverageToColorStateCreateFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineCoverageToColorStateCreateFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineCoverageToColorStateCreateFlagsNV(Flags);
@@ -15719,7 +15722,7 @@ impl fmt::Display for PipelineCoverageToColorStateCreateFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineCoverageModulationStateCreateFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineCoverageModulationStateCreateFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineCoverageModulationStateCreateFlagsNV(Flags);
@@ -15734,7 +15737,7 @@ impl fmt::Display for PipelineCoverageModulationStateCreateFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineCoverageReductionStateCreateFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineCoverageReductionStateCreateFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineCoverageReductionStateCreateFlagsNV(Flags);
@@ -15749,7 +15752,7 @@ impl fmt::Display for PipelineCoverageReductionStateCreateFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ValidationCacheCreateFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkValidationCacheCreateFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ValidationCacheCreateFlagsEXT(Flags);
@@ -15764,7 +15767,7 @@ impl fmt::Display for ValidationCacheCreateFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DebugUtilsMessageSeverityFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDebugUtilsMessageSeverityFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DebugUtilsMessageSeverityFlagsEXT(Flags);
@@ -15789,7 +15792,7 @@ impl fmt::Display for DebugUtilsMessageSeverityFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DebugUtilsMessageTypeFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDebugUtilsMessageTypeFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DebugUtilsMessageTypeFlagsEXT(Flags);
@@ -15814,7 +15817,7 @@ impl fmt::Display for DebugUtilsMessageTypeFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DebugUtilsMessengerCreateFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDebugUtilsMessengerCreateFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DebugUtilsMessengerCreateFlagsEXT(Flags);
@@ -15829,7 +15832,7 @@ impl fmt::Display for DebugUtilsMessengerCreateFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DebugUtilsMessengerCallbackDataFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDebugUtilsMessengerCallbackDataFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DebugUtilsMessengerCallbackDataFlagsEXT(Flags);
@@ -15844,7 +15847,7 @@ impl fmt::Display for DebugUtilsMessengerCallbackDataFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DeviceMemoryReportFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDeviceMemoryReportFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DeviceMemoryReportFlagsEXT(Flags);
@@ -15859,7 +15862,7 @@ impl fmt::Display for DeviceMemoryReportFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineRasterizationConservativeStateCreateFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineRasterizationConservativeStateCreateFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineRasterizationConservativeStateCreateFlagsEXT(Flags);
@@ -15874,7 +15877,7 @@ impl fmt::Display for PipelineRasterizationConservativeStateCreateFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DescriptorBindingFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDescriptorBindingFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DescriptorBindingFlags(Flags);
@@ -15899,7 +15902,7 @@ impl fmt::Display for DescriptorBindingFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ConditionalRenderingFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkConditionalRenderingFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ConditionalRenderingFlagsEXT(Flags);
@@ -15916,7 +15919,7 @@ impl fmt::Display for ConditionalRenderingFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ResolveModeFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkResolveModeFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ResolveModeFlags(Flags);
@@ -15946,7 +15949,7 @@ impl fmt::Display for ResolveModeFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineRasterizationStateStreamCreateFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineRasterizationStateStreamCreateFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineRasterizationStateStreamCreateFlagsEXT(Flags);
@@ -15961,7 +15964,7 @@ impl fmt::Display for PipelineRasterizationStateStreamCreateFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PipelineRasterizationDepthClipStateCreateFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineRasterizationDepthClipStateCreateFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PipelineRasterizationDepthClipStateCreateFlagsEXT(Flags);
@@ -15976,7 +15979,7 @@ impl fmt::Display for PipelineRasterizationDepthClipStateCreateFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SwapchainImageUsageFlagsANDROID.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSwapchainImageUsageFlagsANDROID.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SwapchainImageUsageFlagsANDROID(Flags);
@@ -15993,7 +15996,7 @@ impl fmt::Display for SwapchainImageUsageFlagsANDROID {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ToolPurposeFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkToolPurposeFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ToolPurposeFlags(Flags);
@@ -16024,7 +16027,7 @@ impl fmt::Display for ToolPurposeFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SubmitFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSubmitFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SubmitFlags(Flags);
@@ -16041,7 +16044,7 @@ impl fmt::Display for SubmitFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ImageFormatConstraintsFlagsFUCHSIA.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkImageFormatConstraintsFlagsFUCHSIA.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ImageFormatConstraintsFlagsFUCHSIA(Flags);
@@ -16056,7 +16059,7 @@ impl fmt::Display for ImageFormatConstraintsFlagsFUCHSIA {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/HostImageCopyFlags.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkHostImageCopyFlags.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct HostImageCopyFlags(Flags);
@@ -16073,7 +16076,7 @@ impl fmt::Display for HostImageCopyFlags {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PartitionedAccelerationStructureInstanceFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPartitionedAccelerationStructureInstanceFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PartitionedAccelerationStructureInstanceFlagsNV(Flags);
@@ -16100,7 +16103,7 @@ impl fmt::Display for PartitionedAccelerationStructureInstanceFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ImageConstraintsInfoFlagsFUCHSIA.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkImageConstraintsInfoFlagsFUCHSIA.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ImageConstraintsInfoFlagsFUCHSIA(Flags);
@@ -16127,7 +16130,7 @@ impl fmt::Display for ImageConstraintsInfoFlagsFUCHSIA {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/GraphicsPipelineLibraryFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkGraphicsPipelineLibraryFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct GraphicsPipelineLibraryFlagsEXT(Flags);
@@ -16152,7 +16155,7 @@ impl fmt::Display for GraphicsPipelineLibraryFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ImageCompressionFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkImageCompressionFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ImageCompressionFlagsEXT(Flags);
@@ -16176,7 +16179,7 @@ impl fmt::Display for ImageCompressionFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ImageCompressionFixedRateFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkImageCompressionFixedRateFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ImageCompressionFixedRateFlagsEXT(Flags);
@@ -16242,7 +16245,7 @@ impl fmt::Display for ImageCompressionFixedRateFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ExportMetalObjectTypeFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkExportMetalObjectTypeFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ExportMetalObjectTypeFlagsEXT(Flags);
@@ -16271,7 +16274,7 @@ impl fmt::Display for ExportMetalObjectTypeFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/RenderingAttachmentFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkRenderingAttachmentFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct RenderingAttachmentFlagsKHR(Flags);
@@ -16294,7 +16297,7 @@ impl fmt::Display for RenderingAttachmentFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ResolveImageFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkResolveImageFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ResolveImageFlagsKHR(Flags);
@@ -16315,7 +16318,7 @@ impl fmt::Display for ResolveImageFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DeviceAddressBindingFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDeviceAddressBindingFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DeviceAddressBindingFlagsEXT(Flags);
@@ -16332,7 +16335,7 @@ impl fmt::Display for DeviceAddressBindingFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/OpticalFlowGridSizeFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkOpticalFlowGridSizeFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct OpticalFlowGridSizeFlagsNV(Flags);
@@ -16358,7 +16361,7 @@ impl fmt::Display for OpticalFlowGridSizeFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/OpticalFlowUsageFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkOpticalFlowUsageFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct OpticalFlowUsageFlagsNV(Flags);
@@ -16386,7 +16389,7 @@ impl fmt::Display for OpticalFlowUsageFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/OpticalFlowSessionCreateFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkOpticalFlowSessionCreateFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct OpticalFlowSessionCreateFlagsNV(Flags);
@@ -16413,7 +16416,7 @@ impl fmt::Display for OpticalFlowSessionCreateFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/OpticalFlowExecuteFlagsNV.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkOpticalFlowExecuteFlagsNV.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct OpticalFlowExecuteFlagsNV(Flags);
@@ -16430,7 +16433,7 @@ impl fmt::Display for OpticalFlowExecuteFlagsNV {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/FrameBoundaryFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkFrameBoundaryFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FrameBoundaryFlagsEXT(Flags);
@@ -16447,7 +16450,7 @@ impl fmt::Display for FrameBoundaryFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PresentScalingFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPresentScalingFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PresentScalingFlagsKHR(Flags);
@@ -16473,7 +16476,7 @@ impl fmt::Display for PresentScalingFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PresentGravityFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPresentGravityFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PresentGravityFlagsKHR(Flags);
@@ -16496,7 +16499,7 @@ impl fmt::Display for PresentGravityFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ShaderCreateFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkShaderCreateFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ShaderCreateFlagsEXT(Flags);
@@ -16535,7 +16538,7 @@ impl fmt::Display for ShaderCreateFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/TileShadingRenderPassFlagsQCOM.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkTileShadingRenderPassFlagsQCOM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TileShadingRenderPassFlagsQCOM(Flags);
@@ -16553,7 +16556,7 @@ impl fmt::Display for TileShadingRenderPassFlagsQCOM {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PhysicalDeviceSchedulingControlsFlagsARM.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPhysicalDeviceSchedulingControlsFlagsARM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PhysicalDeviceSchedulingControlsFlagsARM(Flags64);
@@ -16574,7 +16577,7 @@ impl fmt::Display for PhysicalDeviceSchedulingControlsFlagsARM {
         flag_display(self.0, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SurfaceCreateFlagsOHOS.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSurfaceCreateFlagsOHOS.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SurfaceCreateFlagsOHOS(Flags);
@@ -16589,7 +16592,7 @@ impl fmt::Display for SurfaceCreateFlagsOHOS {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PresentStageFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPresentStageFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PresentStageFlagsEXT(Flags);
@@ -16614,7 +16617,7 @@ impl fmt::Display for PresentStageFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PastPresentationTimingFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPastPresentationTimingFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PastPresentationTimingFlagsEXT(Flags);
@@ -16635,7 +16638,7 @@ impl fmt::Display for PastPresentationTimingFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PresentTimingInfoFlagsEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPresentTimingInfoFlagsEXT.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PresentTimingInfoFlagsEXT(Flags);
@@ -16656,7 +16659,7 @@ impl fmt::Display for PresentTimingInfoFlagsEXT {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/SwapchainImageUsageFlagsOHOS.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSwapchainImageUsageFlagsOHOS.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SwapchainImageUsageFlagsOHOS(Flags);
@@ -16673,7 +16676,7 @@ impl fmt::Display for SwapchainImageUsageFlagsOHOS {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/PerformanceCounterDescriptionFlagsARM.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPerformanceCounterDescriptionFlagsARM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PerformanceCounterDescriptionFlagsARM(Flags);
@@ -16688,7 +16691,7 @@ impl fmt::Display for PerformanceCounterDescriptionFlagsARM {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/ShaderInstrumentationValuesFlagsARM.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkShaderInstrumentationValuesFlagsARM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ShaderInstrumentationValuesFlagsARM(Flags);
@@ -16703,7 +16706,7 @@ impl fmt::Display for ShaderInstrumentationValuesFlagsARM {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DataGraphTOSAQualityFlagsARM.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDataGraphTOSAQualityFlagsARM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DataGraphTOSAQualityFlagsARM(Flags);
@@ -16728,7 +16731,7 @@ impl fmt::Display for DataGraphTOSAQualityFlagsARM {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DataGraphOpticalFlowGridSizeFlagsARM.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDataGraphOpticalFlowGridSizeFlagsARM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DataGraphOpticalFlowGridSizeFlagsARM(Flags);
@@ -16754,7 +16757,7 @@ impl fmt::Display for DataGraphOpticalFlowGridSizeFlagsARM {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DataGraphOpticalFlowImageUsageFlagsARM.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDataGraphOpticalFlowImageUsageFlagsARM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DataGraphOpticalFlowImageUsageFlagsARM(Flags);
@@ -16780,7 +16783,7 @@ impl fmt::Display for DataGraphOpticalFlowImageUsageFlagsARM {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DataGraphOpticalFlowCreateFlagsARM.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDataGraphOpticalFlowCreateFlagsARM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DataGraphOpticalFlowCreateFlagsARM(Flags);
@@ -16803,7 +16806,7 @@ impl fmt::Display for DataGraphOpticalFlowCreateFlagsARM {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/DataGraphOpticalFlowExecuteFlagsARM.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDataGraphOpticalFlowExecuteFlagsARM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DataGraphOpticalFlowExecuteFlagsARM(Flags);
@@ -16830,7 +16833,7 @@ impl fmt::Display for DataGraphOpticalFlowExecuteFlagsARM {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoCodecOperationFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoCodecOperationFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoCodecOperationFlagsKHR(Flags);
@@ -16862,7 +16865,7 @@ impl fmt::Display for VideoCodecOperationFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoCapabilityFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoCapabilityFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoCapabilityFlagsKHR(Flags);
@@ -16883,7 +16886,7 @@ impl fmt::Display for VideoCapabilityFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoSessionCreateFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoSessionCreateFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoSessionCreateFlagsKHR(Flags);
@@ -16912,7 +16915,7 @@ impl fmt::Display for VideoSessionCreateFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoSessionParametersCreateFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoSessionParametersCreateFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoSessionParametersCreateFlagsKHR(Flags);
@@ -16929,7 +16932,7 @@ impl fmt::Display for VideoSessionParametersCreateFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoBeginCodingFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoBeginCodingFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoBeginCodingFlagsKHR(Flags);
@@ -16944,7 +16947,7 @@ impl fmt::Display for VideoBeginCodingFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEndCodingFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEndCodingFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEndCodingFlagsKHR(Flags);
@@ -16959,7 +16962,7 @@ impl fmt::Display for VideoEndCodingFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoCodingControlFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoCodingControlFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoCodingControlFlagsKHR(Flags);
@@ -16982,7 +16985,7 @@ impl fmt::Display for VideoCodingControlFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoDecodeUsageFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoDecodeUsageFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoDecodeUsageFlagsKHR(Flags);
@@ -17006,7 +17009,7 @@ impl fmt::Display for VideoDecodeUsageFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoDecodeCapabilityFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoDecodeCapabilityFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoDecodeCapabilityFlagsKHR(Flags);
@@ -17027,7 +17030,7 @@ impl fmt::Display for VideoDecodeCapabilityFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoDecodeFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoDecodeFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoDecodeFlagsKHR(Flags);
@@ -17042,7 +17045,7 @@ impl fmt::Display for VideoDecodeFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoDecodeH264PictureLayoutFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoDecodeH264PictureLayoutFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoDecodeH264PictureLayoutFlagsKHR(Flags);
@@ -17064,7 +17067,7 @@ impl fmt::Display for VideoDecodeH264PictureLayoutFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeFlagsKHR(Flags);
@@ -17087,7 +17090,7 @@ impl fmt::Display for VideoEncodeFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeUsageFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeUsageFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeUsageFlagsKHR(Flags);
@@ -17113,7 +17116,7 @@ impl fmt::Display for VideoEncodeUsageFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeContentFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeContentFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeContentFlagsKHR(Flags);
@@ -17137,7 +17140,7 @@ impl fmt::Display for VideoEncodeContentFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeCapabilityFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeCapabilityFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeCapabilityFlagsKHR(Flags);
@@ -17162,7 +17165,7 @@ impl fmt::Display for VideoEncodeCapabilityFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeFeedbackFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeFeedbackFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeFeedbackFlagsKHR(Flags);
@@ -17185,7 +17188,7 @@ impl fmt::Display for VideoEncodeFeedbackFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeRateControlFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeRateControlFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeRateControlFlagsKHR(Flags);
@@ -17200,7 +17203,7 @@ impl fmt::Display for VideoEncodeRateControlFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeRateControlModeFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeRateControlModeFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeRateControlModeFlagsKHR(Flags);
@@ -17221,7 +17224,7 @@ impl fmt::Display for VideoEncodeRateControlModeFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeIntraRefreshModeFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeIntraRefreshModeFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeIntraRefreshModeFlagsKHR(Flags);
@@ -17247,7 +17250,7 @@ impl fmt::Display for VideoEncodeIntraRefreshModeFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoChromaSubsamplingFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoChromaSubsamplingFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoChromaSubsamplingFlagsKHR(Flags);
@@ -17273,7 +17276,7 @@ impl fmt::Display for VideoChromaSubsamplingFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoComponentBitDepthFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoComponentBitDepthFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoComponentBitDepthFlagsKHR(Flags);
@@ -17297,7 +17300,7 @@ impl fmt::Display for VideoComponentBitDepthFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeH264CapabilityFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeH264CapabilityFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeH264CapabilityFlagsKHR(Flags);
@@ -17336,7 +17339,7 @@ impl fmt::Display for VideoEncodeH264CapabilityFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeH264StdFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeH264StdFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeH264StdFlagsKHR(Flags);
@@ -17393,7 +17396,7 @@ impl fmt::Display for VideoEncodeH264StdFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeH264RateControlFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeH264RateControlFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeH264RateControlFlagsKHR(Flags);
@@ -17420,7 +17423,7 @@ impl fmt::Display for VideoEncodeH264RateControlFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeH265CapabilityFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeH265CapabilityFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeH265CapabilityFlagsKHR(Flags);
@@ -17461,7 +17464,7 @@ impl fmt::Display for VideoEncodeH265CapabilityFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeH265StdFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeH265StdFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeH265StdFlagsKHR(Flags);
@@ -17520,7 +17523,7 @@ impl fmt::Display for VideoEncodeH265StdFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeH265RateControlFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeH265RateControlFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeH265RateControlFlagsKHR(Flags);
@@ -17547,7 +17550,7 @@ impl fmt::Display for VideoEncodeH265RateControlFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeH265CtbSizeFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeH265CtbSizeFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeH265CtbSizeFlagsKHR(Flags);
@@ -17570,7 +17573,7 @@ impl fmt::Display for VideoEncodeH265CtbSizeFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeH265TransformBlockSizeFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeH265TransformBlockSizeFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeH265TransformBlockSizeFlagsKHR(Flags);
@@ -17595,7 +17598,7 @@ impl fmt::Display for VideoEncodeH265TransformBlockSizeFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeAV1CapabilityFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeAV1CapabilityFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeAV1CapabilityFlagsKHR(Flags);
@@ -17640,7 +17643,7 @@ impl fmt::Display for VideoEncodeAV1CapabilityFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeAV1StdFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeAV1StdFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeAV1StdFlagsKHR(Flags);
@@ -17668,7 +17671,7 @@ impl fmt::Display for VideoEncodeAV1StdFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeAV1RateControlFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeAV1RateControlFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeAV1RateControlFlagsKHR(Flags);
@@ -17702,7 +17705,7 @@ impl fmt::Display for VideoEncodeAV1RateControlFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VideoEncodeAV1SuperblockSizeFlagsKHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkVideoEncodeAV1SuperblockSizeFlagsKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VideoEncodeAV1SuperblockSizeFlagsKHR(Flags);
@@ -17723,7 +17726,7 @@ impl fmt::Display for VideoEncodeAV1SuperblockSizeFlagsKHR {
         flag_display(self.0 as u64, BITS, f)
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/AccessFlags3KHR.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkAccessFlags3KHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AccessFlags3KHR(Flags64);
