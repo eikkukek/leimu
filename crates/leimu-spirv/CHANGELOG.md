@@ -33,6 +33,7 @@ All changes to this project will be documented in this file.
 - Initial crate release
 - Basic reflection
 
+[0.3.1]: https://crates.io/crates/leimu-spirv/0.3.1
 [0.3.0]: https://crates.io/crates/leimu-spirv/0.3.0
 [0.2.0]: https://crates.io/crates/nox-spirv/0.2.0
 [0.1.1]: https://crates.io/crates/nox-spirv/0.1.1
