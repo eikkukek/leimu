@@ -51,7 +51,7 @@ pub use extension_gen::*;
 mod macros;
 
 /// A trait for loading extension instances/devices generically.
-pub trait LoadWith {
+pub trait LoadWith: Clone {
 
     /// The handle type, which is either [`vk::Device`] or [`vk::Instance`].
     type Handle;
@@ -69,6 +69,7 @@ pub trait LoadWith {
 
 pub mod nop {
     use super::*;
+    #[derive(Clone, Copy)]
     pub struct Device;
     impl LoadWith for Device {
 
@@ -81,6 +82,7 @@ pub mod nop {
             Self
         }
     }
+    #[derive(Clone, Copy)]
     pub struct Instance;
     impl LoadWith for Instance {
 

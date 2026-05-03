@@ -1,6 +1,9 @@
 # Changelog
 
 All changes to this project will be documented in this file.
+## [0.1.3] - 2026-05-03
+### Fixed
+- Devices and instances not being clonable.
 ## [0.1.2] - 2026-04-25
 
 ### Fixed
@@ -17,6 +20,7 @@ All changes to this project will be documented in this file.
 ### Added
 - Initial crate release
 
+[0.1.3]: https://crates.io/crates/tuhka/0.1.3
 [0.1.2]: https://crates.io/crates/tuhka/0.1.2
 [0.1.1]: https://crates.io/crates/tuhka/0.1.1
 [0.1.0]: https://crates.io/crates/tuhka/0.1.0
