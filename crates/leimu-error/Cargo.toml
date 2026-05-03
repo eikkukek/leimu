@@ -1,7 +1,0 @@
-[package]
-name = "leimu-error"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-leimu-proc = { path = "../leimu-proc" }

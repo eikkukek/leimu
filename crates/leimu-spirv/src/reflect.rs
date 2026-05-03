@@ -702,6 +702,13 @@ impl<'a> Reflector<'a> {
         };
         Ok(self.variables().map(move |op_variable| {
             let op_variable = op_variable?;
+            let name = self.names().find_map(|op_name| {
+                if let Ok(name) = op_name &&
+                    name.target == op_variable.id_result
+                {
+                    Some(name.name)
+                } else { None }
+            });
             if self.module.version() >= VERSION_1_4 &&
                 !entry_point.interface.contains(&op_variable.id_result)
             {
@@ -763,14 +770,7 @@ impl<'a> Reflector<'a> {
                         break
                     },
                 };
-            }
-            let name = self.names().find_map(|op_name| {
-                if let Ok(name) = op_name &&
-                    name.target == op_variable.id_result
-                {
-                    Some(name.name)
-                } else { None }
-            }); 
+            } 
             if resource_class == op::StorageClass::UNIFORM_CONSTANT {
                 match ty {
                     ResourceType::InputAttachment => {
