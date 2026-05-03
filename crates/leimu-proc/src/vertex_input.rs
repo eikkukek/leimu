@@ -1,6 +1,49 @@
-use proc_macro::{TokenStream};
-use syn::{parse_macro_input, Data, DeriveInput, Error};
-use quote::{quote, ToTokens};
+use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::Literal;
+use syn::{parse_macro_input, Data, DeriveInput};
+use quote::quote;
+
+fn parse_inputs(
+    name: &syn::Ident,
+    data: &syn::DataStruct,
+) -> syn::Result<Vec<TokenStream2>> {
+    let mut inputs = vec![];
+    for (i, field) in data.fields.iter().enumerate() {
+        let offset_of = field.ident
+            .as_ref()
+            .map(|ident| {
+                quote! {
+                    ::core::mem::offset_of!(#name, #ident)
+                }
+            }).unwrap_or_else(|| {
+                let f = Literal::usize_unsuffixed(i);
+                quote! {
+                    ::core::mem::offset_of!(#name, #f)
+                }
+            });
+        let i = i as u32;
+        let Some(attr) = field
+            .attrs.iter()
+            .find(|attr|
+                attr.path().is_ident("format")
+            )
+        else {
+            return Err(
+                syn::Error::new_spanned(field, "missing format attribute for field")
+            )
+        };
+        let format = attr.parse_args::<syn::Expr>()?;
+        inputs.push(quote! {
+            leimu::gpu::VertexInputAttribute {
+                location: first_location + #i,
+                format: #format,
+                offset: #offset_of as u32,
+            }
+        });
+    }
+    Ok(inputs)
+}
 
 pub fn vertex_input(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
@@ -11,69 +54,38 @@ pub fn vertex_input(item: TokenStream) -> TokenStream {
             ident == "C"
         {
             repr_c = true;
-            break
         }
     }
     if !repr_c {
-        let err = Error::new_spanned(&input, "Struct must be repr(C)");
+        let err = syn::Error::new_spanned(&input, "VertexInput must be repr(C)");
         return err.to_compile_error().into()
     }
-    let fields = match &input.data {
-        Data::Struct(data_struct) => &data_struct.fields,
-        _ => {
-            return Error::new_spanned(&input, "VertexInput must be a struct")
+    let Data::Struct(data) = &input.data else {
+        return syn::Error::new_spanned(&input, "VertexInput must be a struct")
+            .to_compile_error()
+            .into()
+    };
+    let name = &input.ident; 
+    let inputs = match parse_inputs(name, data) {
+        Ok(inputs) => inputs,
+        Err(err) => {
+            return err
                 .to_compile_error()
                 .into()
+
         }
     };
-    let name = &input.ident;
-    let inputs: Vec<_> = fields
-        .iter()
-        .enumerate()
-        .map(|(i, f)| {
-            let i = i as u32;
-            let n = &f.ident; 
-            let ty = f.ty.to_token_stream();
-            let str = ty.to_string();
-            let format = match str.as_str() {
-                "u32" => quote!(nox::gpu::Format::R32Uint),
-                "[u32; 2]" => quote!(nox::gpu::Format::R32g32Uint),
-                "[u32; 3]" => quote!(nox::gpu::Format::R32g32b32Uint),
-                "[u32; 4]" => quote!(nox::gpu::Format::R32g32b32a32Uint),
-                "i32" => quote!(nox::gpu::Format::R32_SINT),
-                "[i32; 2]" => quote!(nox::gpu::Format::R32g32Sint),
-                "[i32; 3]" => quote!(nox::gpu::Format::R32g32b32Sint),
-                "[i32; 4]" => quote!(nox::gpu::Format::R32g32b32a32Sint),
-                "f32" => quote!(nox::gpu::Format::R32Sfloat),
-                "[f32; 2]" => quote!(nox::gpu::Format::R32g32Sfloat),
-                "[f32; 3]" => quote!(nox::gpu::Format::R32g32b32Sfloat),
-                "[f32; 4]" => quote!(nox::gpu::Format::R32g32b32a32Sfloat),
-                _ if str.ends_with("Vec2") => quote!(nox::gpu::Format::R32g32Sfloat),
-                _ if str.ends_with("Vec3") => quote!(nox::gpu::Format::R32g32b32Sfloat),
-                _ if str.ends_with("Vec4") => quote!(nox::gpu::Format::R32g32b32a32Sfloat),
-                _ => quote!(#ty::FORMAT),
-            };
-            quote! {
-                nox::gpu::VertexInputAttribute {
-                    location: first_location + #i,
-                    format: #format,
-                    offset: core::mem::offset_of!(#name, #n) as u32,
-                }
-            }
-        })
-        .collect();
     let n = inputs.len();
-    let expanded = quote! {
-        impl<> nox::gpu::VertexInput<#n> for #name {
+    quote! {
+        impl<> leimu::gpu::VertexInput<#n> for #name {
 
             fn get_attributes(
                 first_location: u32,
-            ) -> [nox::gpu::VertexInputAttribute; #n] {
+            ) -> [leimu::gpu::VertexInputAttribute; #n] {
                 [#(
                     #inputs
                 ),*]
             }
         }
-    };
-    TokenStream::from(expanded)
+    }.into()
 }

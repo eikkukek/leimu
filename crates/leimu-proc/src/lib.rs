@@ -26,7 +26,7 @@ pub fn error(item: TokenStream) -> TokenStream {
 }
 
 /// Derive macro for [`VertexInput`].
-#[proc_macro_derive(VertexInput)]
+#[proc_macro_derive(VertexInput, attributes(format))]
 pub fn vertex_input(item: TokenStream) -> TokenStream {
     vertex_input::vertex_input(item)
 }
