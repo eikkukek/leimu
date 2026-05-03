@@ -20,14 +20,10 @@ use leimu_mem::{
 
 
 use crate::{
-    error::*,
-    sync::*,
-    core::{TryExtend, OptionExt},
-    gpu::prelude::{
+    caller, core::{OptionExt, TryExtend}, error::*, gpu::{prelude::{
         command_cache::*,
         *,
-    },
-    caller,
+    }, semaphore_create_info}, sync::*
 };
 
 #[derive(Default)]
@@ -65,7 +61,7 @@ impl Inner {
     fn new(gpu: Gpu, num_workers: u32) -> Result<Self>
     {
         let mut frame_semaphore = Default::default();
-        gpu.create_timeline_semaphores([(&mut frame_semaphore, 0)])?;
+        gpu.create_timeline_semaphores([semaphore_create_info(&mut frame_semaphore, 0)])?;
         let mut workers = vec32![];
         workers.try_extend((0..num_workers).map(|_| {
             SchedulerWorker::new(gpu.clone())
@@ -99,7 +95,7 @@ impl<'a> CommandScheduler<'a> {
         self.inner.get_mut().command_resources.reserve(capacity);
         let mut new_ids = vec32![TimelineSemaphoreId::default(); n_new_resources];
         self.gpu.create_timeline_semaphores(
-            new_ids.iter_mut().map(|id| (id, 0))
+            new_ids.iter_mut().map(|id| semaphore_create_info(id, 0))
         )?;
         self.inner.get_mut().command_resources.extend(
             new_ids.iter().map(|&id| CommandResources::new(id))

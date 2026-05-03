@@ -8,12 +8,16 @@ pub mod gpu;
 
 mod macros;
 
-pub use leimu_mem as mem;
-pub use tuhka;
+/// Base collections and allocators used internally by leimu.
+///
+/// A re-export of [`leimu_mem`].
+pub mod mem {
+    pub use leimu_mem::*;
+}
 
-mod library;
+mod entry;
 
-pub use library::Library;
+pub use entry::Entry;
 
 #[cfg(feature = "event-loop")]
 mod leimu;
@@ -32,3 +36,5 @@ pub fn default<T: Default>() -> T {
 pub fn duration_secs(secs: f32) -> ::core::time::Duration {
     ::core::time::Duration::from_secs_f32(secs)
 }
+
+pub use executor::block_on;

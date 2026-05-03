@@ -18,7 +18,7 @@ use tuhka::vk;
 use crate::{
     bitflags,
     error::*,
-    gpu::prelude::*,
+    gpu::{prelude::*, semaphore_create_info, semaphore_wait_info},
     location,
 };
 
@@ -51,15 +51,14 @@ pub trait NewCommands {
         where Self::Target<'a, 'b>: Commands<'a, 'b>;
 }
 
-/// A trait for [`recording`][1] commands with a [`command buffer`][2] and
-/// [`submitting them to a queue`][3]
+/// A trait for [`recording`][1] commands with a [`command buffer`][2] and [`submitting them to a queue`][3].
 ///
 /// # Safety
 /// There are a multitude of safety considerations when implementing this trait yourself.
 ///
 /// Resources need to be handled with proper [`pipeline barriers`][4], command buffers need to be
-/// recorded with proper validation and the implementation needs to fit in the Leimu [`command recording`][1]
-/// scheme.
+/// recorded with proper validation and the implementation needs to fit in the Leimu 
+/// [`command recording`][1] scheme.
 ///
 /// [1]: CommandRecorder
 /// [2]: https://docs.vulkan.org/refpages/latest/refpages/source/VkCommandBuffer.html
@@ -403,8 +402,8 @@ impl SchedulerWorker {
         let mut semaphore_id = Default::default();
         let mut present_prep_semaphore = Default::default();
         gpu.create_timeline_semaphores([
-            (&mut semaphore_id, 0),
-            (&mut present_prep_semaphore, 0)
+            semaphore_create_info(&mut semaphore_id, 0),
+            semaphore_create_info(&mut present_prep_semaphore, 0)
         ])?;
         let mut command_pools = AHashMap::default();
         for queue in device.device_queues() {
@@ -491,7 +490,7 @@ impl SchedulerWorker {
         current_frame: u64,
     ) -> Result<(TimelineSemaphoreId, u64)> {
         if gpu.wait_for_semaphores(
-            &[(self.semaphore_id, self.timeline_value)],
+            [semaphore_wait_info(self.semaphore_id, self.timeline_value)],
             core::time::Duration::from_nanos(self.device.frame_timeout()),
         )? {
             self.timeline_value += 1;

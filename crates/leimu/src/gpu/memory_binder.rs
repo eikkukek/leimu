@@ -37,11 +37,33 @@ pub enum HostCoherency {
     Coherent,
 }
 
+/// Specifies a range of mapped buffer memory.
 #[derive(Clone, Copy)]
 pub struct MappedBufferMemoryRange {
+    /// The [`id`][1] of the mapped buffer.
+    ///
+    /// [1]: BufferId
     pub buffer_id: BufferId,
+    /// The offset into the mapped buffer.
     pub offset: DeviceSize,
+    /// The size of the range.
     pub size: DeviceSize,
+}
+
+impl MappedBufferMemoryRange {
+
+    #[inline]
+    pub fn new(
+        buffer_id: BufferId,
+        offset: DeviceSize,
+        size: DeviceSize,
+    ) -> Self {
+        Self {
+            buffer_id,
+            offset,
+            size,
+        }
+    }
 }
 
 /// A trait for [`vk::DeviceMemory`] objects.
@@ -146,7 +168,7 @@ impl MemoryMap {
     
     /// Writes bytes to the mapped memory.
     ///
-    /// Panics if the byte count is larger than [`size`][1]
+    /// Panics if the `offset` + byte count is larger than [`size`][1]
     ///
     /// # Safety
     /// It has to be ensured that the mapping is still valid up to [`size`][1].
@@ -155,12 +177,13 @@ impl MemoryMap {
     #[inline]
     pub unsafe fn write_bytes(
         &mut self,
+        offset: usize,
         bytes: &[u8]
     ) {
-        assert!(self.size <= bytes.len());
+        assert!(self.size >= offset + bytes.len());
         unsafe {
             bytes.as_ptr().copy_to_nonoverlapping(
-                self.map,
+                self.map.add(offset),
                 bytes.len()
             );
         }

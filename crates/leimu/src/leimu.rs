@@ -24,7 +24,7 @@ use crate::{
     error::*,
     gpu,
     win::WindowId,
-    Library,
+    Entry,
 };
 
 pub struct Leimu;
@@ -42,7 +42,7 @@ impl Leimu {
 
     #[allow(clippy::new_ret_no_self)]
     pub fn new<'a, 'b, F>(
-        library: Library,
+        entry: Entry,
         device: gpu::Device,
         attributes: Attributes,
         globals: &'a Globals<'b>,
@@ -51,7 +51,7 @@ impl Leimu {
         where F: FnMut(&ActiveEventLoop, Event) -> EventResult<()>,
     {
         let event_loop = EventLoop
-            ::new(library)
+            ::new(entry)
             .context("failed to create event loop")?; 
         let (gpu, gpu_cache) = gpu::Gpu
             ::new(&event_loop, device, attributes)
@@ -63,6 +63,7 @@ impl Leimu {
             globals,
             gpu,
             gpu_cache,
+            err_terminate: false,
         })
     }
 }
@@ -77,6 +78,7 @@ pub struct LeimuRun<'a, 'b, F>
     globals: &'a Globals<'b>,
     gpu: gpu::Gpu,
     gpu_cache: gpu::Cache,
+    err_terminate: bool,
 }
 
 impl<'a, 'b, F> LeimuRun<'a, 'b, F>
@@ -84,12 +86,12 @@ impl<'a, 'b, F> LeimuRun<'a, 'b, F>
         F: FnMut(&ActiveEventLoop, Event) -> EventResult<()>,
 {
 
-    pub fn run(mut self) {
+    pub fn run(mut self) -> Result<()> {
         self.event_loop
             .init()
-            .event_loop
+            .take_event_loop().unwrap()
             .run_app(&mut self)
-            .expect("failed to run event loop");
+            .context("failed to run event loop")
     }
 }
 
@@ -108,6 +110,7 @@ impl<'a, 'b, F> ApplicationHandler<RunEvent> for LeimuRun<'a, 'b, F>
             if let Err(err) = self.globals.init(
                 &event_loop,
             ) {
+                self.err_terminate = true;
                 event_loop.exit();
                 expand_error(err);
                 return
@@ -119,6 +122,7 @@ impl<'a, 'b, F> ApplicationHandler<RunEvent> for LeimuRun<'a, 'b, F>
                 "init event error at {}", orig.or_this(),
             ))
             {
+                self.err_terminate = true;
                 event_loop.exit();
                 expand_error(err);
             }
@@ -133,7 +137,9 @@ impl<'a, 'b, F> ApplicationHandler<RunEvent> for LeimuRun<'a, 'b, F>
             &self.event_loop,
             event_loop
         );
-        if let Err(err) = (self.event_handler)(&event_loop, Event::CleanUp)
+        if let Err(err) = (self.event_handler)(&event_loop, Event::CleanUp {
+            ended_on_error: self.err_terminate,
+        })
             .context_from_tracked(|orig| format!(
                 "clean up event error at {}", orig.or_this(),
             ))
@@ -160,6 +166,7 @@ impl<'a, 'b, F> ApplicationHandler<RunEvent> for LeimuRun<'a, 'b, F>
                     "update event error at {}", orig.or_this()
                 ))
                 {
+                    self.err_terminate = true;
                     event_loop.exit();
                     expand_error(err);
                     return
@@ -186,6 +193,7 @@ impl<'a, 'b, F> ApplicationHandler<RunEvent> for LeimuRun<'a, 'b, F>
                         }, &mut self.gpu_cache)
                         .context("gpu error")
                     {
+                        self.err_terminate = true;
                         event_loop.exit();
                         expand_error(err);
                         return

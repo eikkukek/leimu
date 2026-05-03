@@ -12,13 +12,16 @@ use crate::{
     error::*,
 };
 
+/// Contains the handle and metadata of a [`physical device`][1].
+///
+/// [1]: vk::PhysicalDevice
 #[derive(Clone)]
 pub struct PhysicalDevice {
     handle: vk::PhysicalDevice,
     api_version: Version,
     driver_version: Version,
     device_type: PhysicalDeviceType,
-    limits: vk::PhysicalDeviceLimits,
+    limits: PhysicalDeviceLimits,
     memory_properties: vk::PhysicalDeviceMemoryProperties,
     queue_families: QueueFamilies,
     device_name: DeviceName,
@@ -51,49 +54,70 @@ impl PhysicalDevice {
             api_version: Version::from_u32(properties.api_version),
             driver_version: Version::from_u32(properties.driver_version),
             device_type: properties.device_type.into(),
-            limits: properties.limits,
+            limits: PhysicalDeviceLimits(properties.limits),
             memory_properties,
             queue_families,
             device_name,
         }
     }
 
+    /// Gets the raw [`handle`][1] of this device.
+    ///
+    /// [1]: vk::PhysicalDevice
     #[inline(always)]
     pub fn handle(&self) -> vk::PhysicalDevice {
         self.handle
     }
 
+    /// Gets the api version of this device.
     #[inline(always)]
     pub fn api_version(&self) -> Version {
         self.api_version
     }
 
+    /// Gets the driver version of this device.
     #[inline(always)]
     pub fn driver_version(&self) -> Version {
         self.driver_version
     }
 
+    /// Gets the [`PhysicalDeviceType`] of this device.
     #[inline(always)]
     pub fn device_type(&self) -> PhysicalDeviceType {
         self.device_type
     }
 
+    /// Gets the name of this device.
     #[inline(always)]
     pub fn device_name(&self) -> &str {
         str::from_utf8(&self.device_name.0[0..self.device_name.1])
             .unwrap_or("<utf8-error")
     }
 
-    #[inline(always)]
-    pub fn queue_families(&self) -> &QueueFamilies {
+    /// Enumerates all queue families owned by this device.
+    #[inline]
+    pub fn enumerate_queue_families(&self) -> EnumeratedQueueFamilies<'_> {
+        EnumeratedQueueFamilies {
+            properties: self.queue_families.properties(),
+        }
+    }
+
+    #[inline]
+    pub(crate) fn queue_families(&self) -> &QueueFamilies {
         &self.queue_families
     }
 
+    /// Returns the [`limits`][1] of this device.
+    ///
+    /// [1]: PhysicalDeviceLimits
     #[inline(always)]
-    pub fn limits(&self) -> &vk::PhysicalDeviceLimits {
+    pub fn limits(&self) -> &PhysicalDeviceLimits {
         &self.limits
     }
 
+    /// Returns the [`memory properties`][1] of this device.
+    ///
+    /// [1]: vk::PhysicalDeviceMemoryProperties
     #[inline(always)]
     pub fn memory_properties(&self) -> &vk::PhysicalDeviceMemoryProperties {
         &self.memory_properties
@@ -135,13 +159,6 @@ pub(super) fn is_device_suitable<'a>(
         &mut vulkan14_features,
         None,
     );
-    for info in device_extension_infos {
-        if let Some(precondition) = &info.precondition &&
-            let Some(err) = precondition.call(&context)
-        {
-            return Ok(DeviceSuitability::MissingFeatures(err))
-        }
-    }
     let api_version = physical_device.api_version;
     if api_version < vk::API_VERSION_1_1 {
         return Ok(DeviceSuitability::OldVersion(api_version))
@@ -164,7 +181,6 @@ pub(super) fn is_device_suitable<'a>(
         ).context("failed to enumerate vulkan device extensions")?;
         av
     };
-
     let missing_extensions: Vec32<_> = check_ext.iter().filter_map(|&ext| {
         (!available_extensions.iter().any(|a| {
             a.extension_name_as_cstr().unwrap_or_default() == ext
@@ -173,6 +189,14 @@ pub(super) fn is_device_suitable<'a>(
 
     if !missing_extensions.is_empty() {
         return Ok(DeviceSuitability::MissingExtensions(missing_extensions))
+    }
+
+    for info in device_extension_infos {
+        if let Some(precondition) = &info.precondition &&
+            let Some(err) = precondition.call(&context)
+        {
+            return Ok(DeviceSuitability::MissingFeatures(err))
+        }
     }
 
     Ok(DeviceSuitability::Ok)

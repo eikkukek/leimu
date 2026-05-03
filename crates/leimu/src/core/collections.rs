@@ -58,3 +58,5 @@ impl<'a, K, V> EntryExt<'a, K, V> for Entry<'a, K, V> {
         }
     }
 }
+
+pub use ahash::{AHashMap, AHashSet};

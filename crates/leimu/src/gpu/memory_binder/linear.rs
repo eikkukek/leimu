@@ -130,7 +130,7 @@ impl Block {
         });
         allocation.device_memory?;
         let mut offset = 0;
-        let used = allocation.used.fetch_update(
+        let used = allocation.used.try_update(
             atomic::Ordering::AcqRel, atomic::Ordering::Acquire,
             |used| {
                 let align = memory_requirements.memory_requirements.alignment.max(granularity);
@@ -151,8 +151,8 @@ impl Block {
         Ok(Memory::new(
             allocation.clone(),
             offset,
-            block_size,
             memory_requirements.memory_requirements.size,
+            block_size,
             coherency,
             is_optimal,
         ))
@@ -245,7 +245,7 @@ struct Memory {
     allocation: Arc<Allocation>,
     offset: DeviceSize,
     size: DeviceSize,
-    block_size: DeviceSize,
+    memory_size: DeviceSize,
     coherency: HostCoherency,
     is_optimal: bool,
 }
@@ -259,7 +259,7 @@ impl Memory {
         allocation: Arc<Allocation>,
         offset: DeviceSize,
         size: DeviceSize,
-        block_size: DeviceSize,
+        memory_size: DeviceSize,
         coherency: HostCoherency,
         is_optimal: bool,
     ) -> Self
@@ -268,7 +268,7 @@ impl Memory {
             allocation,
             offset,
             size,
-            block_size,
+            memory_size,
             coherency,
             is_optimal,
         }
@@ -286,7 +286,7 @@ unsafe impl DeviceMemory for Memory {
     }
 
     fn memory_size(&self) -> u64 {
-        self.block_size
+        self.memory_size
     }
 
     fn offset(&self) -> DeviceSize {
@@ -349,7 +349,7 @@ unsafe impl MemoryBinder for LinearBinder {
         let block_size = self.block_size;
         let granularity = self.device
             .physical_device()
-            .limits().buffer_image_granularity;
+            .limits().buffer_image_granularity();
         unsafe {
             if let Some(dedicated_requirements) = chain_in_iter(memory_requirements)
                 .find(|_in| (_in).s_type == vk::MemoryDedicatedRequirements::S_TYPE)

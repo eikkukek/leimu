@@ -25,6 +25,7 @@ use crate::{
 pub struct GraphicsPipeline {
     handle: PipelineHandle,
     samples: MsaaSamples,
+    stage_flags: ShaderStageFlags,
     vertex_input_bindings: Arc<[VertexInputBinding]>,
     color_outputs_and_dynamic_states: Arc<[i32]>,
     n_color_output_formats: u32,
@@ -34,7 +35,7 @@ pub struct GraphicsPipeline {
 
 impl GraphicsPipeline {
 
-    #[inline(always)]
+    #[inline]
     pub(super) unsafe fn new(
         device: Device,
         handle: vk::Pipeline,
@@ -58,10 +59,15 @@ impl GraphicsPipeline {
                 );
             Arc::from_raw(data)
         };
+        let mut stage_flags = ShaderStageFlags::empty();
+        for shader in shader_set.shaders() {
+            stage_flags |= shader.stage().into();
+        }
         Self {
             handle: unsafe {
                 PipelineHandle::new(device, handle, shader_set)
             },
+            stage_flags,
             samples: create_info.sample_shading_info
                 .map(|info| info.samples)
                 .unwrap_or(MsaaSamples::X1),
@@ -78,22 +84,27 @@ impl GraphicsPipeline {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn handle(&self) -> &PipelineHandle {
         &self.handle
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn samples(&self) -> MsaaSamples {
         self.samples
     }
 
-    #[inline(always)]
+    #[inline]
+    pub fn stage_flags(&self) -> ShaderStageFlags {
+        self.stage_flags
+    }
+
+    #[inline]
     pub fn vertex_input_bindings(&self) -> &[VertexInputBinding] {
         &self.vertex_input_bindings
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn color_output_formats(&self) -> &[Format] {
         unsafe {
             slice::cast(
@@ -102,17 +113,17 @@ impl GraphicsPipeline {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn depth_output_format(&self) -> Format {
         self.depth_output_format
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn stencil_output_format(&self) -> Format {
         self.stencil_output_format
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn dynamic_states(&self) -> &[DynamicState] {
         unsafe {
             slice::cast(
@@ -121,7 +132,7 @@ impl GraphicsPipeline {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn has_dynamic_state(&self, dynamic_state: DynamicState) -> bool {
         self.dynamic_states().contains(&dynamic_state)
     }

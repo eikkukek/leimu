@@ -1,15 +1,18 @@
+//! Everything [`Gpu`] related.
+//!
+//! See [`Instance`], [`Device`] and [`Gpu`] to get started.
+
 pub mod ext;
 mod memory_binder;
-pub mod device;
-pub mod extendable;
+mod device;
 
 mod instance;
 mod queue;
 mod physical_device;
-mod interface;
 mod definitions;
 mod version;
 mod enums;
+#[allow(missing_docs)]
 mod format;
 mod memory_layout;
 mod handle;
@@ -54,6 +57,9 @@ use crate::{
     core::collections::EntryExt,
 };
 
+/// Vulkan bindings used by leimu.
+pub use tuhka;
+
 pub(crate) mod prelude {
 
     use super::*;
@@ -83,7 +89,6 @@ pub(crate) mod prelude {
         super::descriptor::*,
         pipeline::vertex_input::*,
         super::memory_binder::*,
-        interface::*,
         super::ext,
         surface::VulkanWindow,
         super::event::Event,
@@ -105,12 +110,12 @@ use commands::scheduler::QueueScheduler;
 
 pub use prelude::*;
 
-pub struct TmpAllocs {
+pub(crate) struct MtContext {
     fallback_alloc: Arc<Arena<True>>,
     tmp_allocs: AHashMap<std::thread::ThreadId, Arc<Arena<True>>>,
 }
 
-impl TmpAllocs {
+impl MtContext {
 
     #[inline]
     pub fn tmp_alloc(
@@ -124,8 +129,12 @@ impl TmpAllocs {
     }
 }
 
+/// Parameters used when creating [`Cache`].
 #[derive(Clone, Copy)]
 pub struct CacheAttributes {
+    /// The local allocated arena size, in bytes.
+    ///
+    /// The default is 65536 bytes.
     pub arena_size: usize,
 }
 
@@ -139,6 +148,7 @@ impl Default for CacheAttributes {
     }
 }
 
+/// An id assigned to a [`Device`].
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct DeviceId(u64);
 
@@ -151,6 +161,12 @@ impl Display for DeviceId {
 
 static DEVICE_ID: AtomicU64 = AtomicU64::new(0);
 
+/// A cache used by [`Gpu`] that is **not** thread-safe.
+///
+/// This type does **not** implement [`Send`] or [`Sync`] and must only be accessed from 
+/// a single thread.
+///
+/// See [`create_cache`] for full explanation.
 pub struct Cache {
     command_cache: UnsafeCell<CommandRecorderCache>,
     arena: Arena<True>,
@@ -180,9 +196,11 @@ impl Cache {
     }
 }
 
-/// Creates [`Cache`], which is needed for recording commands with the [`Gpu`] via [`Gpu::tick`].
+/// Creates a [`Cache`], which is needed for recording commands with the [`Gpu`] via [`tick`][1].
 ///
-/// [`Cache`] is *not* [`Send`] or [`Sync`] and should only be used on the main thread.
+/// [`Cache`] is *not* [`Send`] or [`Sync`] and should only be used from a single thread.
+///
+/// [1]: Gpu::tick
 pub fn create_cache(
     attributes: CacheAttributes,
 ) -> Cache
@@ -197,6 +215,46 @@ pub fn create_cache(
     }
 }
 
+/// Specifies the parameters for [`creating`][1] timeline semaphores.
+///
+/// [1]: Gpu::create_timeline_semaphores
+pub struct SemaphoreCreateInfo<'a> {
+    /// Mutable reference to where the [`id`][1] will be returned to.
+    ///
+    /// [1]: TimelineSemaphoreId
+    pub out_id: &'a mut TimelineSemaphoreId,
+    /// The initial value of the timeline semaphore,
+    pub initial_value: u64,
+}
+
+/// Creates [`SemaphoreCreateInfo`].
+#[inline]
+pub fn semaphore_create_info<'a>(
+    out_id: &'a mut TimelineSemaphoreId,
+    initial_value: u64
+) -> SemaphoreCreateInfo<'a> {
+    SemaphoreCreateInfo { out_id, initial_value }
+}
+
+/// Specifies the parameters for [`waiting`][1] on a semaphore on the host.
+///
+/// [1]: Gpu::wait_for_semaphores
+#[derive(Clone, Copy)]
+pub struct SemaphoreWaitInfo {
+    /// The id of the semaphore to be waited upon.
+    pub id: TimelineSemaphoreId,
+    /// The value to wait upon.
+    pub value: u64,
+}
+
+#[inline]
+pub fn semaphore_wait_info(
+    id: TimelineSemaphoreId,
+    value: u64
+) -> SemaphoreWaitInfo {
+    SemaphoreWaitInfo { id, value }
+}
+
 struct GpuInner {
     thread_pool: ThreadPool,
     memory_layout: MemoryLayout,
@@ -209,12 +267,12 @@ struct GpuInner {
     images: RwLock<SlotMap<ImageMeta>>,
     timeline_semaphores: RwLock<SlotMap<vk::Semaphore>>,
     draw_commands: RwLock<SlotMap<DrawCommandResource>>,
-    tmp_allocs: Arc<TmpAllocs>,
+    mt_ctx: Arc<MtContext>,
     desired_buffered_frames: u32,
     device: Device,
 }
 
-/// The GPU interface of Leimu.
+/// The GPU interface of leimu.
 ///
 /// A [`Clone`] + [`Send`] + [`Sync`] handle.
 #[derive(Clone)]
@@ -224,6 +282,23 @@ pub struct Gpu {
 
 impl Gpu {
 
+    /// Creates the [`Gpu`] in a standalone mode.
+    ///
+    /// This is useful when the application has its own event loop/windowing system, or when
+    /// running the [`Gpu`] in [`headless`][1] mode.
+    ///
+    /// To advance the GPU loop, simply call [`tick`][2] once per frame or whenever you want to
+    /// progress command submission.
+    ///
+    /// Surfaces can be created via [`create_surface`][3] and swapchain updates can be requested via
+    /// [`request_swapchain_update`][4].
+    ///
+    /// Everything else is handled by [`tick`][2].
+    ///
+    /// [1]: crate::Entry::headless
+    /// [2]: Self::tick
+    /// [3]: Self::create_surface
+    /// [4]: Self::request_swapchain_update
     pub fn standalone(
         device: Device,
         thread_pool: ThreadPool,
@@ -259,7 +334,7 @@ impl Gpu {
             buffers: RwLock::new(SlotMap::new()),
             timeline_semaphores: RwLock::new(SlotMap::new()),
             draw_commands: RwLock::new(SlotMap::new()),
-            tmp_allocs: Arc::new(TmpAllocs {
+            mt_ctx: Arc::new(MtContext {
                 fallback_alloc: Arc::new(main_tmp_alloc),
                 tmp_allocs,
             }),
@@ -289,23 +364,29 @@ impl Gpu {
         )?, create_cache(attributes.gpu_cache_attributes)))
     }
 
+    /// Gets the [`limits`][1] of the [`Device`] used to create this [`Gpu`].
+    ///
+    /// [1]: PhysicalDeviceLimits
     #[inline]
-    pub fn device_limits(&self) -> DeviceLimits<'_> {
-        DeviceLimits {
-            limits: self.inner.device.physical_device().limits(),
-        }
+    pub fn device_limits(&self) -> &PhysicalDeviceLimits {
+        self.inner.device.physical_device().limits()
     }
 
+    /// Returns [`base device features`][1] enabled on the [`Device`] used to create this [`Gpu`].
+    ///
+    /// [1]: BaseDeviceFeatures
     #[inline]
     pub fn enabled_base_features(&self) -> &BaseDeviceFeatures {
         self.inner.device.base_device_features()
     }
 
+    /// Gets an [`extension`][ext] device.
     #[inline]
-    pub fn get_extension_device<T: ext::ExtensionDevice>(&self) -> Option<T> {
+    pub fn get_extension_device<T: ext::ExtensionDevice>(&self) -> Option<&T> {
         self.inner.device.get_extension_device()
     }
 
+    /// Gets an [`extension`][ext] attribute.
     #[inline]
     pub fn get_device_attribute(&self, name: ext::ConstName) -> &ext::DeviceAttribute {
         self.inner.device.get_device_attribute(name)
@@ -326,10 +407,10 @@ impl Gpu {
         &self,
     ) -> Arc<Arena<True>>
     {
-        self.inner.tmp_allocs.tmp_alloc()
+        self.inner.mt_ctx.tmp_alloc()
     }
 
-    /// Gets the [`Device`] used to create this [`Gpu`] instance.
+    /// Gets the [`Device`] used to create this [`Gpu`].
     #[inline]
     pub fn device(&self) -> &Device {
         &self.inner.device
@@ -341,22 +422,28 @@ impl Gpu {
             self.inner.queue_scheduler.get().unwrap_unchecked()
         }
     }
-
+    
+    /// Returns the api version of this [`Gpu`].
     #[inline]
     pub fn api_version(&self) -> Version {
         self.inner.device.physical_device().api_version()
     }
 
+    /// Returns the [`physical device`][1] of this [`Gpu`].
+    ///
+    /// [1]: PhysicalDevice
     #[inline]
     pub fn physical_device(&self) -> &PhysicalDevice {
         self.inner.device.physical_device()
     }
 
+    /// Searches for any [`DeviceQueue`], which matches `flags`.
     #[inline]
     pub fn any_device_queue(&self, flags: QueueFlags) -> Option<DeviceQueue> {
         self.inner.device.any_device_queue(flags)
     } 
-
+    
+    /// Gets [`ImageFormatProperties`] for the given parameters.
     pub fn get_image_format_properties(
         &self,
         format: Format,
@@ -414,8 +501,8 @@ impl Gpu {
             ImageUsages::INPUT_ATTACHMENT
         ) {
             let limits = self.inner.device.physical_device().limits();
-            max_dimensions.width = max_dimensions.width.min(limits.max_framebuffer_width);
-            max_dimensions.height = max_dimensions.width.min(limits.max_framebuffer_height);
+            max_dimensions.width = max_dimensions.width.min(limits.max_framebuffer_width());
+            max_dimensions.height = max_dimensions.width.min(limits.max_framebuffer_height());
             max_dimensions.depth = 1;
         }
         Ok(ImageFormatProperties {
@@ -427,10 +514,12 @@ impl Gpu {
         })
     }
 
+    /// Returns the user-defined desired buffered frames used when creating swapchains.
     pub fn desired_buffered_frames(&self) -> u32 {
         self.inner.desired_buffered_frames
     }
 
+    /// Creates a surface for `window`.
     pub fn create_surface<H: VulkanWindow>(
         &self,
         window: Arc<H>,
@@ -443,6 +532,7 @@ impl Gpu {
         )?)))
     }
 
+    /// Request swapchain update for a surface.
     pub fn request_swapchain_update(
         &self,
         surface_id: SurfaceId,
@@ -459,15 +549,47 @@ impl Gpu {
         Ok(())
     }
 
+    /// Destroys a previously [`created`][1] surface.
+    ///
+    /// [1]: Self::create_surface
+    pub fn destroy_surface(
+        &self,
+        surface_id: SurfaceId,
+    ) -> Result<()> {
+        self.inner.surfaces
+            .write()
+            .remove(surface_id.slot_index())
+            .context_with(|| format!(
+                "invalid surface id {surface_id}"
+            ))?;
+        Ok(())
+    }
+   
+    /// Schedules a batch of [`commands`][1].
+    ///
+    /// Commands created in the closure are guaranteed to be recorded in the same scope.
+    ///
+    /// [`CommandId`]s of commands created in the same scope **can** be used as [`dependencies`][2]
+    /// of other commands in that scope.
+    ///
+    /// [1]: Commands
+    /// [2]: CommandDependency
     #[inline]
-    pub fn schedule_commands(&self) -> CommandScheduler<'_> {
-        unsafe {
+    pub fn schedule_commands<F>(&self, f: F) -> Result<()>
+        where F: FnOnce(&mut CommandScheduler<'_>) -> EventResult<()>
+    {
+        let mut scheduler = unsafe {
             self.inner.queue_scheduler
             .get()
             .unwrap_unchecked()
-        }.schedule(self.clone())
+        }.schedule(self.clone());
+        f(&mut scheduler).context_from_tracked(|orig| {
+            format!("failed to schedule commands at {}", orig.or_this())
+        })?;
+        Ok(())
     }
-
+    
+    /// Creates static [`DrawCommands`], which can be used when drawing with [`GraphicsCommands`].
     pub fn create_draw_commands<F>(
         &self,
         command_pool: &mut CommandPool,
@@ -540,6 +662,9 @@ impl Gpu {
         Ok(DrawCommandId(commands.insert(resource)))
     }
 
+    /// Destroys previously [`created`][1] [`DrawCommands`] with `id`.
+    ///
+    /// [1]: Self::create_draw_commands
     #[inline]
     pub fn destroy_draw_commands(
         &self,
@@ -566,7 +691,10 @@ impl Gpu {
             "invalid draw command id {id}"
         )))
     }
-
+    
+    /// Advances the [`Gpu`] frame.
+    ///
+    /// This records and submits scheduled commands and updates swapchains.
     pub fn tick<F>(
         &self,
         mut event_handler: F,
@@ -637,26 +765,20 @@ impl Gpu {
             }.context("queue present failed")?;
         }
         Ok(())
-    }
-
-    pub fn destroy_surface(
-        &self,
-        surface_id: SurfaceId,
-    ) -> Result<()> {
-        self.inner.surfaces
-            .write()
-            .remove(surface_id.slot_index())
-            .context_with(|| format!(
-                "invalid surface id {surface_id}"
-            ))?;
-        Ok(())
-    }
+    } 
 
     #[inline]
     pub(crate) fn write_surfaces(&self) -> ResourceWriteGuard<'_, Surface, SurfaceId> {
         ResourceWriteGuard::new(self.inner.surfaces.write())
     }
 
+    /// Creates a [`ShaderSet`].
+    ///
+    /// Shader sets are needed for [`creating pipelines`][1] and for [`allocating'][2] descriptor
+    /// sets.
+    ///
+    /// [1]: Self::create_pipeline_batch
+    /// [2]: Self::allocate_descriptor_sets
     pub fn create_shader_set<const N_SHADERS: usize>(
         &self,
         shaders: [Shader; N_SHADERS],
@@ -667,10 +789,13 @@ impl Gpu {
             shaders,
             attributes,
             self.inner.thread_pool.clone(),
-            self.inner.tmp_allocs.clone(),
+            self.inner.mt_ctx.clone(),
         )
     }
 
+    /// Gets a future containing the result of a previous call to [`create_shader_set`][1].
+    ///
+    /// [1]: Self::create_shader_set
     #[inline]
     pub fn get_shader_set<'a>(
         &self,
@@ -681,27 +806,34 @@ impl Gpu {
             .read()
             .get_shader_set(id)
     }
-
+    
+    /// Deletes a [`ShaderSet`] from the resource pool.
     #[inline]
     pub fn delete_shader_set(&self, id: ShaderSetId) { 
         self.inner.shader_cache.write().delete_shader_set(id)
     }
 
-    pub fn create_descriptor_pool(
+    /// Creates a descriptor pool, which can be used to [`allocate`][1] descriptor sets for use in
+    /// shaders.
+    ///
+    /// [1]: Self::allocate_descriptor_sets
+    pub fn create_descriptor_pool<I>(
         &self,
-        pool_sizes: impl IntoIterator<Item = (DescriptorType, u32)>,
+        pool_sizes: I,
         max_sets: u32,
         max_inline_uniform_block_bindings: u32,
     ) -> Result<DescriptorPoolId>
+        where I: IntoIterator<Item = DescriptorPoolSize>
     {
         self.inner.descriptor_pools.modify(|pools| {
-            Ok(DescriptorPoolId::new(pools.insert(DescriptorPool::new(
-                self.inner.device.clone(),
+            Ok(DescriptorPoolId::new(pools.try_insert_with_index(|index| DescriptorPool::new(
+                self.inner.device.clone(), DescriptorPoolId::new(index),
                 pool_sizes, max_sets, max_inline_uniform_block_bindings,
-            ).context("failed to create descriptor pool")?)))
+            ).context("failed to create descriptor pool"))?))
         })
     }
-
+    
+    /// Delets a descriptor pool from the resource pool.
     #[inline]
     pub fn destroy_descriptor_pool(
         &self,
@@ -720,26 +852,36 @@ impl Gpu {
         self.inner.descriptor_pools.load()
     }
 
-    pub fn allocate_descriptor_sets(
+    /// Allocates descriptor sets from a descriptor pool with `pool_id`.
+    pub fn allocate_descriptor_sets<'a, I, >(
         &self,
         pool_id: DescriptorPoolId,
-        set_infos: &mut [DescriptorSetInfo<'_>],
-    ) -> impl Future<Output = Result<()>>
+        set_infos: I,
+    ) -> Result<()>
+        where
+            I: IntoIterator<Item = DescriptorSetInfo<'a>>,
+            I::IntoIter: ExactSizeIterator
+
     {
         let pools = self.inner.descriptor_pools.load();
         let pool = pools
             .get(pool_id.slot_index())
             .context("failed find pool")
             .cloned();
-        async move {
-            let tmp_alloc = self.tmp_alloc();
-            let tmp_alloc = tmp_alloc.guard();
-            pool?.allocate(set_infos, pool_id, &self.inner.shader_cache, &tmp_alloc)
-                .await
-                .context("failed to allocate descriptor sets")
-        }
+        let tmp_alloc = self.tmp_alloc();
+        let tmp_alloc = tmp_alloc.guard();
+        pool?.allocate(set_infos, &tmp_alloc)
+            .context("failed to allocate descriptor sets")
     }
-
+    
+    /// Frees descriptor sets from a descriptor pool with `pool_id`.
+    ///
+    /// # Valid usage
+    /// - `pool_id` **must** be a valid [`DescriptorPoolId`].
+    /// - Each id in `set_ids` **must** be a valid [`DescriptorSetId`] that was [`allocated`][1]
+    ///   with the same [`DescriptorPoolId`] as `pool_id`.
+    ///
+    /// [1]: Self::allocate_descriptor_sets
     pub fn free_descriptor_sets(
         &self,
         pool_id: DescriptorPoolId,
@@ -769,13 +911,23 @@ impl Gpu {
         }
     }
 
-    pub fn update_descriptor_sets(
+    /// Updates descriptor sets [`allocated`][1] from the descriptor pool with `pool_id`.
+    ///
+    /// [1]: Self::allocate_descriptor_sets
+    pub fn update_descriptor_sets<'a, W, C>(
         &self,
         pool_id: DescriptorPoolId,
-        writes: &[WriteDescriptorSet],
-        copies: &[CopyDescriptorSet],
+        writes: W,
+        copies: C,
     ) -> Result<()>
+        where
+            W: IntoIterator<Item = WriteDescriptorSet<'a>>,
+            W::IntoIter: ExactSizeIterator,
+            C: IntoIterator<Item = CopyDescriptorSet>,
+            C::IntoIter: ExactSizeIterator,
     {
+        let writes = writes.into_iter();
+        let copies = copies.into_iter();
         let tmp_alloc = self.tmp_alloc();
         let tmp_alloc = tmp_alloc.guard();
         let queue_scheduler = self.queue_scheduler().read();
@@ -816,7 +968,7 @@ impl Gpu {
                     write.set_id,
                 ))?;
             let (ty, infos) = set 
-                .update(self, write, &tmp_alloc)
+                .update(self, &write, &tmp_alloc)
                 .context_with(|| format!(
                     "failed to update descriptor set {}",
                     write.set_id,
@@ -904,6 +1056,14 @@ impl Gpu {
         Ok(())
     } 
 
+    pub fn write_sampler_descriptors_ext(
+        &self,
+    ) -> Result<()> { Ok(()) }
+
+    pub fn write_resource_descriptors_ext(
+        &self,
+    ) -> Result<()> { Ok(()) }
+
     #[inline]
     pub(crate) fn reserve_pipeline_batch_slot(&self) -> PipelineBatchId {
         PipelineBatchId::new(self.inner.pipeline_batches.modify(|data| {
@@ -984,16 +1144,17 @@ impl Gpu {
     ///   have originated from the specified batch.
     /// - Each id in `compute_pipeline_ids` *must* be a valid [`ComputePipelineId`] and *must*
     ///   have originated from the specified batch.
-    pub fn destroy_pipelines(
+    pub fn destroy_pipelines<I1, I2>(
         &self,
         batch_id: PipelineBatchId,
-        graphics_pipeline_ids: impl IntoIterator<
-            IntoIter = impl ExactSizeIterator<Item = GraphicsPipelineId>
-        >,
-        compute_pipeline_ids: impl IntoIterator<
-            IntoIter = impl ExactSizeIterator<Item = ComputePipelineId>
-        >,
+        graphics_pipeline_ids: I1,
+        compute_pipeline_ids: I2,
     ) -> Result<()>
+        where
+            I1: IntoIterator<Item = GraphicsPipelineId>,
+            I1::IntoIter: ExactSizeIterator,
+            I2: IntoIterator<Item = ComputePipelineId>,
+            I2::IntoIter: ExactSizeIterator,
     {
         self.inner.pipeline_batches.modify(|batches| {
             let batch = batches
@@ -1011,6 +1172,9 @@ impl Gpu {
         })
     } 
 
+    /// Gets a previously [`created`][1] [`PipelineBatch`].
+    ///
+    /// [1]: Self::create_pipeline_batch
     #[inline]
     pub fn get_pipeline_batch(
         &self,
@@ -1030,6 +1194,9 @@ impl Gpu {
             })
     }
 
+    /// Gets a [`graphics pipeline`][1] handle with `id`.
+    ///
+    /// [1]: GraphicsPipeline
     pub async fn get_graphics_pipeline<'a>(
         &self,
         id: GraphicsPipelineId,
@@ -1050,6 +1217,9 @@ impl Gpu {
             ))
     }
 
+    /// Gets a [`compute pipeline`][1] handle with `id`.
+    ///
+    /// [1]: ComputePipeline
     pub async fn get_compute_pipeline<'a>(
         &self,
         id: ComputePipelineId,
@@ -1069,11 +1239,6 @@ impl Gpu {
             ))
     }
 
-    #[inline]
-    pub fn is_buffer_valid(&self, id: BufferId) -> bool {
-        self.inner.buffers.read().contains(id.0)
-    }
-
     /// Creates buffers and images in a batch.
     ///
     /// If one resource creation fails, no resources are returned.
@@ -1086,12 +1251,14 @@ impl Gpu {
     ///   [`BufferCreateInfo`] respectively.
     pub fn create_resources<'a, B, I>(
         &self,
-        buffer_create_infos: impl IntoIterator<IntoIter = B>,
-        image_create_infos: impl IntoIterator<IntoIter = I>,
+        buffer_create_infos: B,
+        image_create_infos: I,
     ) -> Result<()>
         where
-            B: ExactSizeIterator<Item = BufferCreateInfo<'a>>,
-            I: ExactSizeIterator<Item = ImageCreateInfo<'a>>,
+            B: IntoIterator<Item = BufferCreateInfo<'a>>,
+            B::IntoIter: ExactSizeIterator,
+            I: IntoIterator<Item = ImageCreateInfo<'a>>,
+            I::IntoIter: ExactSizeIterator,
     {
         let buffer_create_infos = buffer_create_infos.into_iter();
         let image_create_infos = image_create_infos.into_iter();
@@ -1173,11 +1340,14 @@ impl Gpu {
         ResourceWriteGuard::new(self.inner.images.write())
     }
 
-    pub fn destroy_resources(
+    pub fn destroy_resources<I, B>(
         &self,
-        buffers: impl IntoIterator<Item = BufferId>,
-        images: impl IntoIterator<Item = ImageId>,
+        buffers: I,
+        images: B,
     ) -> Result<()>
+        where
+            I: IntoIterator<Item = BufferId>,
+            B: IntoIterator<Item = ImageId>,
     {
         let buffers = buffers.into_iter();
         let images = images.into_iter();
@@ -1209,19 +1379,10 @@ impl Gpu {
         Ok(())
     }
 
-    pub fn create_image_view(
-        &self,
-        image_id: ImageId,
-        range: ImageRange,
-    ) -> Result<ImageViewId> {
-        self.inner.images
-            .write()
-            .get_mut(image_id.slot_index())
-            .context_with(|| format!(
-                "invalid image id {image_id}"
-            ))?
-            .create_view(range)
-            .map(|idx| ImageViewId::new(image_id, idx))
+    /// Returns whether a [`BufferId`] is valid.
+    #[inline]
+    pub fn is_buffer_valid(&self, id: BufferId) -> bool {
+        self.inner.buffers.read().contains(id.0)
     }
 
     #[inline]
@@ -1269,7 +1430,8 @@ impl Gpu {
                 )))
             }
             if !range.size.is_multiple_of(non_coherent_atom_size) &&
-                offset + range.size != memory.memory_size() {
+                offset + range.size != memory.memory_size()
+            {
                 return Err(Error::just_context(format!(
                     "buffer {} range size {} is not a multiple of non coherent atom size {}",
                     range.buffer_id, range.size, non_coherent_atom_size,
@@ -1347,11 +1509,29 @@ impl Gpu {
         }.context("failed to flush mapped memory ranges").map(|_| ())
     }
 
+    /// Returns whether an [`ImageId`] is valid.
     #[inline]
     pub fn is_image_valid(&self, id: ImageId) -> bool {
         self.inner.images.read().contains(id.slot_index())
     }
 
+    /// Creates an image view.
+    pub fn create_image_view(
+        &self,
+        image_id: ImageId,
+        range: ImageRange,
+    ) -> Result<ImageViewId> {
+        self.inner.images
+            .write()
+            .get_mut(image_id.slot_index())
+            .context_with(|| format!(
+                "invalid image id {image_id}"
+            ))?
+            .create_view(range)
+            .map(|idx| ImageViewId::new(image_id, idx))
+    }
+    
+    /// Returns whether an [`ImageViewId`] is valid.
     #[inline]
     pub fn is_image_view_valid(&self, id: ImageViewId) -> bool {
         if let Ok(img) = self.inner.images.read().get(id.image_id().slot_index()) {
@@ -1380,10 +1560,11 @@ impl Gpu {
     /// Creates timeline semaphores from an iterator over their initial values.
     pub fn create_timeline_semaphores<'a, I>(
         &self,
-        create_infos: impl IntoIterator<IntoIter = I>,
+        create_infos: I,
     ) -> Result<()>
         where
-            I: ExactSizeIterator<Item = (&'a mut TimelineSemaphoreId, u64)>,
+            I: IntoIterator<Item = SemaphoreCreateInfo<'a>>,
+            I::IntoIter: ExactSizeIterator,
     {
         let create_infos = create_infos.into_iter();
         if create_infos.len() == 0 {
@@ -1397,7 +1578,7 @@ impl Gpu {
         ).context("alloc failed")?;
         let mut err = None;
         let mut semaphores = self.inner.timeline_semaphores.write();
-        for (out_id, initial_value) in create_infos {
+        for SemaphoreCreateInfo { out_id, initial_value } in create_infos {
             if err.is_some() {
                 break;
             }
@@ -1450,13 +1631,18 @@ impl Gpu {
     /// Waits for previous semaphores until `timeout`.
     ///
     /// Returns Ok(true) on success, Ok(false) on timeout and Err(err) if there's another error.
-    pub fn wait_for_semaphores(
+    pub fn wait_for_semaphores<I>(
         &self,
-        semaphores: &[(TimelineSemaphoreId, u64)],
+        semaphores: I,
         timeout: Duration,
-    ) -> Result<bool> {
+    ) -> Result<bool>
+        where
+            I: IntoIterator<Item = SemaphoreWaitInfo>,
+            I::IntoIter: ExactSizeIterator,
+    {
         let tmp_alloc = self.tmp_alloc();
         let tmp_alloc = tmp_alloc.guard();
+        let semaphores = semaphores.into_iter();
         let n_semaphores = semaphores.len() as u32;
         let mut handles = FixedVec32
             ::with_capacity(n_semaphores, &tmp_alloc)
@@ -1465,7 +1651,7 @@ impl Gpu {
             ::with_capacity(n_semaphores, &tmp_alloc)
             .context("alloc failed")?;
         let read = self.inner.timeline_semaphores.read();
-        for &(id, value) in semaphores {
+        for SemaphoreWaitInfo { id, value } in semaphores {
             let &semaphore = read
                 .get(id.0)
                 .context("failed to find timeline semaphore")?;
@@ -1474,7 +1660,7 @@ impl Gpu {
         }
         let wait_info = vk::SemaphoreWaitInfo {
             s_type: vk::StructureType::SEMAPHORE_WAIT_INFO,
-            semaphore_count: semaphores.len() as u32,
+            semaphore_count: n_semaphores,
             p_semaphores: handles.as_ptr(),
             p_values: values.as_ptr(),
             ..Default::default()
@@ -1488,6 +1674,7 @@ impl Gpu {
         Ok(res.result == vk::Result::SUCCESS)
     }
 
+    /// Destroys a batch of timeline semaphores.
     pub fn destroy_timeline_semaphores(&self, ids: &[TimelineSemaphoreId]) {
         let mut semaphores = self.inner.timeline_semaphores.write();
         for id in ids {

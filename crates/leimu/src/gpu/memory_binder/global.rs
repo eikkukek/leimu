@@ -119,7 +119,7 @@ unsafe impl DeviceMemory for Memory {
                 self.memory,
                 0,
                 vk::WHOLE_SIZE,
-                vk::MemoryMapFlags::from_raw(0)
+                vk::MemoryMapFlags::empty(),
             )
         }.context("failed to map memory")?.value;
         self.map = ptr as *mut u8;

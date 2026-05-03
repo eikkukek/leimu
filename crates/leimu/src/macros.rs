@@ -268,7 +268,7 @@ macro_rules! impl_id_display {
         impl ::core::fmt::Display for $name {
 
             fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-                write!(f, "Id({})", self.0)
+                write!(f, "Id{}", self.0)
             }
         }
     };

@@ -176,7 +176,6 @@ impl Spawn for ThreadPool {
             unpark.unpark();
             tx.send(future.boxed()).expect("failed to send");
         } else {
-            println!("here");
             inner.scheduler.injector.push(future.boxed());
         }
         Ok(())

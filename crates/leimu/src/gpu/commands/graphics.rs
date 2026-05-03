@@ -747,7 +747,7 @@ impl<'a, 'b, 'c> ActiveRenderPass<'a, 'b, 'c>
                     cmd_cache.shader_resource_cache.touch_buffer(
                         index_buffer.id,
                         index_buffer.offset,
-                        unsafe { index_buffer.size.unwrap_unchecked().get() },
+                        index_buffer.size,
                         vk::PipelineStageFlags2::INDEX_INPUT,
                         ExplicitAccess::from_raw(vk::AccessFlags2::INDEX_READ.as_raw()),
                         CommandOrdering::Lenient
@@ -757,7 +757,7 @@ impl<'a, 'b, 'c> ActiveRenderPass<'a, 'b, 'c>
                     cmd_cache.shader_resource_cache.touch_buffer(
                         vertex_buffer.id,
                         vertex_buffer.offset,
-                        unsafe { vertex_buffer.size.unwrap_unchecked().get() },
+                        vertex_buffer.size,
                         vk::PipelineStageFlags2::VERTEX_ATTRIBUTE_INPUT,
                         ExplicitAccess::from_raw(vk::AccessFlags2::VERTEX_ATTRIBUTE_READ.as_raw()),
                         CommandOrdering::Lenient
@@ -789,7 +789,7 @@ impl<'a, 'b, 'c> ActiveRenderPass<'a, 'b, 'c>
                     cmd_cache.shader_resource_cache.touch_buffer(
                         index_buffer.id,
                         index_buffer.offset,
-                        unsafe { index_buffer.size.unwrap_unchecked().get() },
+                        index_buffer.size,
                         vk::PipelineStageFlags2::INDEX_INPUT,
                         ExplicitAccess::from_raw(vk::AccessFlags2::INDEX_READ.as_raw()),
                         CommandOrdering::Lenient
@@ -799,7 +799,7 @@ impl<'a, 'b, 'c> ActiveRenderPass<'a, 'b, 'c>
                     cmd_cache.shader_resource_cache.touch_buffer(
                         vertex_buffer.id,
                         vertex_buffer.offset,
-                        unsafe { vertex_buffer.size.unwrap_unchecked().get() },
+                        vertex_buffer.size,
                         vk::PipelineStageFlags2::VERTEX_ATTRIBUTE_INPUT,
                         ExplicitAccess::from_raw(vk::AccessFlags2::VERTEX_ATTRIBUTE_READ.as_raw()),
                         CommandOrdering::Lenient

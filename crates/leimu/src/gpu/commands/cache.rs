@@ -21,7 +21,7 @@ struct BufferCommandCache {
     stage_mask: vk::PipelineStageFlags2,
     access_flags: vk::AccessFlags2,
     command_ordering: CommandOrdering,
-    ranges: Vec32<(DeviceSize, DeviceSize)>,
+    ranges: Vec32<(DeviceSize, Option<NonZeroDeviceSize>)>,
 }
 
 impl BufferCommandCache {
@@ -29,7 +29,7 @@ impl BufferCommandCache {
     pub fn touch(
         &mut self,
         offset: DeviceSize,
-        size: DeviceSize,
+        size: Option<NonZeroDeviceSize>,
         stage_mask: vk::PipelineStageFlags2,
         access_flags: vk::AccessFlags2,
         ordering: CommandOrdering,
@@ -132,7 +132,7 @@ impl ShaderResourceCache {
         &mut self,
         buffer: BufferId,
         offset: DeviceSize,
-        size: DeviceSize,
+        size: Option<NonZeroDeviceSize>,
         stage_mask: vk::PipelineStageFlags2,
         access_mask: ExplicitAccess,
         ordering: CommandOrdering,
@@ -477,7 +477,7 @@ impl PipelineCommandCache {
                     for buffer in binding.buffer_descriptors() {
                         if let Some((id, offset, size)) = buffer.buffer {
                             shader_resource_cache.touch_buffer(
-                                id, offset, size,
+                                id, offset, NonZeroDeviceSize::new(size),
                                 stage_mask,
                                 access,
                                 ordering
@@ -512,14 +512,14 @@ impl PipelineCommandCache {
             for buffer in &call.buffers {
                 shader_resource_cache.touch_buffer(
                     buffer.buffer_id,
-                    buffer.offset, buffer.size,
+                    buffer.offset, buffer.range,
                     stage_mask,
                     access,
                     ordering
                 );
             }
             for (image, layout) in &call.images {
-                if let Some(image_view) = image.image_view {
+                if let Some(image_view) = image.image_view_id {
                     let id = image_view.into_bare();
                     shader_resource_cache.touch_image(
                         id,

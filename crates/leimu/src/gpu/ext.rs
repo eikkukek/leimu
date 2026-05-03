@@ -27,6 +27,7 @@
 //! - [`VK_KHR_robustness2`][robustness2]
 //! - [`VK_EXT_pipeline_robustness`][pipeline_robustness]
 //! - [`VK_EXT_descriptor_indexing`][descriptor_indexing]
+//! - [`VK_EXT_mesh_shader`][mesh_shader]
 //!
 //! # Future extensions
 //!  *can* be enabled, but doesn't yet have a high level
@@ -57,6 +58,8 @@ pub mod robust_image_access;
 pub mod robustness2;
 pub mod pipeline_robustness;
 pub mod descriptor_indexing;
+pub mod mesh_shader;
+pub mod descriptor_heap;
 
 pub(crate) use core::core_extensions;
 
@@ -333,7 +336,7 @@ impl DeviceAttribute {
         match &self.ty {
             AttributeType::Structure(value) => {
                 if value.is::<T>() {
-                    let ptr: *const dyn Any = value;
+                    let ptr: *const dyn Any = value.as_ref();
                     Some(unsafe {
                         &*ptr.cast()
                     })
@@ -453,7 +456,7 @@ impl EnabledDeviceExtensions {
     pub(crate) fn get_device<T: ExtensionDevice + 'static>(
         &self,
         device: &Device,
-    ) -> Option<T>
+    ) -> Option<&T>
     {
         let mut devices = self.extension_devices.lock();
         let obj = devices.entry(T::NAME)
@@ -474,7 +477,7 @@ impl EnabledDeviceExtensions {
                 &dyn AnyExtensionDevice,
                 (NonNull<T>, *const ())
             >(obj.0.deref()).0
-            .as_ref().clone()
+            .as_ref()
         })
     }
 }

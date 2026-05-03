@@ -13,7 +13,11 @@ use super::{
     *
 };
 
+/// Represents [`DeviceMemory`] size and offset values.
 pub type DeviceSize = u64;
+
+/// Non-zero [`DeviceSize`] value.
+pub type NonZeroDeviceSize = ::core::num::NonZero<DeviceSize>;
 
 /// Sets which base device features to enable.
 ///
@@ -27,63 +31,190 @@ pub type DeviceSize = u64;
 /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkPhysicalDeviceFeatures.html>
 #[derive(Clone, Copy, BuildStructure)]
 pub struct BaseDeviceFeatures {
+    /// Enables [`robust buffer access`][1] guarantees for shader buffer accesses.
+    ///
+    /// [1]: https://docs.vulkan.org/spec/latest/chapters/shaders.html#shaders-robust-buffer-access
     pub robust_buffer_access: bool,
+    /// Specifies the full 32-bit range of indices is supported for indexed draw calls when using
+    /// a [`IndexType::U32`].
     pub full_draw_index_uint32: bool,
+    /// Specifies whether [`image views`][1] **can** be created with [`ImageRange::is_cube_map`] set to
+    /// `true`.
+    ///
+    /// [1]: Gpu::create_image_view
     pub image_cube_array: bool,
+    /// Specifies whether the [`color blend`][1] settings are controlled independently per-attachment.
+    ///
+    /// [1]: ColorOutputBlendState
     pub independent_blend: bool,
+    /// Specifies whether geometry shaders are supported.
     pub geometry_shader: bool,
+    /// Specifies whether tessellation shaders are supported.
     pub tessellation_shader: bool,
+    /// Specifies whether samples shading and multisample interpolation are supported.
     #[default(true)]
     pub sample_rate_shading: bool,
+    /// Specifies whether blend operations which take two sources are supported.
     pub dual_src_blend: bool,
+    /// Specifies whether logic operations are supported. 
+    /// 
+    /// If this feature is not enabled, the `logic_op` parameter of
+    /// [`GraphicsPipelineCreateInfo::with_logic_op`] **must** be [`None`].
     pub logic_op: bool,
-    pub multi_draw_indirect: bool,
-    pub draw_indirect_first_instance: bool,
+    #[skip]
+    multi_draw_indirect: bool, // unused for now
+    #[skip]
+    draw_indirect_first_instance: bool, // unused for now
+    /// Specifies whether [`depth clamping`][1] is supported.
+    ///
+    /// [1]: GraphicsPipelineCreateInfo::with_depth_clamp
     pub depth_clamp: bool,
+    /// Specifies whether [`depth bias clamping`][1] is supported.
+    ///
+    /// [1]: DepthBiasInfo::clamp
     pub depth_bias_clamp: bool,
+    /// Specifies whether point and wireframe fill modes are supported.
     pub fill_mode_non_solid: bool,
+    /// Specifies whether depth bounds tests are supported.
     pub depth_bounds: bool,
+    /// Specifies whether lines with width other than 1.0 are supported.
     pub wide_lines: bool,
+    /// Specifies whether points with size greater than 1.0 are supported.
     pub large_points: bool,
+    /// Specifies whether the implementation is able to replace the alpha value of the fragment
+    /// shader color output in the multisample coverage fragment operation.
+    ///
+    /// If this feature is not enabled, then [`alpha_to_one`][1] member of [`SampleShadingInfo`]
+    /// **must** be `false`.
+    ///
+    /// [1]: SampleShadingInfo::alpha_to_one
     #[default(true)]
     pub alpha_to_one: bool,
+    /// Specifies whether more than one viewport is supported.
     pub multi_viewport: bool,
+    /// Specifies whether anisotropic filtering is supported.
     #[default(true)]
     pub sampler_anisotropy: bool,
+    /// Specifies whether all of the ETC2 and EAC compressed texture [`formats`][1] are supported.
+    ///
+    /// [1]: Format
     pub texture_compression_etc2: bool,
+    /// Specifies whether all of the ASTC LDR compressed texture [`formats`][1] are supported.
+    ///
+    /// [1]: Format
     pub texture_compression_astc_ldr: bool,
+    /// Specifies whether all of the BC compressed texture [`formats`][1] are supported.
+    ///
+    /// [1]: Format
     pub texture_compression_bc: bool,
+    /// Specifies whether occlusion queries returning actual sample counts are supported.
     pub occlusion_query_precise: bool,
+    /// Specifies whether the pipeline statistics queries are supported.
     pub pipeline_statistics_query: bool,
+    /// Specifies whether storage buffers and images support stores and atomic operations in the
+    /// vertex, tessellation, and geometry shader stages.
     pub vertex_pipeline_stores_and_atomics: bool,
+    /// Specifies whether storage buffers and images support stores and atomic operations in the
+    /// fragment shader stage.
     pub fragment_stores_and_atomics: bool,
+    /// Specifies whether the PointSize built-in decoration is available in the tessellation
+    /// control, tessellation evaluation, and geometry shader stages.
     pub shader_tessellation_and_geometry_point_size: bool,
+    /// Specifies whether the extended set of image gather instructions are available in shader
+    /// code.
     pub shader_image_gather_extended: bool,
+    /// Specifies whether all the “storage image extended formats” are supported.
+    ///
+    /// # Storage image extended formats
+    /// - [`Format::R16g16_Sfloat`]
+    /// - [`Format::B10g11r11_Ufloat_Pack32`]
+    /// - [`Format::R16_Sfloat`]
+    /// - [`Format::R16g16b16a16_Unorm`]
+    /// - [`Format::A2b10g10r10_Unorm_Pack32`]
+    /// - [`Format::R16g16_Unorm`]
+    /// - [`Format::R8g8_Unorm`]
+    /// - [`Format::R16_Unorm`]
+    /// - [`Format::R8_Unorm`]
+    /// - [`Format::R16g16b16a16_Snorm`]
+    /// - [`Format::R16g16_Snorm`]
+    /// - [`Format::R8g8_Snorm`]
+    /// - [`Format::R16_Snorm`]
+    /// - [`Format::R8_Snorm`]
+    /// - [`Format::R16g16_Sint`]
+    /// - [`Format::R8g8_Sint`]
+    /// - [`Format::R16_Sint`]
+    /// - [`Format::R8_Sint`]
+    /// - [`Format::A2b10g10r10_Uint_Pack32`]
+    /// - [`Format::R16g16_Uint`]
+    /// - [`Format::R8g8_Uint`]
+    /// - [`Format::R16_Uint`]
+    /// - [`Format::R8_Uint`]
     pub shader_storage_image_extended_formats: bool,
+    /// Specifies whether multisampled storage images are supported.
     pub shader_storage_image_multisample: bool,
+    /// Specifies whether storage images and storage texel buffers require a format qualifier to be
+    /// specified when reading.
     pub shader_storage_image_read_without_format: bool,
+    /// Specifies whether storage images and storage texel buffers require a format qualifier to be
+    /// specified when writing.
     pub shader_storage_image_write_without_format: bool,
+    /// Specifies whether arrays of uniform buffers **can** be indexed by integer expressions that are
+    /// dynamically uniform within either the subgroup or the invocation group in shader code..
     pub shader_uniform_buffer_array_dynamic_indexing: bool,
+    /// Specifies whether arrays of samplers or sampled images **can** be indexed by integer
+    /// expressions that are dynamically uniform within either the subgroup or the invocation group
+    /// in shader code.
     pub shader_sampled_image_array_dynamic_indexing: bool,
+    /// Specifies whether arrays of storage buffers **can** be indexed by integer expressions that are
+    /// dynamically uniform within either the subgroup or the invocation group in shader code.
     pub shader_storage_buffer_array_dynamic_indexing: bool,
+    /// Specifies whether arrays of storage images **can** be indexed by integer expressions that are
+    /// dynamically uniform within either the subgroup or the invocation group in shader code.
     pub shader_storage_image_array_dynamic_indexing: bool,
+    /// Specifies whether clip distances are supported in shader code.
     pub shader_clip_distance: bool,
+    /// Specifies whether cull distances are supported in shader code.
     pub shader_cull_distance: bool,
+    /// Specifies whether 64-bit floats are supported in shader code.
     pub shader_float64: bool,
+    /// Specifies whether 64-bit integers (signed and unsigned) are supported in shader code.
     pub shader_int64: bool,
+    /// Specifies whether 16-bit integers (signed and unsigned) are supported in shader code.
     pub shader_int16: bool,
+    /// Specifies whether image operations that return resource residency information are supported
+    /// in shader code.
     pub shader_resource_residency: bool,
+    /// Specifies whether image operations specifying the minimum resource LOD are supported in
+    /// shader code.
     pub shader_resource_min_lod: bool,
+    /// Specifies whether resource memory **can** be managed at opaque sparse block level instead of at
+    /// the object level.
     pub sparse_binding: bool,
+    /// Specifies whether the device **can** access partially resident buffers.
     pub sparse_residency_buffer: bool,
+    /// Specifies whether the device **can** access partially resident 2D images with 1 sample per
+    /// pixel.
     pub sparse_residency_image_2d: bool,
+    /// Specifies whether the device **can** access partially resident 3D images.
     pub sparse_residency_image_3d: bool,
+    /// Specifies whether the physical device **can** access partially resident 2D images with 2
+    /// samples per pixel.
     pub sparse_residency_2_samples: bool,
+    /// Specifies whether the physical device **can** access partially resident 2D images with 4
+    /// samples per pixel.
     pub sparse_residency_4_samples: bool,
+    /// Specifies whether the physical device **can** access partially resident 2D images with 8
+    /// samples per pixel.
     pub sparse_residency_8_samples: bool,
+    /// Specifies whether the physical device **can** access partially resident 2D images with 16
+    /// samples per pixel.
     pub sparse_residency_16_samples: bool,
+    /// Specifies whether the physical device **can** correctly access data aliased into multiple
+    /// locations.
     pub sparse_residency_aliased: bool,
-    pub variable_multisample_rate: bool,
+    #[skip]
+    variable_multisample_rate: bool,
+    /// Specifies whether a secondary command buffer **may** be executed while a query is active.
     pub inherited_queries: bool,
 }
 
@@ -239,14 +370,18 @@ impl From<BaseDeviceFeatures> for vk::PhysicalDeviceFeatures {
     }
 }
 
+/// A two-dimensional offset.
 #[derive(Default, Clone, Copy, PartialEq, Eq, Debug, BuildStructure)]
 pub struct Offset2D {
+    /// The x-offset.
     pub x: i32,
+    /// The y-offset.
     pub y: i32
 }
 
 impl Offset2D {
 
+    /// Creates the offset from the x and y values.
     #[inline]
     pub fn new(x: i32, y: i32) -> Self {
         Self {
@@ -275,15 +410,20 @@ impl Display for Offset2D {
     }
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Eq, Debug)]
+/// Specifies the three-dimensional offset.
+#[derive(Default, Clone, Copy, PartialEq, Eq, Debug, BuildStructure)]
 pub struct Offset3D {
+    /// The x-offset.
     pub x: i32,
+    /// The y-offset.
     pub y: i32,
+    /// The z-offset.
     pub z: i32,
 }
 
 impl Offset3D {
 
+    /// Creates the offset from the x, y and z values.
     #[inline]
     pub fn new(x: i32, y: i32, z: i32) -> Self
     {
@@ -322,7 +462,8 @@ pub struct Dimensions {
 }
 
 impl Dimensions {
-
+    
+    /// Creates new dimensions from a width. height and depth.
     #[inline]
     pub const fn new(width: u32, height: u32, depth: u32) -> Self {
         Self {
@@ -332,6 +473,7 @@ impl Dimensions {
         }
     }
 
+    /// Returns whether any dimension is zero.
     #[inline]
     pub const fn is_zero(&self) -> bool {
         self.width == 0 ||
@@ -339,6 +481,7 @@ impl Dimensions {
         self.depth == 0
     }
 
+    /// Returns the texel count of the dimensions.
     #[inline]
     pub const fn texel_count(&self) -> DeviceSize {
         self.width as DeviceSize *
@@ -346,6 +489,8 @@ impl Dimensions {
         self.depth as DeviceSize
     }
 
+    /// Returns whether each dimension of self is a multiple of each respective dimension of
+    /// `other`.
     #[inline]
     pub const fn is_multiple_of(&self, other: Self) -> bool {
         self.width.is_multiple_of(other.width) &&
@@ -353,6 +498,8 @@ impl Dimensions {
         self.depth.is_multiple_of(other.depth)
     }
 
+    /// Maps the dimensions with a closure.
+    #[must_use]
     #[inline]
     pub fn map<F>(self, mut f: F) -> Self
         where F: FnMut(u32) -> u32
@@ -371,6 +518,7 @@ impl Dimensions {
         self.map(|x| (x >> mip_level).max(1))
     }
 
+    /// Converts the dimensions into [`ImageCopyOffset`].
     #[must_use]
     #[inline]
     pub fn into_offset(self) -> ImageCopyOffset {
@@ -508,9 +656,13 @@ impl From<[u32; 3]> for Dimensions {
 /// Specifies how colors are mapped.
 #[derive(Default, Clone, Copy, PartialEq, Eq, BuildStructure)]
 pub struct ComponentMapping {
+    /// Specifies the `r` component swizzle.
     pub r: ComponentSwizzle,
+    /// Specifies the `g` component swizzle.
     pub g: ComponentSwizzle,
+    /// Specifies the `b` component swizzle.
     pub b: ComponentSwizzle,
+    /// Specifies the `a` component swizzle.
     pub a: ComponentSwizzle,
 }
 
@@ -676,6 +828,9 @@ impl From<vk::ImageSubresourceRange> for ImageSubresourceRange {
     }
 }
 
+/// Specifies the layers of a given [`mip level`][1].
+///
+/// [1]: Self::mip_level
 #[derive(Default, Clone, Copy, PartialEq, Eq, BuildStructure)]
 pub struct ImageSubresourceLayers {
     /// Specifies the [`aspects`][1] to be copied.
@@ -708,6 +863,7 @@ impl ImageSubresourceLayers {
         self
     }
 
+    /// Returns whether self overlaps with `other`.
     #[inline]
     pub fn overlaps(self, other: Self) -> bool {
         if !self.aspect_mask.intersects(other.aspect_mask) || self.mip_level != other.mip_level {
@@ -727,7 +883,8 @@ impl ImageSubresourceLayers {
             false
         }
     }
-
+    
+    /// Converts self into [`ImageSubresourceRange`].
     #[inline]
     pub fn into_range(self) -> ImageSubresourceRange {
         ImageSubresourceRange {
@@ -740,7 +897,7 @@ impl ImageSubresourceLayers {
     }
 
     #[inline]
-    pub fn effective(self, image_layer_count: u32) -> vk::ImageSubresourceLayers {
+    pub(crate) fn effective(self, image_layer_count: u32) -> vk::ImageSubresourceLayers {
         vk::ImageSubresourceLayers {
             aspect_mask: self.aspect_mask.into(),
             mip_level: self.mip_level,
@@ -765,14 +922,26 @@ impl From<ImageSubresourceLayers> for vk::ImageSubresourceLayers {
     }
 }
 
+/// Specifies component info of an [`image view`][1].
+///
+/// [1]: Gpu::create_image_view
 #[derive(Clone, Copy, PartialEq, Eq, BuildStructure)]
 pub struct ComponentInfo {
+    /// Specifies the [`ComponentMapping`] of the view.
     pub component_mapping: ComponentMapping,
+    /// Specifies the [`Format`] of the view.
+    ///
+    /// This **must** be the same as the [`image's`][1] format, if the image was *not* created with
+    /// [`mutable format`][2] enabled.
+    ///
+    /// [1]: ImageId
+    /// [2]: ImageCreateInfo::with_format
     pub format: Format,
 }
 
 impl ComponentInfo {
-
+    
+    /// Creates new [`ComponentInfo`].
     pub fn new(
         component_mapping: ComponentMapping,
         format: Format,
@@ -785,15 +954,30 @@ impl ComponentInfo {
     }
 }
 
+/// Specifies an [`ImageRange`] used when [`creating an image view`][1].
+///
+/// [1]: Gpu::create_image_view
 #[derive(Default, Clone, Copy, PartialEq, Eq, BuildStructure)]
 pub struct ImageRange {
+    /// Specifies the [`subresource range`][1] of the view.
+    ///
+    /// [1]: ImageSubresourceRange
     pub subresource_range: ImageSubresourceRange,
+    /// Specifies the optional [`component info`][1] of the view.
+    ///
+    /// [1]: ComponentInfo
     pub component_info: Option<ComponentInfo>,
+    /// Specifies whether the image view will be a cube map.
+    ///
+    /// The image **must** be [`cube map compatible`][1].
+    ///
+    /// [1]: ImageCreateInfo::with_cube_map
     pub is_cube_map: bool,
 }
 
 impl ImageRange {
 
+    /// Creates an [`ImageRange`] of a view of an entire image.
     #[inline]
     pub fn whole_range(aspect: ImageAspects) -> Self {
         Self {
@@ -861,21 +1045,30 @@ impl From<Viewport> for vk::Viewport {
 /// This is used instead of `VkRect2D`, to enforce that x >= 0 and y >= 0.
 #[derive(Default, Clone, Copy, PartialEq, Eq, Debug, BuildStructure)]
 pub struct Scissor {
+    /// The x offset of the scissor.
     pub x: u32,
+    /// The y offset of the scissor.
     pub y: u32,
+    /// The width of the scissor.
     pub width: u32,
+    /// The height of the scissor.
     pub height: u32,
 }
 
+/// A structure specifying supported [`ResolveModes`].
 #[derive(Default, Clone, Copy, PartialEq, Eq, Debug)]
 pub struct FormatResolveModes {
+    /// A bitmask of supported color [`ResolveMode`]
     pub color: ResolveModes,
+    /// A bitmask of supported depth [`ResolveMode`]
     pub depth: ResolveModes,
+    /// A bitmask of supported stencil [`ResolveMode`]
     pub stencil: ResolveModes,
 }
 
 impl FormatResolveModes {
 
+    /// Returns the [`ResolveMode`] bitmask by a specific [`ResolveAspect`].
     #[inline]
     pub fn by_aspect(self, aspect: ResolveAspect) -> ResolveModes {
         match aspect {
@@ -886,19 +1079,33 @@ impl FormatResolveModes {
     }
 }
 
+/// A structure describing image [`Format`] properties.
 #[derive(Clone, Copy)]
 pub struct ImageFormatProperties {
+    /// Maximum supported dimensions of an image with the format.
     pub max_dimensions: Dimensions,
+    /// Maximum mip levels of an image with the format.
     pub max_mip_levels: u32,
+    /// Maximum array layers of an image with the format.
     pub max_array_layers: u32,
+    /// Bitmask of supported [`sample counts`][1] of an image with the format.
+    ///
+    /// [1]: MsaaSamples
     pub sample_counts: MsaaSamples,
+    /// A bitmask of supported [`FormatFeatures`] of an image with the format.
     pub format_features: FormatFeatures,
 }
 
+/// Specifies an image offset used with [`copy commands`][1].
+///
+/// [1]: CopyCommands
 #[derive(Default, Clone, Copy, PartialEq, Eq, Debug, BuildStructure)]
 pub struct ImageCopyOffset {
+    /// The x-offset.
     pub x: u32,
+    /// The y-offset.
     pub y: u32,
+    /// The z-offset.
     pub z: u32,
 }
 
@@ -911,12 +1118,14 @@ impl Display for ImageCopyOffset {
 
 impl ImageCopyOffset {
 
+    /// Creates a new offset with the x, y and z values.
     pub fn new(x: u32, y: u32, z: u32) -> Self {
         Self {
             x, y, z,
         }
     }
 
+    /// Returns whether each offset of self is a multiple of each respective dimension of `extent`.
     #[inline]
     pub fn is_multiple_of(self, extent: Dimensions) -> bool {
         self.x.is_multiple_of(extent.width) &&
@@ -925,7 +1134,7 @@ impl ImageCopyOffset {
     }
 
     #[inline]
-    pub fn is_in_range(
+    pub(crate) fn is_in_range(
         self,
         image_dimensions: Dimensions,
         copy_extent: Dimensions,
@@ -934,14 +1143,7 @@ impl ImageCopyOffset {
         off.x <= image_dimensions.width &&
         off.y <= image_dimensions.height &&
         off.z <= image_dimensions.depth
-    }
-
-    #[inline]
-    pub fn is_zero(self) -> bool {
-        self.x == 0 ||
-        self.y == 0 ||
-        self.z == 0
-    }
+    } 
 }
 
 impl From<ImageCopyOffset> for vk::Offset3D {
@@ -956,13 +1158,32 @@ impl From<ImageCopyOffset> for vk::Offset3D {
     }
 }
 
+/// An offset used in [`blit_image`][1] and [`gen_mip_map`][2].
+///
+/// [1]: CopyCommands::blit_image
+/// [2]: CopyCommands::gen_mip_map
 pub type ImageBlitOffset = ImageCopyOffset;
 
+/// Specifies an image [`blit`][1] region.
+///
+/// [1]: CopyCommands::blit_image.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ImageBlitRegion {
+    /// Specifies source [`subresource layers`][1].
+    ///
+    /// [1]: ImageSubresourceLayers
     pub src_subresource: ImageSubresourceLayers,
+    /// Specifies source offsets.
+    ///
+    /// These define the source rect of the blitting.
     pub src_offsets: [ImageBlitOffset; 2],
+    /// Specifies destination [`subresource layers`][1].
+    ///
+    /// [1]: ImageSubresourceLayers
     pub dst_subresource: ImageSubresourceLayers,
+    /// Specifies destination offsets.
+    ///
+    /// These define the destination rect of the blitting.
     pub dst_offsets: [ImageBlitOffset; 2],
 }
 
@@ -972,9 +1193,13 @@ pub struct ImageBlitRegion {
 /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineRobustnessCreateInfo.html>
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct PipelineRobustnessInfo {
+    /// Specifies storage buffer behavior.
     pub storage_buffer_behavior: PipelineRobustnessBufferBehavior,
+    /// Specifies uniform buffer behavior.
     pub uniform_buffer_behavior: PipelineRobustnessBufferBehavior,
+    /// Specifies vertex input behavior.
     pub vertex_input_behavior: PipelineRobustnessBufferBehavior,
+    /// Specifies image behavior.
     pub image_behavior: PipelineRobustnessImageBehavior,
 }
 
@@ -992,15 +1217,20 @@ impl From<PipelineRobustnessInfo> for vk::PipelineRobustnessCreateInfo<'_> {
     }
 }
 
+/// Specifies a buffer-to-buffer copy range.
 #[derive(Default, Clone, Copy, PartialEq, Eq, BuildStructure)]
 pub struct BufferCopy {
+    /// Specifies the source offset.
     pub src_offset: DeviceSize,
+    /// Specifies the destination offset.
     pub dst_offset: DeviceSize,
+    /// Specifies the range of the copy.
     pub size: DeviceSize,
 }
 
 impl BufferCopy {
-    
+   
+    /// Creates a new copy range.
     #[inline]
     pub fn new(
         src_offset: DeviceSize,
@@ -1028,12 +1258,28 @@ impl From<BufferCopy> for vk::BufferCopy2<'_> {
     }
 }
 
+/// Specifies an image-to-image copy range.
 #[derive(Clone, Copy, PartialEq, Eq, BuildStructure)]
 pub struct ImageCopy {
+    /// Specifies the source [`subresource layers`][1].
+    ///
+    /// [1]: ImageSubresourceLayers
     pub src_subresource: ImageSubresourceLayers,
+    /// Specifies the source [`offset`][1].
+    ///
+    /// [1]: ImageCopyOffset
     pub src_offset: ImageCopyOffset,
+    /// Specifies the destination [`subresource layers`][1].
+    ///
+    /// [1]: ImageSubresourceLayers
     pub dst_subresource: ImageSubresourceLayers,
+    /// Specifies the destination [`offset`][1].
+    ///
+    /// [1]: ImageCopyOffset
     pub dst_offset: ImageCopyOffset,
+    /// Specifies the [`extent`][1] of the copy.
+    ///
+    /// [1]: Dimensions
     pub extent: Dimensions,
 }
 
@@ -1052,15 +1298,28 @@ impl From<ImageCopy> for vk::ImageCopy2<'_> {
     }
 }
 
+/// Specifies a buffer-image copy range.
 #[derive(Default, Clone, Copy, BuildStructure)]
 pub struct BufferImageCopy {
+    /// Specifies the offset into the buffer.
     pub buffer_offset: DeviceSize,
+    /// Specifies the row length of the buffer.
     #[skip]
     pub buffer_row_length: Option<NonZeroU32>,
+    /// Specifies the image height of the buffer.
     #[skip]
     pub buffer_image_height: Option<NonZeroU32>,
+    /// Specifies the [`subresource layers'][1] of the image.
+    ///
+    /// [1]: ImageSubresourceLayers
     pub image_subresource: ImageSubresourceLayers,
+    /// Specifies the [`image offset`][1].
+    ///
+    /// [1]: ImageCopyOffset
     pub image_offset: ImageCopyOffset,
+    /// Specifies the image [`extent`][1].
+    ///
+    /// [1]: Dimensions
     #[skip]
     pub image_extent: Dimensions,
 }
@@ -1153,5 +1412,821 @@ impl From<BufferImageCopy> for vk::BufferImageCopy2<'_> {
             image_extent: value.image_extent.into(),
             ..Default::default()
         }
+    }
+}
+
+/// Limits of a [`PhysicalDevice`].
+///
+/// See the [`Vulkan docs`][1] for a full description.
+///
+/// [1]: https://docs.vulkan.org/refpages/latest/refpages/source/VkPhysicalDeviceLimits.html
+#[derive(Clone, Copy)]
+pub struct PhysicalDeviceLimits(pub(crate) vk::PhysicalDeviceLimits);
+
+impl PhysicalDeviceLimits {
+
+    /// Largest width guaranteed to be supported by 1D images.
+    #[inline]
+    pub fn max_image_dimension_1d(&self) -> u32 {
+        self.0.max_image_dimension1_d
+    }
+
+    /// Largest width or height guaranteed to be supported 2D images.
+    #[inline]
+    pub fn max_image_dimension_2d(&self) -> u32 {
+        self.0.max_image_dimension2_d
+    }
+
+    /// Largest width, height or depth guaranteed to be supported 2D images.
+    #[inline]
+    pub fn max_image_dimension_3d(&self) -> u32 {
+        self.0.max_image_dimension3_d
+    }
+
+    /// Largest wdith or height guaranteed to be supported by 2D images that are
+    /// [`cube map compatible`][1].
+    ///
+    /// [1]: ImageCreateInfo::with_cube_map
+    #[inline]
+    pub fn max_image_dimension_cube(&self) -> u32 {
+        self.0.max_image_dimension_cube
+    }
+
+    /// The maximum number of supported [`layers`][1] for an image.
+    ///
+    /// [1]: ImageCreateInfo::with_array_layers
+    #[inline]
+    pub fn max_image_array_layers(&self) -> u32 {
+        self.0.max_image_array_layers
+    }
+
+    /// The maximum number of addressable texels for a buffer, which was created with
+    /// [`UNIFORM_TEXEL_BUFFER`][1] or [`STORAGE_TEXEL_BUFFER`][2] usages set.
+    ///
+    /// [1]: BufferUsages::UNIFORM_TEXEL_BUFFER
+    /// [2]: BufferUsages::STORAGE_TEXEL_BUFFER
+    #[inline]
+    pub fn max_texel_buffer_elements(&self) -> u32 {
+        self.0.max_texel_buffer_elements
+    }
+
+    /// The maximum value that **can** be specified for the [`range`][1] member of
+    /// [`DescriptorBufferInfo`] when descriptor type is [`uniform buffer`][2].
+    ///
+    /// [1]: DescriptorBufferInfo::range
+    /// [2]: DescriptorType::UniformBuffer
+    #[inline]
+    pub fn max_uniform_buffer_range(&self) -> u32 {
+        self.0.max_uniform_buffer_range
+    }
+
+    /// The maximum value that **can** be specified for the [`range`][1] member of
+    /// [`DescriptorBufferInfo`] when descriptor type is [`storage buffer`][2].
+    ///
+    /// [1]: DescriptorBufferInfo::range
+    /// [2]: DescriptorType::StorageBuffer
+    #[inline]
+    pub fn max_storage_buffer_range(&self) -> u32 {
+        self.0.max_storage_buffer_range
+    }
+   
+    /// The maximum size, in bytes, of the pool of push constant memory.
+    ///
+    /// The offsets + sizes of push constants in shaders **must** be less than or equal to this
+    /// limit.
+    #[inline]
+    pub fn max_push_constants_size(&self) -> u32 {
+        self.0.max_push_constants_size
+    }
+   
+    /// This is the maximum number of [`device memory allocations`][1], which **can**
+    /// simultaneously exist on a [`Device`].
+    ///
+    /// [1]: MemoryBinder
+    #[inline]
+    pub fn max_memory_allocation_count(&self) -> u32 {
+        self.0.max_memory_allocation_count
+    }
+   
+    /// This is the maximum number of [`samplers`][1], which **can** simultaneously exist on a
+    /// [`Device`].
+    ///
+    /// [1]: Sampler
+    #[inline]
+    pub fn max_sampler_allocation_count(&self) -> u32 {
+        self.0.max_sampler_allocation_count
+    }
+   
+    /// The granularity, in bytes, at which buffer or linear image resources, linear or optimal
+    /// tensor resources, and optimal image resources can be bound to adjacent offsets in the same
+    /// [`DeviceMemory`] object without aliasing.
+    #[inline]
+    pub fn buffer_image_granularity(&self) -> DeviceSize {
+        self.0.buffer_image_granularity
+    }
+   
+    /// The total amount of address space available, in bytes, for sparse memory resources.
+    #[inline]
+    pub fn sparse_address_space_size(&self) -> DeviceSize {
+        self.0.sparse_address_space_size
+    }
+   
+    /// The maximum number of descriptor sets that **can** be simultaneously used by a pipeline.
+    #[inline]
+    pub fn max_bound_descriptor_sets(&self) -> u32 {
+        self.0.max_bound_descriptor_sets
+    }
+   
+    /// The maximum number of samplers that **can** be accessible to a single shader stage in
+    /// a [`shader set`][1].
+    ///
+    /// [1]: ShaderSet
+    #[inline]
+    pub fn max_per_stage_descriptor_samplers(&self) -> u32 {
+        self.0.max_per_stage_descriptor_samplers
+    }
+    
+    /// The maximum number of uniform buffers that **can** be accessible to a single shader stage in a
+    /// [`shader set`][1].
+    ///
+    /// [1]: ShaderSet
+    #[inline]
+    pub fn max_per_stage_descriptor_uniform_buffers(&self) -> u32 {
+        self.0.max_per_stage_descriptor_uniform_buffers
+    }
+
+    /// The maximum number of storage buffers that **can** be accessible to a single shader stage in a
+    /// [`shader set`][1].
+    ///
+    /// [1]: ShaderSet
+    #[inline]
+    pub fn max_per_stage_descriptor_storage_buffers(&self) -> u32 {
+        self.0.max_per_stage_descriptor_storage_buffers
+    }
+
+    /// The maximum number of sampled images that **can** be accessible to a single shader stage in a
+    /// [`shader set`][1].
+    ///
+    /// [1]: ShaderSet
+    #[inline]
+    pub fn max_per_stage_descriptor_sampled_images(&self) -> u32 {
+        self.0.max_per_stage_descriptor_sampled_images
+    }
+
+    /// The maximum number of storage images that **can** be accessible to a single shader stage in a
+    /// [`shader set`][1].
+    ///
+    /// [1]: ShaderSet
+    #[inline]
+    pub fn max_per_stage_descriptor_storage_images(&self) -> u32 {
+        self.0.max_per_stage_descriptor_storage_images
+    }
+
+    /// The maximum number of input attachments that **can** be accessible to a single shader stage in 
+    /// a [`shader set`][1].
+    ///
+    /// [1]: ShaderSet   
+    #[inline]
+    pub fn max_per_stage_descriptor_input_attachments(&self) -> u32 {
+        self.0.max_per_stage_descriptor_input_attachments
+    }
+    
+    /// The maximum number of resources that **can** be accessible to a single shader stage in a
+    /// [`shader set`][1]
+    ///
+    /// [1]: ShaderSet
+    #[inline]
+    pub fn max_per_stage_resources(&self) -> u32 {
+        self.0.max_per_stage_resources
+    }
+   
+    /// The maximum number of samplers that **can** be included in a [`shader set`][1].
+    ///
+    /// [1]: ShaderSet
+    #[inline]
+    pub fn max_descriptor_set_samplers(&self) -> u32 {
+        self.0.max_descriptor_set_samplers
+    }
+
+    /// The maximum number of uniform buffers that **can** be included in a [`shader set`][1].
+    ///
+    /// [1]: ShaderSet
+    #[inline]
+    pub fn max_descriptor_set_uniform_buffers(&self) -> u32 {
+        self.0.max_descriptor_set_uniform_buffers
+    }
+
+    /// The maximum number of dynamic uniform buffers that **can** be included in a [`shader set`][1].
+    ///
+    /// [1]: ShaderSet
+    #[inline]
+    pub fn max_descriptor_set_uniform_buffers_dynamic(&self) -> u32 {
+        self.0.max_descriptor_set_uniform_buffers_dynamic
+    }
+
+    /// The maximum number of storage buffers that **can** be included in a [`shader set`][1].
+    ///
+    /// [1]: ShaderSet
+    #[inline]
+    pub fn max_descriptor_set_storage_buffers(&self) -> u32 {
+        self.0.max_descriptor_set_storage_buffers
+    }
+
+    /// The maximum number of dynamic storage buffers that **can** be included in a
+    /// [`shader set`][1].
+    ///
+    /// [1]: ShaderSet
+    #[inline]
+    pub fn max_descriptor_set_storage_buffers_dynamic(&self) -> u32 {
+        self.0.max_descriptor_set_storage_buffers_dynamic
+    }
+
+    /// The maximum number of sampled images that **can** be included in a [`shader set`][1].
+    ///
+    /// [1]: ShaderSet
+    #[inline]
+    pub fn max_descriptor_set_sampled_images(&self) -> u32 {
+        self.0.max_descriptor_set_sampled_images
+    }
+
+    /// The maximum number of storage images that **can** be included in a [`shader set`][1].
+    ///
+    /// [1]: ShaderSet
+    #[inline]
+    pub fn max_descriptor_set_storage_images(&self) -> u32 {
+        self.0.max_descriptor_set_storage_images
+    }
+
+    /// The maximum number of input attachments that **can** be included in a [`shader set`][1].
+    ///
+    /// [1]: ShaderSet
+    #[inline]
+    pub fn max_descriptor_set_input_attachments(&self) -> u32 {
+        self.0.max_descriptor_set_input_attachments
+    }
+   
+    /// The maximum number of vertex buffers that can be specified for providing vertex attributes
+    /// to a [`graphics pipeline`][1].
+    ///
+    /// [1]: GraphicsPipelineCreateInfo
+    #[inline]
+    pub fn max_vertex_input_attributes(&self) -> u32 {
+        self.0.max_vertex_input_attributes
+    }
+   
+    /// The maximum number of vertex buffers that can be specified for providing vertex attributes
+    /// to a [`graphics pipeline`][1].
+    ///
+    /// [1]: GraphicsPipelineCreateInfo
+    #[inline]
+    pub fn max_vertex_input_bindings(&self) -> u32 {
+        self.0.max_vertex_input_bindings
+    }
+
+    /// The maximum vertex input attribute offset that **can** be added to the vertex input binding
+    /// stride.
+    ///
+    /// The [`offset`][1] of [`VertexInputAttribute`] **must** be less than or equal to this limit.
+    ///
+    /// [1]: VertexInputAttribute::offset
+    #[inline]
+    pub fn max_vertex_input_attribute_offset(&self) -> u32 {
+        self.0.max_vertex_input_attribute_offset
+    }
+
+    /// The maximum vertex input binding stride that **can** be specified in a vertex input binding.
+    ///
+    /// The [`stride`][1] of a [`VertexInputBinding`] **must** be less than or equal to this limit.
+    ///
+    /// [1]: VertexInputBinding::stride   
+    #[inline]
+    pub fn max_vertex_input_binding_stride(&self) -> u32 {
+        self.0.max_vertex_input_binding_stride
+    }
+   
+    /// The maximum number of components of output variables which can be output by a vertex
+    /// shader.
+    #[inline]
+    pub fn max_vertex_output_components(&self) -> u32 {
+        self.0.max_vertex_output_components
+    }
+   
+    /// The maximum tessellation generation level supported by the fixed-function tessellation
+    /// primitive generator.
+    #[inline]
+    pub fn max_tessellation_generation_level(&self) -> u32 {
+        self.0.max_tessellation_generation_level
+    }
+   
+    /// The maximum patch size, in vertices, of patches that can be processed by the tessellation
+    /// control shader and tessellation primitive generator.
+    #[inline]
+    pub fn max_tessellation_patch_size(&self) -> u32 {
+        self.0.max_tessellation_patch_size
+    }
+
+    /// The maximum number of components of input variables which can be provided as per-vertex
+    /// inputs to the tessellation control shader stage.
+    #[inline]
+    pub fn max_tessellation_control_per_vertex_input_components(&self) -> u32 {
+        self.0.max_tessellation_control_per_vertex_input_components
+    }
+   
+    /// The maximum number of components of per-vertex output variables which can be output from
+    /// the tessellation control shader stage.
+    #[inline]
+    pub fn max_tessellation_control_per_vertex_output_components(&self) -> u32 {
+        self.0.max_tessellation_control_per_vertex_output_components
+    }
+    
+    /// The maximum number of components of per-patch output variables which can be output from the
+    /// tessellation control shader stage.
+    #[inline]
+    pub fn max_tessellation_control_per_patch_output_components(&self) -> u32 {
+        self.0.max_tessellation_control_per_patch_output_components
+    }
+   
+    /// The maximum total number of components of per-vertex and per-patch output variables which
+    /// can be output from the tessellation control shader stage.
+    #[inline]
+    pub fn max_tessellation_control_total_output_components(&self) -> u32 {
+        self.0.max_tessellation_control_total_output_components
+    }
+   
+    /// The maximum number of components of input variables which can be provided as per-vertex
+    /// inputs to the tessellation evaluation shader stage.
+    #[inline]
+    pub fn max_tessellation_evaluation_input_components(&self) -> u32 {
+        self.0.max_tessellation_evaluation_input_components
+    }
+   
+    /// The maximum number of components of per-vertex output variables which can be output from the
+    /// tessellation evaluation shader stage.
+    #[inline]
+    pub fn max_tessellation_evaluation_output_components(&self) -> u32 {
+        self.0.max_tessellation_evaluation_output_components
+    }
+   
+    /// The maximum number of components of input variables which can be provided as inputs to the
+    /// fragment shader stage.
+    #[inline]
+    pub fn max_fragment_input_components(&self) -> u32 {
+        self.0.max_fragment_input_components
+    }
+   
+    /// The maximum number of output attachments which can be written to by the fragment shader stage.
+    #[inline]
+    pub fn max_fragment_output_attachments(&self) -> u32 {
+        self.0.max_fragment_output_attachments
+    }
+   
+    /// The maximum number of output attachments which can be written to by the fragment shader
+    /// stage when blending is enabled and one of the dual source blend modes is in use.
+    #[inline]
+    pub fn max_fragment_dual_src_attachments(&self) -> u32 {
+        self.0.max_fragment_dual_src_attachments
+    }
+   
+    /// The total number of storage buffers, storage images, and output Location decorated color
+    /// attachments which can be used in the fragment shader stage.
+    #[inline]
+    pub fn max_fragment_combined_output_resources(&self) -> u32 {
+        self.0.max_fragment_combined_output_resources
+    }
+   
+    /// The maximum total storage size, in bytes, available for variables declared with the
+    /// Workgroup storage class in shader modules (or with the shared storage qualifier in GLSL) in
+    /// the compute shader stage.
+    #[inline]
+    pub fn max_compute_shared_memory_size(&self) -> u32 {
+        self.0.max_compute_shared_memory_size
+    }
+    
+    /// The maximum number of local workgroups that can be dispatched by a single dispatching
+    /// command.
+    #[inline]
+    pub fn max_compute_work_group_count(&self) -> [u32; 3usize] {
+        self.0.max_compute_work_group_count
+    }
+    
+    /// The maximum total number of compute shader invocations in a single local workgroup.
+    #[inline]
+    pub fn max_compute_work_group_invocations(&self) -> u32 {
+        self.0.max_compute_work_group_invocations
+    }
+   
+    /// The maximum size of a local compute workgroup, per dimension.
+    #[inline]
+    pub fn max_compute_work_group_size(&self) -> [u32; 3usize] {
+        self.0.max_compute_work_group_size
+    }
+   
+    /// The number of bits of subpixel precision in framebuffer coordinates.
+    #[inline]
+    pub fn sub_pixel_precision_bits(&self) -> u32 {
+        self.0.sub_pixel_precision_bits
+    }
+   
+    /// The number of bits of precision in the division along an axis of an image used for
+    /// minification and magnification filter.
+    #[inline]
+    pub fn sub_texel_precision_bits(&self) -> u32 {
+        self.0.sub_texel_precision_bits
+    }
+   
+    /// The number of bits of division that the LOD calculation for mipmap fetching get snapped to
+    /// when determining the contribution from each mip level to the mip filtered results.
+    #[inline]
+    pub fn mipmap_precision_bits(&self) -> u32 {
+        self.0.mipmap_precision_bits
+    }
+   
+    /// The maximum index value that can be used for indexed draw calls when using 32-bit indices.
+    #[inline]
+    pub fn max_draw_indexed_index_value(&self) -> u32 {
+        self.0.max_draw_indexed_index_value
+    }
+   
+    /// The maximum absolute [`sampler LOD bias`][1].
+    ///
+    /// [1]: SamplerAttributes::mip_lod_bias
+    #[inline]
+    pub fn max_sampler_lod_bias(&self) -> f32 {
+        self.0.max_sampler_lod_bias
+    }
+   
+    /// The maximum degree of sampler anisotropy. 
+    ///
+    /// The maximum degree of anisotropic filtering used for an image sampling operation is the
+    /// minimum of the [`max anisotropy`][1] member of the [`SamplerAttributes`] and this limit.
+    ///
+    /// [1]: SamplerAttributes::max_anisotropy
+    #[inline]
+    pub fn max_sampler_anisotropy(&self) -> f32 {
+        self.0.max_sampler_anisotropy
+    }
+   
+    /// The maximum number of active viewports.
+    #[inline]
+    pub fn max_viewports(&self) -> u32 {
+        self.0.max_viewports
+    }
+   
+    /// The maximum viewport dimensions in the width and height dimensions, respectively.
+    #[inline]
+    pub fn max_viewport_dimensions(&self) -> [u32; 2usize] {
+        self.0.max_viewport_dimensions
+    }
+   
+    /// The minimum..maximum range that the corners of a viewport must be contained in.
+    #[inline]
+    pub fn viewport_bounds_range(&self) -> [f32; 2usize] {
+        self.0.viewport_bounds_range
+    }
+   
+    /// The number of bits of subpixel precision for viewport bounds.
+    #[inline]
+    pub fn viewport_sub_pixel_bits(&self) -> u32 {
+        self.0.viewport_sub_pixel_bits
+    }
+   
+    /// The minimum required alignment, in bytes, of host visible memory allocations within the
+    /// host address space.
+    ///
+    /// See [`DeviceMemory::map_memory`].
+    #[inline]
+    pub fn min_memory_map_alignment(&self) -> usize {
+        self.0.min_memory_map_alignment
+    }
+  
+    /*
+    TODO: Buffer views
+    #[inline]
+    pub fn min_texel_buffer_offset_alignment(&self) -> DeviceSize {
+        self.0.min_texel_buffer_offset_alignment
+    }
+    */
+    
+    /// The minimum required alignment, in bytes, for the [`offset`][1] member of the
+    /// [`DescriptorBufferInfo`] for [`uniform buffers`][2].
+    ///
+    /// [1]: DescriptorBufferInfo::offset
+    /// [2]: DescriptorType::UniformBuffer
+    #[inline]
+    pub fn min_uniform_buffer_offset_alignment(&self) -> DeviceSize {
+        self.0.min_uniform_buffer_offset_alignment
+    }
+
+    /// The minimum required alignment, in bytes, for the [`offset`][1] member of the
+    /// [`DescriptorBufferInfo`] for [`storage buffers`][2].
+    ///
+    /// [1]: DescriptorBufferInfo::offset   
+    /// [2]: DescriptorType::StorageBuffer
+    #[inline]
+    pub fn min_storage_buffer_offset_alignment(&self) -> DeviceSize {
+        self.0.min_storage_buffer_offset_alignment
+    }
+   
+    /// The minimum offset value for the Offset or ConstOffset image operand of any of the
+    /// OpImageSample* or OpImageFetch* image instructions.
+    #[inline]
+    pub fn min_texel_offset(&self) -> i32 {
+        self.0.min_texel_offset
+    }
+   
+    /// The maximum offset value for the Offset or ConstOffset image operand of any of the
+    /// OpImageSample* or OpImageFetch* image instructions.
+    #[inline]
+    pub fn max_texel_offset(&self) -> u32 {
+        self.0.max_texel_offset
+    }
+   
+    /// The minimum offset value for the Offset, ConstOffset, or ConstOffsets image operands of any
+    /// of the OpImage*Gather image instructions.
+    #[inline]
+    pub fn min_texel_gather_offset(&self) -> i32 {
+        self.0.min_texel_gather_offset
+    }
+   
+    /// The maximum offset value for the Offset, ConstOffset, or ConstOffsets image operands of any
+    /// of the OpImage*Gather image instructions.
+    #[inline]
+    pub fn max_texel_gather_offset(&self) -> u32 {
+        self.0.max_texel_gather_offset
+    }
+   
+    /// The base minimum (inclusive) negative offset value for the Offset operand of the
+    /// InterpolateAtOffset extended instruction.
+    #[inline]
+    pub fn min_interpolation_offset(&self) -> f32 {
+        self.0.min_interpolation_offset
+    }
+   
+    /// The base maximum (inclusive) positive offset value for the Offset operand of the
+    /// InterpolateAtOffset extended instruction.
+    #[inline]
+    pub fn max_interpolation_offset(&self) -> f32 {
+        self.0.max_interpolation_offset
+    }
+   
+    /// The number of fractional bits that the x and y offsets to the InterpolateAtOffset extended
+    /// instruction may be rounded to as fixed-point values.
+    #[inline]
+    pub fn sub_pixel_interpolation_offset_bits(&self) -> u32 {
+        self.0.sub_pixel_interpolation_offset_bits
+    }
+   
+    /// The maximum width for a framebuffer.
+    ///
+    /// The [`width`][1] + the x value of [`offset`][2] of [`render_area`][3] in [`RenderingInfo`]
+    /// **must** be less than or equal to this value.
+    ///
+    /// [1]: RenderArea::width
+    /// [2]: RenderArea::offset
+    /// [3]: RenderArea
+    #[inline]
+    pub fn max_framebuffer_width(&self) -> u32 {
+        self.0.max_framebuffer_width
+    }
+    
+    /// The maximum height for a framebuffer.
+    ///
+    /// The [`height`][1] + the y value of [`offset`][2] of [`render_area`][3] in [`RenderingInfo`]
+    /// **must** be less than or equal to this value.
+    ///
+    /// [1]: RenderArea::height
+    /// [2]: RenderArea::offset
+    /// [3]: RenderArea
+    #[inline]
+    pub fn max_framebuffer_height(&self) -> u32 {
+        self.0.max_framebuffer_height
+    }
+   
+    /// The maximum layer count for a layered framebuffer.
+    ///
+    /// The [`layer count`][1] in [`RenderingInfo`] **must** be less than or equal to this value.
+    ///
+    /// [1]: RenderingInfo::layer_count
+    #[inline]
+    pub fn max_framebuffer_layers(&self) -> u32 {
+        self.0.max_framebuffer_layers
+    }
+   
+    /// A bitmask of [`MsaaSamples`] indicating the color sample counts that are supported
+    /// for all framebuffer color attachments with floating- or fixed-point formats.
+    ///
+    /// The [`msaa samples`][1] in [`RenderingInfo`] **must** be contained in this value.
+    ///
+    /// [1]: RenderingInfo::msaa_samples
+    #[inline]
+    pub fn framebuffer_color_sample_counts(&self) -> MsaaSamples {
+        MsaaSamples::from_raw(self.0.framebuffer_color_sample_counts.as_raw())
+    }
+
+    /// A bitmask of [`MsaaSamples`] indicating the supported depth sample counts for all
+    /// framebuffer depth/stencil attachments, when the format includes a depth component.
+    ///
+    /// The [`msaa samples`][1] in [`RenderingInfo`] **must** be contained in this value.
+    ///
+    /// [1]: RenderingInfo::msaa_samples
+    #[inline]
+    pub fn framebuffer_depth_sample_counts(&self) -> MsaaSamples {
+        MsaaSamples::from_raw(self.0.framebuffer_depth_sample_counts.as_raw())
+    }
+   
+    /// A bitmask of [`MsaaSamples`] indicating the supported stencil sample counts for all
+    /// framebuffer depth/stencil attachments, when the format includes a stencil component.
+    ///
+    /// The [`msaa samples`][1] in [`RenderingInfo`] **must** be contained in this value.
+    ///
+    /// [1]: RenderingInfo::msaa_samples
+    #[inline]
+    pub fn framebuffer_stencil_sample_counts(&self) -> MsaaSamples {
+        MsaaSamples::from_raw(self.0.framebuffer_stencil_sample_counts.as_raw())
+    }
+   
+    /// A bitmask of [`MsaaSamples`] indicating the supported sample counts for a subpass
+    /// which uses no attachments.
+    #[inline]
+    pub fn framebuffer_no_attachments_sample_counts(&self) -> MsaaSamples {
+        MsaaSamples::from_raw(self.0.framebuffer_no_attachments_sample_counts.as_raw())
+    }
+   
+    /// The maximum number of color attachments that can be used by a subpass in a render pass.
+    ///
+    /// The color attachment count when [`rendering`][1] **must** be less than or equal to this
+    /// value.
+    ///
+    /// [1]: GraphicsCommands::render
+    #[inline]
+    pub fn max_color_attachments(&self) -> u32 {
+        self.0.max_color_attachments
+    }
+   
+    /// A bitmask of [`MsaaSamples`] indicating the sample counts supported for all 2D images
+    /// created with the [`SAMPLED`][1] usage and a [`non-integer`][2] [`color format`][3].
+    ///
+    /// [1]: ImageUsages::SAMPLED
+    /// [2]: NumericFormat::is_integer
+    /// [3]: Format::numeric_format_color
+    #[inline]
+    pub fn sampled_image_color_sample_counts(&self) -> MsaaSamples {
+        MsaaSamples::from_raw(self.0.sampled_image_color_sample_counts.as_raw())
+    }
+   
+    /// a bitmask of [`MsaaSamples`] indicating the sample counts supported for all 2D images
+    /// created with the [`SAMPLED`][1] usage and an [`integer`][2] [`color format`][3].
+    ///
+    /// [1]: ImageUsages::SAMPLED
+    /// [2]: NumericFormat::is_integer
+    /// [3]: Format::numeric_format_color
+    #[inline]
+    pub fn sampled_image_integer_sample_counts(&self) -> MsaaSamples {
+        MsaaSamples::from_raw(self.0.sampled_image_integer_sample_counts.as_raw())
+    }
+   
+    /// A bitmask of [`MsaaSamples`] indicating the sample counts supported for all 2D images
+    /// created with the [`SAMPLED`][1] usage and a [`depth format`][2]
+    ///
+    /// [1]: ImageUsages::SAMPLED
+    /// [2]: Format::numeric_format_depth
+    #[inline]
+    pub fn sampled_image_depth_sample_counts(&self) -> MsaaSamples {
+        MsaaSamples::from_raw(self.0.sampled_image_depth_sample_counts.as_raw())
+    }
+
+    /// A bitmask of [`MsaaSamples`] indicating the sample counts supported for all 2D images
+    /// created with the [`SAMPLED`][1] usage and a [`stencil format`][2]
+    ///
+    /// [1]: ImageUsages::SAMPLED
+    /// [2]: Format::numeric_format_stencil
+    #[inline]
+    pub fn sampled_image_stencil_sample_counts(&self) -> MsaaSamples {
+        MsaaSamples::from_raw(self.0.sampled_image_stencil_sample_counts.as_raw())
+    }
+
+    /// A bitmask of [`MsaaSamples`] indicating the sample counts supported for all 2D images
+    /// created with the [`STORAGE`][1] usage.
+    ///
+    /// [1]: ImageUsages::STORAGE
+    #[inline]
+    pub fn storage_image_sample_counts(&self) -> MsaaSamples {
+        MsaaSamples::from_raw(self.0.storage_image_sample_counts.as_raw())
+    }
+
+    /// The maximum number of array elements of a variable decorated with the SampleMask built-in
+    /// decoration.
+    #[inline]
+    pub fn max_sample_mask_words(&self) -> u32 {
+        self.0.max_sample_mask_words
+    }
+
+    /// Specifies support for timestamps on all graphics and compute queues.
+    #[inline]
+    pub fn timestamp_compute_and_graphics(&self) -> bool {
+        self.0.timestamp_compute_and_graphics != 0
+    }
+
+    /// The number of nanoseconds required for a timestamp query to be incremented by 1.
+    #[inline]
+    pub fn timestamp_period(&self) -> f32 {
+        self.0.timestamp_period
+    }
+
+    /// The maximum number of clip distances that can be used in a single shader stage.
+    #[inline]
+    pub fn max_clip_distances(&self) -> u32 {
+        self.0.max_clip_distances
+    }
+
+    /// The maximum number of cull distances that can be used in a single shader stage.
+    #[inline]
+    pub fn max_cull_distances(&self) -> u32 {
+        self.0.max_cull_distances
+    }
+
+    /// The maximum combined number of clip and cull distances that can be used in a single shader
+    /// stage.
+    #[inline]
+    pub fn max_combined_clip_and_cull_distances(&self) -> u32 {
+        self.0.max_combined_clip_and_cull_distances
+    }
+
+    /*
+    TODO: DeviceQueue priorities
+    #[inline]
+    pub fn discrete_queue_priorities(&self) -> u32 {
+        self.0.discrete_queue_priorities
+    }*/
+
+    /// The range minimum..maximum of supported sizes for points.
+    ///
+    /// Values written to variables decorated with the PointSize built-in decoration are clamped to
+    /// this range.
+    #[inline]
+    pub fn point_size_range(&self) -> [f32; 2usize] {
+        self.0.point_size_range
+    }
+
+    /// The range minimum..maximum of supported widths for lines.
+    ///
+    /// Values specified by the [`line_width`][1] of [`GraphicsPipelineCreateInfo`] or the
+    /// `line_width` parameter to [`set_line_width`][2] are clamped to this range.
+    ///
+    /// [1]: GraphicsPipelineCreateInfo::with_line_width
+    /// [2]: DrawPipelineCommands::set_line_width
+    #[inline]
+    pub fn line_width_range(&self) -> [f32; 2usize] {
+        self.0.line_width_range
+    }
+
+    /// The granularity of supported point sizes.
+    #[inline]
+    pub fn point_size_granularity(&self) -> f32 {
+        self.0.point_size_granularity
+    }
+
+    /// The granularity of supported line widths.
+    #[inline]
+    pub fn line_width_granularity(&self) -> f32 {
+        self.0.line_width_granularity
+    }
+
+    /// Specifies whether lines are rasterized according to the preferred method of rasterization.
+    #[inline]
+    pub fn strict_lines(&self) -> bool {
+        self.0.strict_lines != 0
+    }
+
+    /// Specifies whether rasterization uses the standard sample locations.
+    #[inline]
+    pub fn standard_sample_locations(&self) -> bool {
+        self.0.standard_sample_locations != 0
+    }
+
+    /// The optimal buffer offset alignment in bytes for [`copy_buffet_to_image`][1] and
+    /// [`copy_image_to_buffer`][2].
+    ///
+    /// [1]: CopyCommands::copy_buffer_to_image
+    /// [2]: CopyCommands::copy_image_to_buffer
+    #[inline]
+    pub fn optimal_buffer_copy_offset_alignment(&self) -> DeviceSize {
+        self.0.optimal_buffer_copy_offset_alignment
+    }
+
+    /// The optimal buffer row pitch alignment in bytes for [`copy_buffer_to_image`][1] and
+    /// [`copy_image_to_buffer`][2].
+    ///
+    /// [1]: CopyCommands::copy_buffer_to_image
+    /// [2]: CopyCommands::copy_image_to_buffer
+    #[inline]
+    pub fn optimal_buffer_copy_row_pitch_alignment(&self) -> DeviceSize {
+        self.0.optimal_buffer_copy_row_pitch_alignment
+    }
+
+    /// The size and alignment in bytes that bounds concurrent access to host-mapped device memory.
+    #[inline]
+    pub fn non_coherent_atom_size(&self) -> DeviceSize {
+        self.0.non_coherent_atom_size
     }
 }

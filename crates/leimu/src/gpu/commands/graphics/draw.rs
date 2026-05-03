@@ -74,7 +74,7 @@ impl DrawBufferRange {
     /// Set size to zero to specify the entire buffer from [`offset`][1].
     ///
     /// [1]: Self::offset
-    #[inline(always)]
+    #[inline]
     pub fn new(id: BufferId, offset: DeviceSize, size: DeviceSize) -> Self {
         Self {
             id,
@@ -92,7 +92,7 @@ pub struct IndexBufferInfo {
 
 impl IndexBufferInfo {
 
-    #[inline(always)]
+    #[inline]
     pub fn new(id: BufferId, offset: u64) -> Self {
         Self {
             id,
@@ -129,7 +129,7 @@ pub struct DrawCommandInfo<'a> {
 
 impl DrawCommandStorage {
 
-    #[inline(always)]
+    #[inline]
     pub fn reinit<Alloc>(
         &mut self,
         command_buffer: vk::CommandBuffer,
@@ -329,7 +329,7 @@ impl<'a> DrawCommands<'a> {
     /// [5]: PipelineCommands::push_descriptor_bindings
     /// [6]: PipelineCommands::push_constants
     /// [7]: DynamicState
-    #[inline(always)]
+    #[inline]
     pub fn pipeline_commands(&mut self) -> Result<DrawPipelineCommands<'_, 'a>> {
         let Some(pipeline) = &self.last_pipeline else {
             return Err(Error::just_context(
@@ -362,7 +362,7 @@ impl<'a, 'b, T> Deref for DrawPipelineCommands<'a, 'b, T> {
 
     type Target = PipelineCommands<'a, 'b>;
     
-    #[inline(always)]
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.general
     }
@@ -370,7 +370,7 @@ impl<'a, 'b, T> Deref for DrawPipelineCommands<'a, 'b, T> {
 
 impl<'a, 'b, T> DerefMut for DrawPipelineCommands<'a, 'b, T> {
 
-    #[inline(always)]
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.general
     }
@@ -789,8 +789,8 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// [4]: GraphicsPipeline
     /// [5]: BaseDeviceFeatures::multi_viewport
     /// [6]: Gpu::enabled_base_features
-    /// [7]: DeviceLimits::max_viewports
-    /// [8]: DeviceLimits
+    /// [7]: PhysicalDeviceLimits::max_viewports
+    /// [8]: PhysicalDeviceLimits
     pub fn set_multi_viewport(
         &mut self,
         viewports: &[Viewport],
@@ -809,7 +809,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
             )))
         } else if n.clamp(1, self.gpu.device_limits().max_viewports()) != n {
             return Err(Error::just_context(format!(
-                "viewport count must be between inclusively between 1 and DeviceLimits::max_viewports() ({}), given view count is {n}",
+                "viewport count must be between inclusively between 1 and PhysicalDeviceLimits::max_viewports() ({}), given view count is {n}",
                 self.gpu.device_limits().max_viewports(),
             )))
         }
@@ -999,6 +999,78 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
                 pass_op.into(),
                 depth_fail_op.into(),
                 compare_op.into()
+            );
+        }
+        Ok(())
+    }
+
+    /// Dynamically sets whether rasterizer discard is enabled.
+    ///
+    /// # Valid usage
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic state
+    ///   includes [`rasterizer discard enable`][2].
+    ///
+    /// # Vulkan docs
+    /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetRasterizerDiscardEnable.html>
+    ///
+    /// [1]: GraphicsPipeline
+    /// [2]: DynamicState::RASTERIZER_DISCARD_ENABLE
+    pub fn set_rasterizer_discard_enable(
+        &mut self,
+        enabled: bool,
+    ) -> Result<()> {
+        self.check_dynamic_state(DynamicState::RASTERIZER_DISCARD_ENABLE)?;
+        unsafe {
+            self.gpu.device().cmd_set_rasterizer_discard_enable(
+                self.command_buffer,
+                enabled
+            );
+        }
+        Ok(())
+    }
+
+    /// Dynamically sets whether depth bias is enabled.
+    ///
+    /// # Valid usagge
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic state
+    ///   includes [`depth bias enable`][2].
+    ///
+    /// # Vulkan docs
+    /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthBiasEnable.html>
+    ///
+    /// [1]: GraphicsPipeline
+    /// [2]: DynamicState::DEPTH_BIAS_ENABLE
+    pub fn set_depth_bias_enable(
+        &mut self,
+        enabled: bool,
+    ) -> Result<()> {
+        self.check_dynamic_state(DynamicState::DEPTH_BIAS_ENABLE)?;
+        unsafe {
+            self.gpu.device().cmd_set_depth_bias_enable(
+                self.command_buffer,
+                enabled
+            );
+        }
+        Ok(())
+    }
+
+    /// Dynamically sets whether primitive restart is enabled.
+    ///
+    /// # Valid usage
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic state
+    ///   includes [`primitive restart enable`][2].
+    ///
+    /// [1]: GraphicsPipeline
+    /// [2]: DynamicState::PRIMITIVE_RESTART_ENABLE
+    pub fn set_primitive_restart_enable(
+        &mut self,
+        enabled: bool,
+    ) -> Result<()> {
+        self.check_dynamic_state(DynamicState::PRIMITIVE_RESTART_ENABLE)?;
+        unsafe {
+            self.gpu.device().cmd_set_primitive_restart_enable(
+                self.command_buffer,
+                enabled
             );
         }
         Ok(())
@@ -1290,7 +1362,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
             );
             device.cmd_bind_index_buffer2(
                 command_buffer, index_buf.handle(),
-                index_buffer.offset, index_buf_size, draw_info.index_type.into()
+                index_buffer.offset, index_buf_size, draw_info.index_type.into(),
             );
             
             vert_bufs.drop_and_free(&tmp_alloc);
@@ -1323,7 +1395,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// [1]: Self::begin_drawing_indexed
     /// [2]: DynamicState
     /// [3]: GraphicsPipeline
-    #[inline(always)]
+    #[inline]
     pub fn draw_indexed(
         &mut self,
     ) -> Result<()>
@@ -1340,4 +1412,82 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
         }
         Ok(())
     } 
+
+    #[inline]
+    pub fn draw_mesh_tasks_ext(
+        &mut self,
+        group_count_x: u32,
+        group_count_y: u32,
+        group_count_z: u32,
+    ) -> Result<()>
+        where State: state::CanBeginDraw
+    {
+        let properties = self.gpu
+            .get_device_attribute(ext::mesh_shader::Attributes::PROPERTIES)
+            .structure::<ext::mesh_shader::Properties>()
+            .ok_or_else(||
+                Error::just_context("the mesh shader feature is not enabled")
+            )?;
+        if self.pipeline
+            .stage_flags()
+            .contains(ShaderStageFlags::TASK_EXT) {
+            if properties.max_task_work_group_count[0] < group_count_x {
+                return Err(Error::just_context(format!(
+                    "group count x {group_count_x} is greater than max group x count {}",
+                    properties.max_task_work_group_count[0]
+                )))
+            }
+            if properties.max_task_work_group_count[1] < group_count_y {
+                return Err(Error::just_context(format!(
+                    "group count y {group_count_y} is greater than max group y count {}",
+                    properties.max_task_work_group_count[1]
+                )))
+            }
+            if properties.max_task_work_group_count[2] < group_count_z {
+                return Err(Error::just_context(format!(
+                    "group count x {group_count_z} is greater than max group z count {}",
+                    properties.max_task_work_group_count[2]
+                )))
+            }
+        } else if self.pipeline
+            .stage_flags()
+            .contains(ShaderStageFlags::MESH_EXT)
+        {
+            if properties.max_mesh_work_group_count[0] < group_count_x {
+                return Err(Error::just_context(format!(
+                    "group count x {group_count_x} is greater than max group x count {}",
+                    properties.max_mesh_work_group_count[0]
+                )))
+            }
+            if properties.max_mesh_work_group_count[1] < group_count_y {
+                return Err(Error::just_context(format!(
+                    "group count y {group_count_y} is greater than max group y count {}",
+                    properties.max_mesh_work_group_count[1]
+                )))
+            }
+            if properties.max_mesh_work_group_count[2] < group_count_z {
+                return Err(Error::just_context(format!(
+                    "group count z {group_count_z} is greater than max group z count {}",
+                    properties.max_mesh_work_group_count[2]
+                )))
+            }
+        } else {
+            return Err(Error::just_context(
+                "currently bound pipeline doesn't contain a mesh shader stage"
+            ))
+        }
+        let device = self.gpu
+            .get_extension_device::<ext::mesh_shader::Device>()
+            .ok_or_else(|| Error::just_context(
+                "failed to get the mesh shader device"
+            ))?;
+        unsafe {
+            device.cmd_draw_mesh_tasks(
+                self.command_buffer,
+                group_count_x,
+                group_count_y,
+                group_count_z);
+        }
+        Ok(())
+    }
 }

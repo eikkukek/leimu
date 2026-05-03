@@ -28,3 +28,6 @@ winit = { version = "0.30", optional = true }
 [features]
 event-loop = ["dep:winit"]
 default = ["event-loop"]
+
+[package.metadata.docs.rs]
+all-features = true

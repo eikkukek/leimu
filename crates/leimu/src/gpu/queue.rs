@@ -23,21 +23,52 @@ pub struct QueueFamilyProperties {
     pub min_image_transfer_granularity: Dimensions,
 }
 
-#[derive(Clone)]
-pub struct DeviceQueueCreateInfo {
+pub struct UninitDeviceQueue {
+    queue: Option<DeviceQueue>,
+}
+
+impl UninitDeviceQueue {
+
+    pub fn get(self) -> Result<DeviceQueue> {
+        self.queue
+            .ok_or_else(|| Error::just_context("device queue not initialized"))
+    }
+}
+
+/// Parameters used for creating a [`DeviceQueue`].
+pub struct DeviceQueueCreateInfo<'a> {
+    pub(super) out: &'a mut UninitDeviceQueue,
     pub(super) name: Arc<str>,
     pub(super) family_index: u32,
     pub(super) queue_index: u32,
 }
 
-impl DeviceQueueCreateInfo {
+impl<'a> DeviceQueueCreateInfo<'a> {
 
+    /// Creates the parameters.
+    ///
+    /// # Parameters
+    /// - `out`: A mutable reference to an [`uninit`][1] [`DeviceQueue`] where the resultant handle
+    ///   will be stored.
+    /// - `name`: The debug-name assigned to the queue.
+    /// - `family_index`: The [`queue family`][2] index of the queue.
+    /// - `queue_index`: The queue index within the [`queue family`][2] of this queue.
+    ///
+    /// # Valid usage
+    /// - `family_index` *must* be a valid queue family index for the [`Device`].
+    /// - `queue_index` *must* be less than the [`number of queues`][3] in the queue family.
+    ///
+    /// [1]: DeviceQueue::uninit
+    /// [2]: QueueFamilyProperties
+    /// [3]: QueueFamilyProperties::queue_count
     pub fn new(
+        out: &'a mut UninitDeviceQueue,
         name: &str,
         family_index: u32,
         queue_index: u32,
     ) -> Self {
         Self {
+            out,
             name: name.into(),
             family_index,
             queue_index,
@@ -54,6 +85,11 @@ struct DeviceQueueInner {
     queue_index: u32,
 }
 
+/// Represents a [`device queue`][1].
+///
+/// Contains metadata and handle of a queue.
+///
+/// [1]: vk::Queue
 #[derive(Clone)]
 pub struct DeviceQueue {
     id: u64,
@@ -82,15 +118,39 @@ static DEVICE_QUEUE_ID: AtomicU64 = AtomicU64::new(0);
 
 impl DeviceQueue {
 
-    pub(super) unsafe fn new(
+    /// Creates an unitialized [`DeviceQueue`], which can be used as the `out` parameter of
+    /// [`DeviceQueueCreateInfo`].
+    ///
+    /// # Example
+    /// ``` rust
+    /// use leimu::gpu;
+    ///
+    /// let mut devices: gpu::SuitablePhysicalDevices = ...;
+    /// let mut queue = gpu::DeviceQueue::uninit();
+    /// let create_info = gpu::DeviceQueueCreateInfo::new(
+    ///     &mut queue,
+    ///     "queue",
+    ///     0, 0,
+    /// );
+    /// let device = devices.create_device(
+    ///     0, [create_info],
+    /// )?;
+    /// let queue = queue.get()?;
+    /// ```
+    #[inline]
+    pub fn uninit() -> UninitDeviceQueue {
+        UninitDeviceQueue { queue: None }
+    }
+
+    pub(super) unsafe fn new<'a>(
         device_id: DeviceId,
         device: &VkDevice,
         device_queue_index: u32,
-        create_info: &DeviceQueueCreateInfo,
+        create_info: DeviceQueueCreateInfo<'a>,
         family_properties: QueueFamilyProperties,
     ) -> Self {
         let id = DEVICE_QUEUE_ID.fetch_add(1, atomic::Ordering::AcqRel);
-        Self {
+        let s = Self {
             id,
             name: create_info.name.clone(),
             inner: Arc::new(DeviceQueueInner {
@@ -106,7 +166,9 @@ impl DeviceQueue {
                 family_properties,
                 queue_index: create_info.queue_index,
             })
-        }
+        };
+        create_info.out.queue = Some(s.clone());
+        s
     }
 
     #[inline]
@@ -114,31 +176,50 @@ impl DeviceQueue {
         self.inner.handle
     }
 
+    /// Returns the [`DeviceId`] of the [`device`][1] this queue belongs to.
+    ///
+    /// [1]: Device
     #[inline]
     pub fn device_id(&self) -> DeviceId {
         self.inner.device_id
     }
 
+    /// Returns the index of this queue in the [`device`][1] this queue belongs to.
+    ///
+    /// Note that this is different from the [`queue family index`][2] and [`queue index`][3] of
+    /// this queue.
+    ///
+    /// [1]: Device
+    /// [2]: Self::family_index
+    /// [3]: Self::queue_index
     #[inline]
     pub fn device_queue_index(&self) -> u32 {
         self.inner.device_queue_index
     }
 
+    /// Returns the queue family index of this queue.
     #[inline]
     pub fn family_index(&self) -> u32 {
         self.inner.family_index
     }
 
+    /// Returns the [`queue family properties`][1] of this queue.
+    ///
+    /// [1]: QueueFamilyProperties
     #[inline]
     pub fn queue_family_properties(&self) -> &QueueFamilyProperties {
         &self.inner.family_properties
     }
 
+    /// Returns the [`QueueFlags`] of the queue family of this queue.
     #[inline]
     pub fn queue_flags(&self) -> QueueFlags {
         self.inner.family_properties.queue_flags
     }
 
+    /// Returns the queue index within the [`queue family`][1] of this queue.
+    ///
+    /// [1]: Self::family_index
     #[inline]
     pub fn queue_index(&self) -> u32 {
         self.inner.queue_index
@@ -164,13 +245,64 @@ impl Hash for DeviceQueue {
 }
 
 #[derive(Clone)]
-pub struct QueueFamilies {
+pub(crate) struct QueueFamilies {
     queue_family_properties: Arc<[QueueFamilyProperties]>,
+}
+
+mod enumerated {
+
+    use super::*;
+
+    pub struct Iter<'a> {
+        pub(super) iter: ::core::iter::Enumerate<::core::slice::Iter<'a, QueueFamilyProperties>>,
+    }
+    
+    impl<'a> Iterator for Iter<'a> {
+
+        type Item = (u32, &'a QueueFamilyProperties);
+
+        fn next(&mut self) -> Option<Self::Item> {
+            let (idx, prop) = self.iter.next()?;
+            Some((idx as u32, prop))
+        }
+    }
+}
+
+/// Enumerated [`queue families`][1].
+///
+/// [1]: QueueFamilyProperties
+#[derive(Clone, Copy)]
+pub struct EnumeratedQueueFamilies<'a> {
+    pub(crate) properties: &'a [QueueFamilyProperties],
+}
+
+impl<'a> EnumeratedQueueFamilies<'a> {
+
+    #[inline]
+    pub fn as_slice(&self) -> &[QueueFamilyProperties] {
+        self.properties
+    }
+
+    pub fn iter(&self) -> enumerated::Iter<'a> {
+        enumerated::Iter {
+            iter: self.properties.iter().enumerate()
+        }
+    }
+}
+
+impl<'a> IntoIterator for EnumeratedQueueFamilies<'a> {
+
+    type IntoIter = enumerated::Iter<'a>;
+    type Item = (u32, &'a QueueFamilyProperties);
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
 }
 
 impl QueueFamilies {
 
-    pub(crate) fn new(
+    pub fn new(
         physical_device: vk::PhysicalDevice,
         instance: &Instance,
     ) -> Self
@@ -202,7 +334,7 @@ impl QueueFamilies {
         &self.queue_family_properties
     }
 
-    pub(super) fn get_create_infos<'a>(
+    pub fn get_create_infos<'a>(
         &self,
         create_infos: &[DeviceQueueCreateInfo],
         priorities: &'a mut Vec32<Vec32<f32>>,

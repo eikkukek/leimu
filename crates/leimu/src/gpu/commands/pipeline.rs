@@ -1,8 +1,6 @@
 use tuhka::vk;
 use leimu_mem::{
-    vec::{FixedVec32, NonNullVec32},
-    alloc::LocalAlloc,
-    arena,
+    alloc::LocalAlloc, arena, int::NonZeroOption, vec::{FixedVec32, NonNullVec32}
 };
 
 use crate::{
@@ -215,7 +213,7 @@ impl<'a, 'b> PipelineCommands<'a, 'b> {
             let (set, layout_binding) = shader_set.push_descriptor_binding(
                 binding.binding,
             ).ok_or_else(|| Error::just_context(format!(
-                "binding {:?} is not in from a push descriptor set", binding.binding,
+                "binding {:?} is not from a push descriptor set", binding.binding,
             )))?;
             let min_uniform_buffer_offset_alignment
                 = self.gpu.device_limits().min_uniform_buffer_offset_alignment();
@@ -273,7 +271,7 @@ impl<'a, 'b> PipelineCommands<'a, 'b> {
                             Ok(vk::DescriptorBufferInfo {
                                 buffer: buffer.handle(),
                                 offset: info.offset,
-                                range: info.size,
+                                range: info.range.unwrap_or_sentinel(vk::WHOLE_SIZE),
                             })
                         })
                     )?;
@@ -328,7 +326,7 @@ impl<'a, 'b> PipelineCommands<'a, 'b> {
                             let mut vk_info = vk::DescriptorImageInfo::default();
                             if let Some(layout) = image_layout
                             {
-                                let Some(image_view) = info.image_view else {
+                                let Some(image_view) = info.image_view_id else {
                                     return Err(Error::just_context(format!(
                                         "expected image view for binding {:?} at descriptor index {}",
                                         binding.binding, binding.starting_index + i as u32,
@@ -406,7 +404,7 @@ impl<'a, 'b> PipelineCommands<'a, 'b> {
     ///   [`max push constant size`][2].
     ///
     /// [1]: https://docs.vulkan.org/guide/latest/push_constants.html
-    /// [2]: DeviceLimits::max_push_constant_size
+    /// [2]: PhysicalDeviceLimits::max_push_constants_size
     pub fn push_constants<T>(
         &mut self,
         offset: u32,
@@ -425,10 +423,10 @@ impl<'a, 'b> PipelineCommands<'a, 'b> {
                 "push constant data size {size} is not a a multiple of 4"
             )))
         }
-        if offset + size > self.gpu.device_limits().max_push_constant_size() {
+        if offset + size > self.gpu.device_limits().max_push_constants_size() {
             return Err(Error::just_context(format!(
                 "push constant offset {offset} + size {size} is larger than max push constant size {}",
-                self.gpu.device_limits().max_push_constant_size()
+                self.gpu.device_limits().max_push_constants_size()
             )))
         }
         let byte_end = offset + size;
@@ -457,5 +455,13 @@ impl<'a, 'b> PipelineCommands<'a, 'b> {
             );
         }
         Ok(self)
+    }
+
+    pub fn bind_sampler_heap_ext(&mut self) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn bind_resource_heap_ext(&mut self) -> Result<()> {
+        Ok(())
     }
 }

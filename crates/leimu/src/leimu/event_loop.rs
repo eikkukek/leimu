@@ -25,14 +25,17 @@ pub struct EventLoop {
     pub(super) delta_counter: time::Instant,
     pub(super) delta_time: time::Duration,
     pub(super) proxy: EventLoopProxy<RunEvent>,
-    platform: Option<Library>,
+    entry: Option<Entry>,
 }
 
 impl EventLoop {
 
     #[inline(always)]
-    pub(super) fn new(platform: Library) -> Result<Self> {
-        platform.event_loop.set_control_flow(ControlFlow::Poll);
+    pub(super) fn new(entry: Entry) -> Result<Self> {
+        let event_loop = entry
+            .event_loop()
+            .ok_or_else(|| Error::just_context("entry is in headless mode"))?;
+        event_loop.set_control_flow(ControlFlow::Poll);
         Ok(Self {
             thread_pool: ThreadPool
                 ::new()
@@ -41,13 +44,13 @@ impl EventLoop {
             active_ids: Default::default(),
             delta_counter: time::Instant::now(),
             delta_time: Default::default(),
-            proxy: platform.event_loop.create_proxy(),
-            platform: Some(platform),
+            proxy: event_loop.create_proxy(),
+            entry: Some(entry),
         })
     }
 
-    pub(super) fn init(&mut self) -> Library {
-        self.platform.take().unwrap()
+    pub(super) fn init(&mut self) -> Entry {
+        self.entry.take().unwrap()
     }
 
     pub(super) fn tick(&self) {

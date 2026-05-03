@@ -1,4 +1,4 @@
-//! The error prelude of Leimu.
+//! The error prelude of leimu.
 //!
 //! # Includes 
 //! - [`Error`] and [`EventError`] [`error`][1] types.

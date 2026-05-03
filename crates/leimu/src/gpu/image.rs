@@ -137,8 +137,8 @@ impl ImageMeta {
             ImageUsages::INPUT_ATTACHMENT
         ) {
             let limits = device.physical_device().limits();
-            max_dimensions.width = max_dimensions.width.min(limits.max_framebuffer_width);
-            max_dimensions.height = max_dimensions.width.min(limits.max_framebuffer_height);
+            max_dimensions.width = max_dimensions.width.min(limits.max_framebuffer_width());
+            max_dimensions.height = max_dimensions.width.min(limits.max_framebuffer_height());
             max_dimensions.depth = 1;
         }
         if max_dimensions.width < create_info.dimensions.width ||

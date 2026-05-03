@@ -250,8 +250,8 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
     /// - Destination buffer's usage *must* contain the [`transfer destination usage`][1].
     /// - `dst_offset` *must* be less than the buffer's size.
     /// - `dst_offset` *must* be a multiple of 4.
-    /// - If `size` is [`Some`]: it *must* be greater than 0, `dst_offset` + it *must* be less
-    ///   than or equal to the size of the buffer, and it *must* be a multiple of 4.
+    /// - If `size` is [`Some`], `dst_offset` + `size` *must* be less than or equal to the size
+    ///   of the buffer, and it *must* be a multiple of 4.
     ///
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdUpdateBuffer.html>
@@ -261,7 +261,7 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
         &mut self,
         dst_buffer_id: BufferId,
         dst_offset: DeviceSize,
-        size: Option<DeviceSize>,
+        size: Option<NonZeroDeviceSize>,
         data: u32,
         ordering: CommandOrdering,
     ) -> Result<()> {
@@ -283,6 +283,7 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
             }
             let (size, vk_size) = {
                 if let Some(size) = size {
+                    let size = size.get();
                     if !size.is_multiple_of(4) {
                         return Err(Error::just_context(format!(
                             "size {size} is not a multiple of 4"

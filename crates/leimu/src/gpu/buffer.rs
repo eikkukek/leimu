@@ -252,18 +252,31 @@ impl BufferMeta {
     pub fn memory_barrier(
         &mut self,
         offset: DeviceSize,
-        size: DeviceSize,
+        size: Option<NonZeroDeviceSize>,
         state: BufferState,
         ordering: CommandOrdering,
         cache: &mut BufferMemoryBarrierCache,
     ) -> Result<BufferMemoryBarrierRange>
     {
-        if offset + size > self.properties.size {
-            return Err(Error::just_context(format!(
-                "buffer offset {offset} and size {size} was out of range of buffer size {}",
-                self.properties.size
-            )))
-        }
+        let size =
+            if let Some(size) = size {
+                let size = size.get();
+                if offset + size > self.properties.size {
+                    return Err(Error::just_context(format!(
+                        "buffer offset {offset} and size {size} is out of range of buffer size {}",
+                        self.properties.size
+                    )))
+                }
+                size
+            } else {
+                if offset >= self.properties.size {
+                    return Err(Error::just_context(format!(
+                        "buffer offset {offset} is greater than or equal to buffer size {}",
+                        self.properties.size
+                    )))
+                }
+                self.properties.size - offset
+            };
         Ok(unsafe { self.memory_barrier_unchecked(
             offset, size, state,
             ordering, cache,

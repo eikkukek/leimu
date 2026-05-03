@@ -1,10 +1,7 @@
-use std::ffi::{
-    CStr, CString,
-};
-
 use core::{
-    ops::Deref,
+    ops::{Deref, Index},
     fmt::{self, Display},
+    ffi::CStr,
 };
 
 use raw_window_handle::RawDisplayHandle;
@@ -80,10 +77,36 @@ struct Inner {
 
 /// Represents a [`Vulkan instance`][1].
 ///
-/// This is used for creating [`logical devices`][2], which are needed to create [`Gpu`].
+/// Provides methods for [`enumerating`][2] physical devices and [`creating logical devices`][3].
 ///
-/// [1]: https://docs.vulkan.org/refpages/latest/refpages/source/VkInstance.html
-/// [2]: Device
+/// Also exposes raw Vulkan instance-level functions up to Vulkan 1.4.
+///
+/// # Example
+/// ``` rust
+/// use leimu::{Entry, gpu};
+/// let entry = Entry::headless(None)?;
+/// let instance = entry.create_instance(
+///     "My app",
+///     gpu::make_api_version(0, 1, 0, 0),
+///     &[],
+/// )?;
+/// let suitable = instance.enumerate_suitable_physical_devices(
+///     gpu:::default_device_attributes()
+/// )?;
+/// let idx = pick_device(&suitable);
+/// let device = suitable[idx];
+/// let queue_family_index = pick_queue_family(device.enumerate_queue_families());
+/// let queue_info = gpu::DeviceQueueCreateInfo::new(
+///     "queue",
+///     idx,
+///     0,
+/// );
+/// let device = suitable.create_device(idx, &[queue_info])
+/// ```
+///
+/// [1]: tuhka::Instance
+/// [2]: Self::enumerate_suitable_physical_devices
+/// [3]: SuitablePhysicalDevices::create_device
 #[derive(Clone)]
 pub struct Instance {
     inner: Arc<Inner>,
@@ -91,20 +114,16 @@ pub struct Instance {
 
 impl Instance {
 
-    pub(crate) fn new(
-        library: &crate::Library,
-        app_name: &str, 
+    pub(crate) fn new<'a, L>(
+        entry: &crate::Entry,
+        app_name: &CStr, 
         app_version: Version,
-        layers: &[InstanceLayer<'_>],
+        layers: L,
     ) -> Result<Self>
+        where
+            L: IntoIterator<Item = InstanceLayer<'a>>,
     {
-        let app_name = CString
-            ::new(app_name
-                .chars()
-                .filter(|&c| c != '\0')
-                .collect::<String>()
-            ).unwrap();
-        let engine_name = CString::new("leimu").unwrap();
+        let engine_name = c"leimu";
         let application_info = vk::ApplicationInfo {
             s_type: vk::StructureType::APPLICATION_INFO,
             p_application_name: app_name.as_ptr(),
@@ -120,10 +139,10 @@ impl Instance {
             ::with_capacity(8);
         let mut found_extensions_hashed = AHashSet::default();
         get_required_instance_extensions(
-            library.raw_display_handle()?,
+            entry.raw_display_handle()?,
             &mut extensions
         )?;
-        let library = library.vk_lib.clone();
+        let library = entry.vulkan.clone();
         let mut found_layers = Vec32::<*const i8>
             ::with_capacity(8);
         let mut found_layers_hashed = AHashSet::default();
@@ -177,14 +196,16 @@ impl Instance {
         })
     }
 
-    /// Enumerates all [`physical devices`][1] that are suitable for the given [`attributes`][2].
+    /// Enumerates all [`physical devices`][1] that are suitable for the given [`device attributes`][2].
     ///
-    /// After this, you can pick a device you want and [`create a logical device`][3].
+    /// The [`resultant object`][3] provides methods for picking and creating a [`logical device`][4].
+    ///
+    /// See the [`struct-level`][Instance] docs for examples.
     ///
     /// [1]: PhysicalDevice
     /// [2]: DeviceAttributes
-    /// [3]: SuitablePhysicalDevices::create_device
-    #[inline(always)]
+    /// [3]: SuitablePhysicalDevices
+    /// [4]: Device
     pub fn enumerate_suitable_physical_devices(
         &self,
         device_attributes: DeviceAttributes,
@@ -209,11 +230,6 @@ impl Instance {
             device_extension_infos,
         })
     }
-
-    #[inline(always)]
-    pub fn library(&self) -> &Arc<tuhka::Library> {
-        &self.inner.library
-    }
 }
 
 impl Deref for Instance {
@@ -226,7 +242,9 @@ impl Deref for Instance {
     }
 }
 
-/// A structure returned by [`enumerate suitable physical devices`][1].
+/// The structure returned from [`enumerating suitable physical devices`][1].
+///
+/// See the struct-level docs of [`Instance`] for examples.
 ///
 /// [1]: Instance::enumerate_suitable_physical_devices
 pub struct SuitablePhysicalDevices {
@@ -240,26 +258,33 @@ pub struct SuitablePhysicalDevices {
 impl SuitablePhysicalDevices {
 
     /// Returns an iterator over all suitable physical devices.
-    #[inline(always)]
+    #[inline]
     pub fn enumerate(&self) -> impl Iterator<Item = (u32, &PhysicalDevice)> {
         self.devices
         .iter().enumerate()
         .map(|(idx, d)| (idx as u32, d))
     }
 
-    #[inline(always)]
-    pub fn get(&self, index: u32) -> &PhysicalDevice {
-        &self.devices[index as usize]
+    /// Gets the [`physical device`][1] at `idx`.
+    ///
+    /// Returns [`None`] if the index is out of bounds.
+    ///
+    /// [1]: PhysicalDevice
+    #[inline]
+    pub fn get(&self, idx: u32) -> Option<&PhysicalDevice> {
+        self.devices.get(idx as usize)
     }
 
     /// Creates a [`logical device`][1] needed for creating [`Gpu`].
     ///
     /// # Parameters
-    /// - `device_idx`: the index a physical device, that originated from [`Self::iter`].
-    /// - `queue_create_infos`: specifies which which queues to create
+    /// - `device_idx`: The index a physical device.
+    /// - `queue_create_infos`: Specifies which which queues to create.
+    ///
+    /// # Panics
+    /// Panics if `device_idx` is greater than or equal to the number of enumerated physical devices.
     ///
     /// # Valid usage
-    /// - `device_idx` *must* be a valid index into the physical devices in this structure.
     /// - `queue_create_infos` *must* not be empty.
     /// - Each [`create info`][2] in `queue_create_infos` *must* have a valid queue family index for
     ///   the specified device and the queue index *must* be less than the queue count of that queue
@@ -267,13 +292,27 @@ impl SuitablePhysicalDevices {
     ///
     /// [1]: Device
     /// [2]: DeviceQueueCreateInfo
-    #[inline(always)]
-    pub fn create_device(
+    #[inline]
+    pub fn create_device<'a, Q>(
         &self,
         device_idx: u32,
-        queue_create_infos: &[DeviceQueueCreateInfo],
-    ) -> Result<Device> {
+        queue_create_infos: Q,
+    ) -> Result<Device>
+        where
+            Q: IntoIterator<Item = DeviceQueueCreateInfo<'a>>,
+            Q::IntoIter: ExactSizeIterator,
+    {
         Device::new(self, device_idx, queue_create_infos)
+    }
+}
+
+impl Index<u32> for SuitablePhysicalDevices {
+
+    type Output = PhysicalDevice;
+
+    #[inline]
+    fn index(&self, index: u32) -> &Self::Output {
+        &self.devices[index as usize]
     }
 }
 
@@ -309,12 +348,13 @@ fn get_required_instance_extensions(
     Ok(())
 }
 
-fn verify_instance_layers<'a>(
+fn verify_instance_layers<'a, L>(
     library: &tuhka::Library,
-    layers: &[InstanceLayer<'a>],
+    layers: L,
     found: &mut Vec32<*const i8>,
     found_hash: &mut AHashSet<&'a CStr>,
 ) -> Result<()>
+    where L: IntoIterator<Item = InstanceLayer<'a>>
 {
     let mut available = unsafe {
         vec![Default::default(); library.enumerate_instance_layer_properties_len()

@@ -18,5 +18,7 @@ pub enum Event {
     /// Leimu is cleaning up.
     ///
     /// This is the last event that gets called.
-    CleanUp,
+    CleanUp {
+        ended_on_error: bool,
+    },
 }

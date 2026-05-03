@@ -9,10 +9,10 @@ use ahash::{AHashMap, AHashSet};
 
 use leimu_proc::BuildStructure;
 use leimu_mem::{
-    vec::{Vec32, NonNullVec32, FixedVec32},
+    alloc::{Layout, LocalAlloc, dealloc},
     arena::{self, Arena},
     slot_map::*,
-    alloc::{Layout, dealloc, LocalAlloc},
+    vec::{FixedVec32, NonNullVec32, Vec32},
 };
 use tuhka::vk;
 
@@ -186,26 +186,51 @@ impl From<ShaderImageLayout> for vk::ImageLayout {
     }
 }
 
+/// Parameters used to [`allocate a descriptor set`][1].
+///
+/// See [`descriptor_set_info`] for full description.
+///
+/// [1]: Gpu::allocate_descriptor_sets
 #[must_use]
 pub struct DescriptorSetInfo<'a> {
+    /// A mutable reference to where the newly allocated descriptor set's [`id`][1] will be stored.
+    ///
+    /// [1]: DescriptorSetId
     pub out_id: &'a mut DescriptorSetId,
-    pub shader_set_id: ShaderSetId,
+    /// The [`shader set`][1] containing the [`DescriptorSetLayout`], which will be used to allocate the
+    /// descriptor set (see [`descriptor_set_index`][Self::descriptor_set_index]).
+    ///
+    /// [1]: ShaderSet
+    pub shader_set: ShaderSet,
+    /// The index of the descriptor set within [`shader_set`][1], which will be used to allocate the
+    /// descriptor set.
+    ///
+    /// [1]: Self::shader_set
     pub descriptor_set_index: u32,
 }
 
-impl<'a> DescriptorSetInfo<'a> {
-    
-    #[inline(always)]
-    pub fn new(
-        out_id: &'a mut DescriptorSetId,
-        shader_set_id: ShaderSetId,
-        descriptor_set_index: u32,
-    ) -> Self {
-        Self {
-            out_id,
-            shader_set_id,
-            descriptor_set_index,
-        }
+/// Creates new [`DescriptorSetInfo`]
+///
+/// # Parameters
+/// - `out_id`: A mutable reference to where the newly allocated descriptor set's [`id`][1] will be
+///   stored.
+/// - `shader_set`: The [`shader set`][2] containing the [`DescriptorSetLayout`], which will be used
+///   to allocate the descriptor set.
+/// - `descriptor_set_index`: The index of the descriptor set within `shader_set`, which will be
+///   used to allocate the descriptor set.
+///
+/// [1]: DescriptorSetId
+/// [2]: ShaderSet
+#[inline]
+pub fn descriptor_set_info<'a>(
+    out_id: &'a mut DescriptorSetId,
+    shader_set: ShaderSet,
+    descriptor_set_index: u32,
+) -> DescriptorSetInfo<'a> {
+    DescriptorSetInfo {
+        out_id,
+        shader_set,
+        descriptor_set_index,
     }
 }
 
@@ -497,17 +522,91 @@ impl<T> Clone for TrackedDescriptorSetId<T> {
 
 impl<T> Copy for TrackedDescriptorSetId<T> {}
 
-#[derive(Default, Clone, Copy, BuildStructure)]
+/// Specifies the parameters for descriptor buffer [`allocation`][Gpu::allocate_descriptor_sets].
+///
+/// See [`descriptor_buffer_info`] for creating default parameters.
+///
+/// # Valid usage
+/// - [`buffer_id`][1] **must** be a valid [`BufferId`].
+/// - [`offset`][2] **must** be less than the size of the buffer.
+/// - If [`range`][3] is [`Some`], [`offset`][2] + [`range`][3] **must** be less than or equal to
+///   the size of the buffer.
+///
+/// [1]: Self::buffer_id
+/// [2]: Self::offset
+/// [3]: Self::range
+#[derive(Clone, Copy, BuildStructure)]
 pub struct DescriptorBufferInfo {
+    /// The source [`buffer id`][1].
+    ///
+    /// [1]: BufferId
     pub buffer_id: BufferId,
-    pub offset: u64,
-    pub size: u64,
+    /// An offset into the buffer.
+    pub offset: DeviceSize,
+    /// The size in bytes that is used for this descriptor update.
+    ///
+    /// Set to [`None`] to specify the end of the buffer from [`offset`][1].
+    ///
+    /// [1]: Self::offset
+    #[skip]
+    pub range: Option<NonZeroDeviceSize>,
 }
 
-#[derive(Default, Clone, BuildStructure)]
+/// Creates default [`DescriptorBufferInfo`].
+#[inline]
+pub fn descriptor_buffer_info(id: BufferId) -> DescriptorBufferInfo {
+    DescriptorBufferInfo {
+        buffer_id: id,
+        offset: 0,
+        range: None,
+    }
+}
+
+/// Creates an inline uniform block [`DescriptorInfos`].
+#[inline]
+pub fn inline_uniform_block<'a, T: Copy>(
+    data: &'a [T]
+) -> Result<DescriptorInfos<'a>> {
+    DescriptorInfos::inline_uniform_block(data)
+}
+
+impl DescriptorBufferInfo {
+
+    /// The size in bytes that is used for this descriptor update.
+    ///
+    /// Set to zero to specify the end of the buffer from [`offset`][1].
+    ///
+    /// [1]: Self::offset
+    #[inline]
+    pub fn range(mut self, range: u64) -> Self {
+        self.range = NonZeroDeviceSize::new(range);
+        self
+    }
+}
+
+/// Specifies the parameters for descriptor image [`allocation`][1].
+///
+/// [1]: Gpu::allocate_descriptor_sets
+#[derive(Clone, BuildStructure)]
 pub struct DescriptorImageInfo {
     pub sampler: Option<Sampler>,
-    pub image_view: Option<ImageViewId>,
+    pub image_view_id: Option<ImageViewId>,
+}
+
+/// Creates default [`DescriptorImageInfo`].
+#[inline]
+pub fn descriptor_image_info<S, I>(
+    sampler: S,
+    image_view_id: I,
+) -> DescriptorImageInfo 
+    where
+        S: Into<Option<Sampler>>,
+        I: Into<Option<ImageViewId>>,
+{
+    DescriptorImageInfo {
+        sampler: sampler.into(),
+        image_view_id: image_view_id.into(),
+    }
 }
 
 /// Specifies how descriptors will be updated in a descriptor set write operation either through
@@ -644,6 +743,8 @@ enum DescriptorInfosInner<'a> {
 
 /// Specifies the parameters of a [`descriptor set write operation`][1].
 ///
+/// See [`write_descriptor_set`] for a full description.
+///
 /// [1]: Gpu::update_descriptor_sets
 #[derive(Clone)]
 pub struct WriteDescriptorSet<'a> {
@@ -653,33 +754,56 @@ pub struct WriteDescriptorSet<'a> {
     pub(crate) infos: DescriptorInfos<'a>,
 }
 
-impl<'a> WriteDescriptorSet<'a> {
+/// Creates new [`WriteDescriptorSet`] for a [`descriptor set write operation`][1].
+///
+/// # Parameters
+/// - `set_id`: specifies the [`descriptor set`][2] to update.
+/// - `binding`: specifies the binding within the descriptor set to update.
+/// - `starting_index`: specifies either the starting descriptor array element or a byte
+///   offset to an [`inline uniform block`][3] to update.
+/// - `infos`: specifies what each descriptor from [`starting_index`] to the number of
+///   elements in the [`variant`][4] will be updated with.
+///
+/// # Valid usage
+/// - `set_id` **must** be a valid [`DescriptorSetId`]
+/// - `binding` **must** be a valid binding in the descriptor set
+/// - The [`descriptor type`][6] of the binding **must** be compatible with the [`variant`][4] of
+///   `infos` as described in the variants of [`DescriptorType`].
+/// - `starting_index` + the [`number of elements`][5] in `infos` **must** not overflow the
+///   descriptor count or the number of bytes in an [`inline uniform block`][3] in that binding.
+/// - If the write is an [`inline uniform block`][3] write, offset **must** be a multiple of 4.
+///
+/// [1]: Gpu::update_descriptor_sets
+/// [2]: DescriptorSetId
+/// [3]: ext::inline_uniform_block
+/// [4]: DescriptorInfos
+/// [5]: DescriptorInfos::descriptor_count
+/// [6]: DescriptorType
+pub fn write_descriptor_set<'a, D>(
+    set_id: DescriptorSetId,
+    binding: u32,
+    starting_index: u32,
+    infos: D,
+) -> Result<WriteDescriptorSet<'a>>
+    where D: Into<DescriptorInfos<'a>>
+{
+    let infos = infos.into();
+    if infos.as_inline_uniform_block().is_some() &&
+        !starting_index.is_multiple_of(4)
+    {
+        return Err(Error::just_context(format!(
+            "starting index {starting_index} is not a multiple of 4"
+        )))
+    }
+    Ok(WriteDescriptorSet {
+        set_id,
+        binding,
+        starting_index,
+        infos,
+    })
+}
 
-    /// Creates new [`WriteDescriptorSet`] for a [`descriptor set write operation`][1].
-    ///
-    /// # Parameters
-    /// - `set_id`: specifies the [`descriptor set`][2] to update.
-    /// - `binding`: specifies the binding within the descriptor set to update.
-    /// - `starting_index`: specifies either the starting descriptor array element or a byte
-    ///   offset to an [`inline uniform block`][3] to update.
-    /// - `infos`: specifies what each descriptor from [`starting_index`] to the number of
-    ///   elements in the [`variant`][4] will be updated with.
-    ///
-    /// # Valid usage
-    /// - `set_id` *must* be a valid [`DescriptorSetId`]
-    /// - `binding` *must* be a valid binding in the descriptor set
-    /// - The [`descriptor type`][6] of the binding *must* be compatible with the [`variant`][4] of
-    ///   `infos` as described in the variants of [`DescriptorType`].
-    /// - `starting_index` + the [`number of elements`][5] in `infos` *must* not overflow the
-    ///   descriptor count or the number of bytes in an [`inline uniform block`][3] in that binding.
-    /// - If the write is an [`inline uniform block`][3] write, offset *must* be a multiple of 4.
-    ///
-    /// [1]: Gpu::update_descriptor_sets
-    /// [2]: DescriptorSetId
-    /// [3]: ext::inline_uniform_block
-    /// [4]: DescriptorInfos
-    /// [5]: DescriptorInfos::descriptor_count
-    /// [6]: DescriptorType
+impl<'a> WriteDescriptorSet<'a> {
     #[inline(always)]
     pub fn new(
         set_id: DescriptorSetId,
@@ -741,6 +865,7 @@ mod inner {
 
     pub(crate) struct Inner {
         pub device: Device,
+        pub id: DescriptorPoolId,
         pub handle: vk::DescriptorPool,
         pub max_sets: u32,
         pub allocated_sets: SlotMap<DescriptorSet>,
@@ -782,18 +907,32 @@ pub(crate) struct DescriptorPoolWriteGuard<'a> {
     inner: RwLockWriteGuard<'a, inner::Inner>,
 }
 
+#[derive(Clone, Copy)]
+pub struct DescriptorPoolSize {
+    pub descriptor_type: DescriptorType,
+    pub size: u32,
+}
+
+pub fn descriptor_pool_size(
+    descriptor_type: DescriptorType,
+    size: u32
+) -> DescriptorPoolSize {
+    DescriptorPoolSize { descriptor_type, size }
+}
+
 impl DescriptorPool {
 
     pub fn new(
         device: Device,
-        pool_sizes: impl IntoIterator<Item = (DescriptorType, u32)>,
+        id: DescriptorPoolId,
+        pool_sizes: impl IntoIterator<Item = DescriptorPoolSize>,
         max_sets: u32,
         max_inline_uniform_block_bindings: u32,
     ) -> Result<Self>
     {
         let mut pools = AHashMap::<DescriptorType, Pool>::default();
-        for (ty, size) in pool_sizes.into_iter() {
-            pools.entry(ty)
+        for DescriptorPoolSize { descriptor_type, size } in pool_sizes.into_iter() {
+            pools.entry(descriptor_type)
                 .and_modify(|pool| pool.size += size)
                 .or_insert(Pool { size, used: 0, });
 
@@ -844,6 +983,7 @@ impl DescriptorPool {
         Ok(Self {
             inner: Arc::new(RwLock::new(inner::Inner {
                 device,
+                id,
                 handle,
                 max_sets,
                 allocated_sets: SlotMap::default(),
@@ -876,17 +1016,26 @@ impl DescriptorPool {
         }
     }
 
-    pub async fn allocate<Alloc>(
+    pub fn allocate<'a, I, Alloc>(
         &self,
-        set_infos: &mut [DescriptorSetInfo<'_>],
-        pool_id: DescriptorPoolId,
-        shader_cache: &RwLock<ShaderCache>,
+        set_infos: I,
         tmp_alloc: &Alloc,
     ) -> Result<()>
         where
             Alloc: LocalAlloc<Error = arena::Error>,
+            I: IntoIterator<Item = DescriptorSetInfo<'a>>,
+            I::IntoIter: ExactSizeIterator,
     {
-        let count = set_infos.len() as u32;
+        let set_infos = set_infos.into_iter();
+        let mut set_infos = {
+            let mut infos = FixedVec32::with_capacity(
+                set_infos.len() as u32,
+                tmp_alloc
+            ).context("alloc failed")?;
+            infos.extend(set_infos);
+            infos
+        };
+        let count = set_infos.len();
         {
             let inner = self.inner.read();
             if inner.allocated_sets.len() + count > inner.max_sets {
@@ -901,37 +1050,25 @@ impl DescriptorPool {
         let mut sets = FixedVec32
             ::with_capacity(count, tmp_alloc)
             .context("alloc failed")?;
-        for (i, info) in set_infos.iter().enumerate() {
-            let set = shader_cache.read().get_shader_set(info.shader_set_id);
-            let set = set.await
-                .context_with(|| format!(
-                    "failed to get shader set {} at index {i}",
-                    info.shader_set_id
-                ))?;
-            let layout = set.descriptor_set_layouts()
+        let mut inner = self.inner.write();
+        for info in set_infos.iter() {
+            let layout = info.shader_set.descriptor_set_layouts()
                 .get(info.descriptor_set_index as usize)
                 .ok_or_else(|| Error::just_context(format!(
                     "invalid descriptor set index {} for shader set {}",
-                    info.descriptor_set_index, info.shader_set_id,
+                    info.descriptor_set_index, info.shader_set.id(),
                 )))?;
             if layout.is_push_descriptor() {
                 return Err(Error::just_context(format!(
                     "{}{}",
                     format_args!("attempting to allocate descriptor set with index {} of shader set {} ",
-                        info.descriptor_set_index, info.shader_set_id
+                        info.descriptor_set_index, info.shader_set.id()
                     ),
                     "that has the push descriptor flag set",
                 )))
             }
             set_layouts.push(layout.handle);
-            sets.push((set, info.descriptor_set_index));
-        }
-        let mut new_sets = FixedVec32
-            ::with_capacity(count, tmp_alloc)
-            .context("alloc failed")?;
-        let mut inner = self.inner.write();
-        for (set, index) in sets {
-            let set = &set.descriptor_set_layouts()[index as usize];
+            let set = &info.shader_set.descriptor_set_layouts()[info.descriptor_set_index as usize];
             let alloc_size: usize = set.bindings
                 .iter().map(|binding|
                     size_of::<DescriptorSetBinding>() +
@@ -954,7 +1091,7 @@ impl DescriptorPool {
                 .iter()
                 .map(|binding| {
                     if let Some(pool) = inner.pools.get_mut(&binding.descriptor_type) {
-                        let used = pool.used + count;
+                        let used = pool.used + binding.descriptor_count;
                         if used > pool.size {
                             Err(Error::just_context(format!(
                                 "maximum capacity {} for descriptor type {} reached",
@@ -1020,7 +1157,7 @@ impl DescriptorPool {
                     }
                 })
             )?;
-            new_sets.push(DescriptorSet::new(
+            sets.push(DescriptorSet::new(
                 bindings, set.stage_flags,
                 alloc,
             ));
@@ -1039,11 +1176,11 @@ impl DescriptorPool {
             inner.device.allocate_descriptor_sets(&info, &mut handles)
             .context("failed to allocate descriptor sets")?
         };
-        for (i, mut new_set) in new_sets.into_iter().enumerate() {
+        for (i, mut set) in sets.into_iter().enumerate() {
             let handle = handles[i];
-            new_set.handle = handle;
-            let index = inner.allocated_sets.insert(new_set);
-            *set_infos[i].out_id = DescriptorSetId(pool_id, DescriptorSetInnerId(index));
+            set.handle = handle;
+            let index = inner.allocated_sets.insert(set);
+            *set_infos[i].out_id = DescriptorSetId(inner.id, DescriptorSetInnerId(index));
         }
         Ok(())
     }
@@ -1411,24 +1548,44 @@ impl<'a, 'b> DescriptorSetUpdateContext<'a, 'b> {
                     )))
                 }
                 let properties = buffer.properties();
-                if info.offset + info.size > properties.size
-                {
-                    return Err(Error::just_context(format!(
-                        "{}{}",
-                        format_args!("descriptor set {} write (binding {}, index {}, type {ty}) ",
-                            write.set_id, write.binding, starting_idx + i,
-                        ),
-                        format_args!("buffer {} offset {} + size {} was out of range of buffer size {}",
-                            info.buffer_id, info.offset, info.size, properties.size,
-                        )
-                    )))
-                }
-                descriptor.buffer = Some((info.buffer_id, info.offset, info.size));
+                let (vk_range, effective) = match info.range {
+                    Some(range) => {
+                        let range = range.get();
+                        if info.offset + range > properties.size
+                        {
+                            return Err(Error::just_context(format!(
+                                "{}{}",
+                                format_args!("descriptor set {} write (binding {}, index {}, type {ty}) ",
+                                    write.set_id, write.binding, starting_idx + i,
+                                ),
+                                format_args!("buffer {} offset {} + size {} is out of range of buffer size {}",
+                                    info.buffer_id, info.offset, range, properties.size,
+                                )
+                            )))
+                        }
+                        (range, range)
+                    },
+                    None => {
+                        if info.offset >= properties.size {
+                            return Err(Error::just_context(format!(
+                                "{}{}",
+                                format_args!("descriptor set {} write (binding {}, index {}, type {ty}) ",
+                                    write.set_id, write.binding, starting_idx + i,
+                                ),
+                                format_args!("buffer {} offset {} is greater than or equal buffer size {}",
+                                    info.buffer_id, info.offset, properties.size,
+                                )
+                            )))
+                        }
+                        (vk::WHOLE_SIZE, properties.size - info.offset)
+                    }
+                };
+                descriptor.buffer = Some((info.buffer_id, info.offset, effective));
                 descriptor.buffer_track_id = pool.track_buffer(info.buffer_id, id);
                 let vk_info = vk::DescriptorBufferInfo {
                     buffer: buffer.handle(),
                     offset: info.offset,
-                    range: info.size,
+                    range: vk_range,
                 };  
                 vk_infos.push(vk_info);
             }
@@ -1497,7 +1654,7 @@ impl<'a, 'b> DescriptorSetUpdateContext<'a, 'b> {
                         if let Some((view, _)) = descriptor.image {
                             pool.untrack_image(view, descriptor.image_track_id)?;
                         }
-                        let Some(image_view) = info.image_view else {
+                        let Some(image_view) = info.image_view_id else {
                             return Err(Error::just_context(format!(
                                 "descriptor set {} (binding {}, type {ty}) requires an image, but none was given",
                                 write.set_id, write.binding,
@@ -1518,7 +1675,7 @@ impl<'a, 'b> DescriptorSetUpdateContext<'a, 'b> {
                         descriptor.image_track_id = pool.track_image(image_view, write.set_id.inner_id());
                         (image.get_view(image_view)?.handle, layout.into())
                     } else {
-                        if info.image_view.is_some() {
+                        if info.image_view_id.is_some() {
                             log::warn!(
                                 "descriptor set {} (binding {}, type {ty}) doesn't require an image, but an image view was given",
                                 write.set_id, write.binding,

@@ -18,17 +18,14 @@ use leimu_mem::{
 use futures::future::RemoteHandle;
 
 use crate::{
-    bitflags,
-    gpu::{
-        prelude::*,
-        TmpAllocs,
-        ext,
-    },
-    sync::{Arc, FutureLock, RwLock},
-    executor::{ThreadPool, SpawnExt},
+    bitflags, core::{OptionExt, TryExtend},
     error::*,
+    executor::{SpawnExt, ThreadPool},
+    gpu::{
+        MtContext, ext, prelude::*
+    },
     macros::impl_id_display,
-    core::{OptionExt, TryExtend},
+    sync::{Arc, FutureLock, RwLock},
 };
 
 bitflags!(
@@ -37,7 +34,7 @@ bitflags!(
     pub struct DescriptorSetLayoutFlags: Flags32 {
         /// Specifies that the descriptor set *must* not be allocated from a
         /// [`DescriptorPool`], but instead should be pushed by `push descriptor set`
-        /// commands provided by [`DrawCommands`] and [`ComputeCommands`].
+        /// commands provided by [`DrawPipelineCommands`] and [`PipelineCommands`].
         ///
         /// # Valid usage
         /// - The [`push_descriptor`][1] device extension *must* be enabled.
@@ -149,6 +146,7 @@ impl ShaderModule {
 
 pub(crate) struct ShaderSetInner {
     device: Device,
+    id: ShaderSetId,
     pipeline_layout: vk::PipelineLayout,
     n_descriptor_set_layouts: u32,
     descriptor_set_layouts: Pointer<DescriptorSetLayout>,
@@ -169,6 +167,7 @@ impl ShaderSetInner {
     #[inline(always)]
     pub(crate) fn new(
         device: Device,
+        id: ShaderSetId,
         descriptor_set_layouts: &[DescriptorSetLayout],
         push_constant_ranges: &[PushConstantRange],
         shaders: impl ExactSizeIterator<Item = ShaderModule>,
@@ -222,6 +221,7 @@ impl ShaderSetInner {
         }
         unsafe { Self {
             device,
+            id,
             n_descriptor_set_layouts,
             descriptor_set_layouts: Pointer::new_unchecked(p_descriptor_set_layouts),
             n_push_constant_ranges,
@@ -253,17 +253,22 @@ pub struct ShaderSet {
 
 impl ShaderSet {
 
-    #[inline(always)]
+    #[inline]
+    pub fn id(&self) -> ShaderSetId {
+        self.inner.id
+    }
+
+    #[inline]
     pub fn pipeline_layout(&self) -> vk::PipelineLayout {
         self.inner.pipeline_layout
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn set_count(&self) -> u32 {
         self.inner.n_descriptor_set_layouts
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn descriptor_set_layouts(
         &self,
     ) -> &[DescriptorSetLayout]
@@ -338,7 +343,7 @@ impl Drop for ShaderSetInner {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct ShaderSetId(SlotIndex<ShaderSetHandle>);
 
 impl_id_display!(ShaderSetId);
@@ -349,7 +354,8 @@ struct SetAttributes {
     binding_attributes: Option<Vec32<(u32, DescriptorBindingAttributes)>>
 }
 
-#[derive(Clone)]
+#[must_use]
+#[derive(Default, Clone)]
 pub struct ShaderSetAttributes {
     set_attributes: Vec32<(u32, SetAttributes)>,
     inline_uniform_blocks: Vec32<(u32, u32)>,
@@ -364,9 +370,13 @@ pub fn default_shader_set_attributes() -> ShaderSetAttributes {
 
 impl ShaderSetAttributes {
 
-    /// Specifies [`flags'][1] for a specific descriptor set in the shader set.
+    /// Specifies [`flags`][1] for a specific descriptor set in the shader set.
+    ///
+    /// # Valid usage
+    /// - Only one set with the [`push descriptor`][2] flag **may** be set per shader set.
     ///
     /// [1]: DescriptorSetLayoutFlags
+    /// [2]: DescriptorSetLayoutFlags::PUSH_DESCRIPTOR
     #[inline(always)]
     pub fn with_descriptor_set_layout_flags(
         mut self,
@@ -380,7 +390,7 @@ impl ShaderSetAttributes {
             contained.set_flags |= flags;
         } else {
             self.set_attributes.push((set, SetAttributes {
-            set_flags: flags,
+                set_flags: flags,
                 binding_attributes: None,
             }));
         }
@@ -517,7 +527,7 @@ impl ShaderCache {
         shaders: [Shader; N_SHADERS],
         mut attributes: ShaderSetAttributes,
         thread_pool: ThreadPool,
-        tmp_allocs: Arc<TmpAllocs>,
+        mt_ctx: Arc<MtContext>,
     ) -> Result<ShaderSetId>
     {
         let descriptor_set_layout_cache = self.descriptor_set_layouts.clone();
@@ -533,7 +543,7 @@ impl ShaderCache {
                 "attempting to use inline uniform blocks without enabling the extension"
             ))
         }
-        let index = self.shader_sets.insert(ShaderSetHandle::new(
+        let index = self.shader_sets.try_insert_with_index(|index| Ok(ShaderSetHandle::new(
             thread_pool.spawn_with_handle(async move {
                 let mut shaders_inner = ArrayVec::<_, N_SHADERS>::new();
                 let mut all_stage_flags = ShaderStageFlags::empty();
@@ -552,7 +562,7 @@ impl ShaderCache {
                     );
                     shaders_inner.push(inner);
                 }
-                let tmp_alloc = tmp_allocs.tmp_alloc();
+                let tmp_alloc = mt_ctx.tmp_alloc();
                 let tmp_alloc = tmp_alloc.guard();
                 #[derive(Default, Clone)]
                 struct Set {
@@ -577,22 +587,23 @@ impl ShaderCache {
                     for uniform in shader.uniforms() {
                         let set = uniform.set;
                         if set >= sets.len() {
-                            sets.resize(set + 1, Default::default());
-                            unsafe {
-                                let last = sets.last_mut().unwrap_unchecked();
-                                last.bindings.reserve(4);
+                            let mut i = sets.len();
+                            sets.resize_with(set + 1, || {
+                                let mut new_set = Set::default();
                                 if let Some((_, attrs)) = attributes.set_attributes
                                     .iter_mut().find(|&&mut(s, _)| {
-                                        s == set
+                                        s == i
                                     })
                                 {
-                                    last.flags = attrs.set_flags;
-                                    last.binding_attributes = attrs.binding_attributes.take();
-                                    if last.binding_attributes.is_some() {
+                                    new_set.flags = attrs.set_flags;
+                                    new_set.binding_attributes = attrs.binding_attributes.take();
+                                    if new_set.binding_attributes.is_some() {
                                         any_binding_attributes = true;
                                     }
                                 }
-                            }
+                                i += 1;
+                                new_set
+                            });
                         }
                         let set = unsafe {
                             sets.get_unchecked_mut(set as usize)
@@ -667,6 +678,7 @@ impl ShaderCache {
                         "attempting to use descriptor indexing features without enabling the extension"
                     ))
                 }
+                let mut contains_push_descriptor = false;
                 for (i, Set { mut bindings, binding_attributes, stage_flags, flags, inline_ubos }) in
                     sets.into_iter().enumerate()
                 {
@@ -697,6 +709,12 @@ impl ShaderCache {
                     let mut layout_flags = vk::DescriptorSetLayoutCreateFlags::empty();
                     if flags.contains(DescriptorSetLayoutFlags::PUSH_DESCRIPTOR)
                     {
+                        if contains_push_descriptor {
+                            return Err(Error::just_context(
+                                "more than one push descriptor set found"
+                            ))
+                        }
+                        contains_push_descriptor = true;
                         layout_flags |= vk::DescriptorSetLayoutCreateFlags::PUSH_DESCRIPTOR;
                         let binding_count: u32 = bindings
                             .iter()
@@ -840,6 +858,7 @@ impl ShaderCache {
                 )?;
                 Ok(Arc::new(ShaderSetInner::new(
                     device.clone(),
+                    ShaderSetId(index),
                     &descriptor_set_layouts,
                     &push_constant_ranges,
                     shader_modules
@@ -856,8 +875,8 @@ impl ShaderCache {
                         }),
                     pipeline_layout,
                 )))
-            }).context("failed to spawn")?
-        ));
+            }).context("failed to spawn")?)
+        ))?;
         Ok(ShaderSetId(index))
     }
 

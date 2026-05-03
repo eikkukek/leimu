@@ -8,7 +8,7 @@ use {
     super::*,
 };
 
-
+/// Defines attribute names.
 pub struct Attributes;
 
 impl Attributes {

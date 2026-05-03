@@ -36,11 +36,13 @@ struct Inner {
     command_workers: u32,
 }
 
-/// Represents [`Vulkan device`][1].
+/// Represents a [`Vulkan device`][1], the backbone of [`Gpu`].
 ///
-/// The backbone of [`Gpu`].
+/// Exposes raw Vulkan device-level functions up to Vulkan 1.4 and an api for interacting with
+/// [`enabled device extensions`][2].
 ///
-/// [1]: https://docs.vulkan.org/refpages/latest/refpages/source/VkDevice.html
+/// [1]: tuhka::Device
+/// [2]: ext
 #[derive(Clone)]
 pub struct Device {
     inner: Arc<Inner>,
@@ -58,11 +60,17 @@ impl Deref for Device {
 
 impl Device {
 
-    pub(crate) fn new(
+    pub(crate) fn new<'a, Q>(
         suitable: &SuitablePhysicalDevices,
         index: u32,
-        queue_create_infos: &[DeviceQueueCreateInfo],
-    ) -> Result<Device> {
+        queue_create_infos: Q,
+    ) -> Result<Device>
+        where 
+            Q: IntoIterator<Item = DeviceQueueCreateInfo<'a>>,
+            Q::IntoIter: ExactSizeIterator,
+    {
+        let queue_create_infos: Vec<_> = queue_create_infos
+            .into_iter().collect();
         if queue_create_infos.is_empty() {
             return Err(Error::just_context(
                 "at least one device queue needs to be specified"
@@ -103,7 +111,7 @@ impl Device {
         let features = suitable.attributes.required_features.into();
         let mut priorities = vec32![];
         let device_queue_create_infos = physical_device.queue_families()
-            .get_create_infos(queue_create_infos, &mut priorities)
+            .get_create_infos(&queue_create_infos, &mut priorities)
             .context("failed to get device queue create infos")?;
         let mut device_create_info = vk::DeviceCreateInfo {
             s_type: vk::StructureType::DEVICE_CREATE_INFO,
@@ -131,7 +139,7 @@ impl Device {
         let max_memory_allocation_size = properties_11.max_memory_allocation_size;
         let id = DeviceId(super::DEVICE_ID.fetch_add(1, atomic::Ordering::AcqRel));
         let device_queues: Box<[_]> = queue_create_infos
-            .iter()
+            .into_iter()
             .enumerate()
             .map(|(i, info)| {
                 let properties = physical_device.queue_families()
@@ -168,61 +176,71 @@ impl Device {
         })
     }
 
+    /// A [`DeviceId`] assigned to this device.
+    ///
+    /// Note that this does *not* come from Vulkan.
     #[inline(always)]
     pub fn id(&self) -> DeviceId {
         self.inner.id
     }
 
+    /// Returns the [`Instance`] used to create this device.
     #[inline(always)]
     pub fn instance(&self) -> &Instance {
         &self.inner.instance
     }
 
-    #[inline(always)]
-    pub fn api_version(&self) -> Version {
-        self.inner.physical_device.api_version()
-    }
-
+    /// Returns the [`PhysicalDevice`] used to create this device.
     #[inline(always)]
     pub fn physical_device(&self) -> &PhysicalDevice {
         &self.inner.physical_device
     }
 
+    /// Returns the api version of this device.
+    #[inline(always)]
+    pub fn api_version(&self) -> Version {
+        self.inner.physical_device.api_version()
+    }
+
+    /// Returns the raw handle of this device.
     #[inline(always)]
     pub fn handle(&self) -> vk::Device {
         self.inner.device.handle()
     }
 
+    /// Returns the [`base device features`][1] enabled for this device.
+    ///
+    /// [1]: BaseDeviceFeatures
     #[inline(always)]
     pub fn base_device_features(&self) -> &BaseDeviceFeatures {
         &self.inner.base_device_features
     }
 
+    /// Gets a device attribute registered by an [`extension`][ext].
     #[inline(always)]
     pub fn get_device_attribute(&self, name: ext::ConstName) -> &ext::DeviceAttribute {
         self.inner.enabled_device_extensions.get_attribute(name)
     }
 
+    /// Gets a device created by an enabled [`extension`][ext].
     #[inline(always)]
-    pub fn get_extension_device<T: ext::ExtensionDevice>(&self) -> Option<T> {
+    pub fn get_extension_device<T: ext::ExtensionDevice>(&self) -> Option<&T> {
         self.inner.enabled_device_extensions.get_device(self)
     }
 
+    /// Returns the maximum memory allocation size supported by this device.
     #[inline(always)]
     pub fn max_memory_allocation_size(&self) -> vk::DeviceSize {
         self.inner.max_memory_allocation_size
     }
 
-    #[inline(always)]
-    pub fn queue_families(&self) -> &QueueFamilies {
-        self.inner.physical_device.queue_families()
-    }
-
+    /// Returns a slice over all created [`DeviceQueue`]s.
     #[inline(always)]
     pub fn device_queues(&self) -> &[DeviceQueue] {
         &self.inner.device_queues
     }
 
+    /// Searches for any [`DeviceQueue`] satisfying the specified [`QueueFlags`].
     #[inline(always)]
     pub fn any_device_queue(
         &self,
@@ -235,6 +253,7 @@ impl Device {
             }).cloned()
     }
 
+    /// Searches for a [`DeviceQueue`] that supports presentation for the given `surface`.
     #[inline(always)]
     pub fn get_present_queue(&self, surface: vk::SurfaceKHR) -> Result<DeviceQueue> {
         for queue in &self.inner.device_queues {
@@ -252,21 +271,33 @@ impl Device {
         Err(Error::just_context("no queue with presentation support"))
     }
 
+    /// Returns the [`user-defined`][1] frame timeout assigned for this device.
+    ///
+    /// [1]: DeviceAttributes::with_frame_timeout
     #[inline(always)]
     pub fn frame_timeout(&self) -> u64 {
         self.inner.frame_timeout
     }
 
+    /// Returns a bitmask of suppoted depth [`resolve modes`][1].
+    ///
+    /// [1]: vk::ResolveModeFlags
     #[inline(always)]
     pub fn supported_depth_resolve_modes(&self) -> vk::ResolveModeFlags {
         self.inner.supported_depth_resolve_modes
     }
 
+    /// Returns a bitmask of suppoted stencil [`resolve modes`][1].
+    ///
+    /// [1]: vk::ResolveModeFlags
     #[inline(always)]
     pub fn supported_stencil_resolve_modes(&self) -> vk::ResolveModeFlags {
         self.inner.supported_stencil_resolve_modes
     }
 
+    /// Returns the number of [`user-defined`][1] command workers assigned for this device.
+    ///
+    /// [1]: DeviceAttributes::with_command_workers
     #[inline(always)]
     pub fn command_workers(&self) -> u32 {
         self.inner.command_workers

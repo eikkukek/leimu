@@ -31,9 +31,9 @@ bitflags! {
         INTERSECTION_KHR = vk::ShaderStageFlags::INTERSECTION_KHR.as_raw(),
         /// Provided by VK_KHR_ray_tracing_pipeline.
         CALLABLE_KHR = vk::ShaderStageFlags::CALLABLE_KHR.as_raw(),
-        /// Provided by VK_EXT_mesh_shader
+        /// Provided by [`mesh_shader`][ext::mesh_shader].
         TASK_EXT = vk::ShaderStageFlags::TASK_EXT.as_raw(),
-        /// Provided by VK_EXT_mesh_shader
+        /// Provided by [`mesh_shader`][ext::mesh_shader].
         MESH_EXT = vk::ShaderStageFlags::MESH_EXT.as_raw(),
         /// Provided by VK_HUAWEI_subpass_shading
         SUBPASS_SHADING_HUAWEI = vk::ShaderStageFlags::SUBPASS_SHADING_HUAWEI.as_raw(),
@@ -55,6 +55,12 @@ impl ShaderStageFlags {
         }
         if self.contains(Self::TESSELLATION_EVALUATION) {
             mask |= vk::PipelineStageFlags2::TESSELLATION_EVALUATION_SHADER;
+        }
+        if self.contains(Self::TASK_EXT) {
+            mask |= vk::PipelineStageFlags2::TASK_SHADER_EXT;
+        }
+        if self.contains(Self::MESH_EXT) {
+            mask |= vk::PipelineStageFlags2::MESH_SHADER_EXT;
         }
         if self.contains(Self::GEOMETRY) {
             mask |= vk::PipelineStageFlags2::GEOMETRY_SHADER;
@@ -91,9 +97,9 @@ pub enum ShaderStage {
     IntersectionKHR = vk::ShaderStageFlags::INTERSECTION_KHR.as_raw(),
     /// Provided by VK_KHR_ray_tracing_pipeline.
     CallableKHR = vk::ShaderStageFlags::CALLABLE_KHR.as_raw(),
-    /// Provided by VK_EXT_mesh_shader
+    /// Provided by [`mesh_shader`][ext::mesh_shader].
     TaskEXT = vk::ShaderStageFlags::TASK_EXT.as_raw(),
-    /// Provided by VK_EXT_mesh_shader
+    /// Provided by [`mesh_shader`][ext::mesh_shader].
     MeshEXT = vk::ShaderStageFlags::MESH_EXT.as_raw(),
 }
 

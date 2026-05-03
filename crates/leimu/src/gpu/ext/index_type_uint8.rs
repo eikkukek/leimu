@@ -16,9 +16,9 @@ impl Attributes {
 
 /// The extension type.
 #[derive(Clone, Copy)]
-pub struct DeviceExtensionIndexTypeUint8;
+pub struct Extension;
 
-unsafe impl DeviceExtension for DeviceExtensionIndexTypeUint8 {
+unsafe impl DeviceExtension for Extension {
 
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {

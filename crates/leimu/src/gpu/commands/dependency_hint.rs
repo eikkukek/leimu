@@ -17,6 +17,10 @@ bitflags! {
         VERTEX_INPUT = vk::PipelineStageFlags2::VERTEX_INPUT.as_raw(),
         /// The stage where vertex shaders execute.
         VERTEX_SHADER = vk::PipelineStageFlags2::VERTEX_SHADER.as_raw(),
+        /// The stage where task shaders execute.
+        TASK_SHADER = vk::PipelineStageFlags2::TASK_SHADER_EXT.as_raw(),
+        /// The stage where mesh shaders execute.
+        MESH_SHADER = vk::PipelineStageFlags2::MESH_SHADER_EXT.as_raw(),
         /// The stage where fragment shaders execute.
         FRAGMENT_SHADER = vk::PipelineStageFlags2::FRAGMENT_SHADER.as_raw(),
         /// The stage where late fragment tests and depth/stencil store operations take place.

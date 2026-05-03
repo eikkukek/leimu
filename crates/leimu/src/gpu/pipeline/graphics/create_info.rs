@@ -61,7 +61,7 @@ impl<'a> GraphicsPipelineCreateInfo<'a> {
     /// - `shader_set_id` *must* be a valid [`ShaderSetId`].
     /// - The shader set *must* contain a shader with [`ShaderStage::Vertex`].
     /// - If [`GraphicsPipelineCreateInfo::rasterizer_discard`] is false or the dynamic state
-    ///   includes [`DynamicState::RasterizerDiscardEnable`], the shader set *must* contain a shader
+    ///   includes [`DynamicState::RASTERIZER_DISCARD_ENABLE`], the shader set *must* contain a shader
     ///   with [`ShaderStage::Fragment`].
     #[inline]
     pub fn new(
@@ -80,7 +80,7 @@ impl<'a> GraphicsPipelineCreateInfo<'a> {
     /// - [`shader_set_id`][1] *must* be a valid [`ShaderSetId`].
     /// - The shader set *must* contain a shader with [`ShaderStage::Vertex`].
     /// - If [`GraphicsPipelineCreateInfo::rasterizer_discard`] is false or the dynamic state
-    ///   includes [`DynamicState::RasterizerDiscardEnable`], the shader set *must* contain a shader
+    ///   includes [`DynamicState::RASTERIZER_DISCARD_ENABLE`], the shader set *must* contain a shader
     ///   with [`ShaderStage::Fragment`].
     ///
     /// [1]: GraphicsPipelineCreateTemplate
@@ -161,7 +161,7 @@ impl<Meta: Send + Sync> base::Template<Meta> {
     /// - `id` *must* be a valid [`ShaderSetId`].
     /// - The shader set *must* contain a shader with [`ShaderStage::Vertex`].
     /// - If [`GraphicsPipelineCreateInfo::rasterizer_discard`] is false or the dynamic state
-    ///   includes [`DynamicState::RasterizerDiscardEnable`], the shader set *must* contain a shader
+    ///   includes [`DynamicState::RASTERIZER_DISCARD_ENABLE`], the shader set *must* contain a shader
     ///   with [`ShaderStage::Fragment`].
     #[inline]
     pub fn with_shader_set(mut self, id: ShaderSetId) -> Self {
@@ -238,7 +238,7 @@ impl<Meta: Send + Sync> base::Template<Meta> {
     /// This *must* be left as the default value `1.0`, if [`BaseDeviceFeatures`] `wide_lines` is
     /// set to `false`.
     ///
-    /// If dynamic states contain [`DynamicState::LineWidth`], this value is ignored and *must* be
+    /// If dynamic states contain [`DynamicState::LINE_WIDTH`], this value is ignored and *must* be
     /// set with [`DrawCommands`]
     #[inline]
     pub fn with_line_width(mut self, width: f32) -> Self {
@@ -310,6 +310,17 @@ impl<Meta: Send + Sync> base::Template<Meta> {
     #[inline]
     pub fn with_blend_constants(mut self, blend_constants: BlendConstants) -> Self {
         self.color_blend_info.blend_constants = blend_constants;
+        self
+    }
+
+    /// Sets the [`LogicOp`] for the framebuffer.
+    ///
+    /// If the [`logic_op`][1] feature is not enabled, `logic_op` *must* be [`None`].
+    ///
+    /// [1]: BaseDeviceFeatures::logic_op
+    #[inline]
+    pub fn with_logic_op(mut self, logic_op: Option<LogicOp>) -> Self {
+        self.color_blend_info.logic_op = logic_op;
         self
     }
 
@@ -390,28 +401,22 @@ impl<Meta: Send + Sync> base::Template<Meta> {
             ::with_capacity(shaders.len() as u32, alloc)
             .context("alloc failed")?;
 
-        let mut vertex_shader_included = false;
         let mut fragment_shader_included = false;
 
         for module in shaders {
             match module.stage() {
-                ShaderStage::Vertex => {
-                    if vertex_shader_included {
-                        return Err(Error::just_context("vertex shader included twice in pipeline"))
-                    }
-                    vertex_shader_included = true;
-                }
                 ShaderStage::Fragment => {
                     if fragment_shader_included {
                         return Err(Error::just_context("fragment shader included twice in pipeline"))
                     }
                     fragment_shader_included = true;
                 },
-                _ => {
+                ShaderStage::Vertex | ShaderStage::MeshEXT |
+                ShaderStage::TaskEXT | ShaderStage::TessellationControl |
+                ShaderStage::TessellationEvaluation => {},
+                x => {
                     return Err(Error::just_context(format!(
-                        "{}{}",
-                        format_args!("unsupported shader stage {}, only vertex and fragment shaders", module.stage()),
-                        "are supported for graphics pipelines",
+                        "unsupported shader stage for graphics pipeline {x}"
                     )))
                 }
             }
@@ -422,10 +427,6 @@ impl<Meta: Send + Sync> base::Template<Meta> {
                 module: module.handle(),
                 ..Default::default()
             });
-        }
-
-        if !vertex_shader_included {
-            return Err(Error::just_context("no vertex shader included in graphics pipeline"))
         }
 
         let input_assembly_state = vk::PipelineInputAssemblyStateCreateInfo {
@@ -501,7 +502,9 @@ impl<Meta: Send + Sync> base::Template<Meta> {
         let color_blend_state = vk::PipelineColorBlendStateCreateInfo {
             s_type: vk::StructureType::PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
             logic_op_enable: self.color_blend_info.logic_op.is_some().into(),
-            logic_op: self.color_blend_info.logic_op.unwrap_or_default(),
+            logic_op: self.color_blend_info.logic_op
+                .map(|op| vk::LogicOp::from_raw(op.as_raw()))
+                .unwrap_or_default(),
             attachment_count: color_blend_attachment_states.len(),
             p_attachments: color_blend_attachment_states.as_ptr(),
             blend_constants: self.color_blend_info.blend_constants.into(),

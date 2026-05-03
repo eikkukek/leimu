@@ -78,24 +78,12 @@ pub struct StencilTestInfo {
     pub back: StencilOpState,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Default, Clone, Copy, BuildStructure)]
 pub struct DepthStencilInfo {
     pub compare_op: CompareOp,
     pub depth_bounds: Option<DepthBounds>,
     pub stencil_test_info: Option<StencilTestInfo>,
     pub write_enable: bool,
-}
-
-impl Default for DepthStencilInfo {
-
-    fn default() -> Self {
-        Self {
-            compare_op: CompareOp::NEVER,
-            depth_bounds: None,
-            stencil_test_info: None,
-            write_enable: false,
-        }
-    }
 }
 
 #[derive(Clone, Copy)]
@@ -151,5 +139,5 @@ impl From<BlendConstants> for [f32; 4] {
 #[derive(Default, Clone)]
 pub(crate) struct ColorBlendInfo {
     pub blend_constants: BlendConstants, // used in 'ConstColor' and 'ConstAlpha' BlendFactors
-    pub logic_op: Option<vk::LogicOp>, // only for integer frame buffers, unused for now
+    pub logic_op: Option<LogicOp>, // only for integer frame buffers
 }
