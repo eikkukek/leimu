@@ -1,11 +1,5 @@
 use core::{
-    mem::MaybeUninit,
-    ops::{Deref, DerefMut},
-    ptr::{self},
-    fmt::{self, Debug, Display, Formatter},
-    borrow::{Borrow, BorrowMut},
-    hash::{Hash, Hasher},
-    slice,
+    borrow::{Borrow, BorrowMut}, fmt::{self, Debug, Display, Formatter}, hash::{Hash, Hasher}, mem::{ManuallyDrop, MaybeUninit}, ops::{Deref, DerefMut}, ptr::{self}, slice
 };
 
 use crate::reserve::ReserveError;
@@ -72,6 +66,19 @@ impl<T, const N: usize> ArrayVec<T, N>
         let mut vec = ArrayVec::new();
         vec.extend(self.into_iter().map(f));
         vec
+    }
+
+    /// Returns the underlying array, assuming all elements are initialzed.
+    ///
+    /// # Safety
+    /// Values may be unitialized if the array is not full.
+    pub unsafe fn assume_init_array(self) -> [T; N] {
+        let s = ManuallyDrop::new(self);
+        unsafe {
+            s.as_ptr()
+                .cast::<[T; N]>()
+                .read()
+        }
     }
 }
 

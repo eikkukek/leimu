@@ -401,18 +401,13 @@ impl<T, Alloc, Wrap, ReservePol, IndexType>
         })
     }
 
-    /// Inserts a value to the map.
-    ///
-    /// May panic if an allocation fails.
-    #[inline]
-    pub fn insert(&mut self, value: T) -> SlotIndex<T, IndexType> {
-        self.insert_internal(value).unwrap()
-    }
-
     /// Tries to insert a value to the map, returning an error if an allocation fails.
     #[inline]
     pub fn try_insert(&mut self, value: T) -> Result<SlotIndex<T, IndexType>, ReserveError<T>> {
-        self.insert_internal(value)
+        self.insert_internal::<fn(SlotIndex<T, IndexType>) -> T>(None, || Some(value)).map_err(|err| {
+            let (value, err) = err.recover_value();
+            ReserveError::new(err, value.unwrap())
+        })
     }
 }
 
@@ -513,28 +508,83 @@ impl<T, Alloc, ReservePol, IsStd, IndexType> base::Map<T, Alloc, ReservePol, IsS
         Ok(())
     }
 
-    fn insert_internal(&mut self, value: T) -> Result<SlotIndex<T, IndexType>, ReserveError<T>>
+    fn insert_internal<F: FnOnce(SlotIndex<T, IndexType>) -> T>(
+        &mut self,
+        f: Option<F>,
+        get_value: impl FnOnce() -> Option<T>,
+    ) -> Result<SlotIndex<T, IndexType>, ReserveError<Option<T>>>
     {
         if self.free_head.is_none() {
             let capacity = self.capacity as usize * 2;
             if capacity > u32::MAX as usize {
-                return Err(ReserveError::max_capacity_exceeded(u32::MAX, capacity, value))
+                return Err(ReserveError::max_capacity_exceeded(
+                    u32::MAX, capacity,
+                    get_value()
+                ))
             }
             if let Err(err) = self.try_reserve(capacity as u32) {
-                return Err(err.with_value(value))
+                return Err(err.with_value(get_value()))
             }
         }
         let index = self.free_head.unwrap();
         let free_slot = unsafe { self.data.add(index as usize).as_mut() };
-        self.free_head = free_slot.next_free_index.unwrap();
-        free_slot.value.write(value);
-        free_slot.next_free_index = None;
-        self.len += 1;
-        Ok(SlotIndex {
+        let index = SlotIndex {
             version: free_slot.version,
             index,
             _marker: PhantomData,
-        })
+        };
+        self.free_head = free_slot.next_free_index.unwrap();
+        free_slot.value.write(f.map(|f| f(index)).unwrap_or_else(|| unsafe { get_value()
+            .unwrap_unchecked()
+        }));
+        free_slot.next_free_index = None;
+        self.len += 1;
+        Ok(index)
+    }
+
+    /// Inserts a value to the map.
+    ///
+    /// May panic if an allocation fails.
+    #[inline]
+    pub fn insert(&mut self, value: T) -> SlotIndex<T, IndexType> {
+        self.insert_internal::<fn(SlotIndex<T, IndexType>) -> T>(None, || Some(value)).unwrap()
+    }
+
+    /// Inserts a value to the map with closure that takes in the new index.
+    ///
+    /// May panic if an allocation fails.
+    pub fn insert_with_index<F>(&mut self, f: F) -> SlotIndex<T, IndexType>
+        where F: FnOnce(SlotIndex<T, IndexType>) -> T
+    {
+        self.insert_internal(Some(f), || None).unwrap()
+    }
+
+    /// Tries to inserts a value to the map with closure that takes in the index and may return an
+    /// error.
+    ///
+    /// May panic if an allocation fails.
+    pub fn try_insert_with_index<F, E>(&mut self, f: F) -> Result<SlotIndex<T, IndexType>, E>
+        where F: FnOnce(SlotIndex<T, IndexType>) -> Result<T, E>
+    {
+        if self.free_head.is_none() {
+            let capacity = self.capacity as usize * 2;
+            if capacity > u32::MAX as usize {
+                panic!("max capacity exceeded")
+            }
+            self.reserve(capacity as u32);
+        }
+        let index = self.free_head.unwrap();
+        let free_slot = unsafe { self.data.add(index as usize).as_mut() };
+        let index = SlotIndex {
+            version: free_slot.version,
+            index,
+            _marker: PhantomData,
+        };
+        self.free_head = free_slot.next_free_index.unwrap();
+        free_slot.value.write(f(index)?);
+        free_slot.next_free_index = None;
+        self.len += 1;
+        Ok(index)
     }
 
     /// Removes a value from the slot map, returning an error if the index is stale or otherwise
@@ -1171,11 +1221,6 @@ mod std_features {
                 alloc: StdAlloc,
                 _marker: PhantomData,
             }
-        }
-        
-        /// Inserts a value to the map.
-        pub fn insert(&mut self, value: T) -> SlotIndex<T, IndexType> {
-            self.insert_internal(value).unwrap()
         }
     }
 
