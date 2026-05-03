@@ -1,11 +1,11 @@
 use core::f32::consts::{PI, TAU, FRAC_PI_3};
 
 use leimu::{
-    Library,
+    Entry,
     gpu::{self, ext},
     core::collections::{EntryExt, HashMap},
     sync::{Arc, SwapLock, atomic::{self, AtomicU64}},
-    log,
+    EventError,
 };
 
 fn hsva_to_srgb_pack32(hue: f32, sat: f32, val: f32) -> u32 {
@@ -27,55 +27,51 @@ fn hsva_to_srgb_pack32(hue: f32, sat: f32, val: f32) -> u32 {
     ])
 }
 
-fn main() {
-    let library = Library
+fn main() -> leimu::EventResult<()> {
+    let entry = Entry
         ::new()
         .expect("failed to init library");
-    let instance = gpu::Instance::new(
-        &library,
-        "test",
-        gpu::Version::new(1, 0, 0),
-        &[gpu::InstanceLayer::new(gpu::LAYER_KHRONOS_VALIDATION, false)],
-    ).unwrap();
+    let instance = entry.create_instance(
+        c"test",
+        gpu::make_api_version(0, 1, 0, 0),
+        [gpu::layer_khronos_validation(false)]
+    )?;
     let device_attributes = gpu
         ::default_device_attributes()
         .with_device_extension(ext::push_descriptor::Extension);
     let devices = instance.enumerate_suitable_physical_devices(
         device_attributes
-    ).unwrap();
+    )?;
     let mut idx = 0;
-    for (i, device) in devices.iter() {
+    for (i, device) in devices.enumerate() {
         if device.device_type() ==
             gpu::PhysicalDeviceType::DISCRETE_GPU
         {
             idx = i;
         }
     }
-    let physical_device = devices.get(idx);
+    let physical_device = &devices[idx];
     let queue_family_index = physical_device
-        .queue_families()
-        .properties()
-        .iter()
-        .enumerate()
+        .enumerate_queue_families()
+        .into_iter()
         .find_map(|(i, properties)|
             (properties.queue_flags.contains(gpu::QueueFlags::GRAPHICS))
-            .then_some(i as u32)
-        ).unwrap();
+            .then_some(i)
+        ).ok_or_else(|| EventError::just_context("failed to find graphics queue"))?;
+    let mut queue = gpu::DeviceQueue::uninit();
     let queue_create_info = gpu::DeviceQueueCreateInfo::new(
+        &mut queue,
         "graphics queue",
         queue_family_index,
         0
     );
     let logical_device = devices
-        .create_device(idx, &[queue_create_info])
+        .create_device(idx, [queue_create_info])
         .unwrap();
-    log::info!("selected device: {}",
-        logical_device.physical_device().device_name()
-    );
+    let queue = queue.get()?;
     let min_uniform_buffer_offset_alignment = logical_device
         .physical_device()
-        .limits().min_uniform_buffer_offset_alignment;
-    let queue = logical_device.device_queues()[0].clone();
+        .limits().min_uniform_buffer_offset_alignment();
     let globals = leimu::create_globals();
     let window = globals.add(|event_loop| {
         Ok(event_loop.create_window(
@@ -179,7 +175,7 @@ fn main() {
         let mut id = Default::default();
         event_loop
             .gpu()
-            .create_timeline_semaphores([(&mut id, 3)])?;
+            .create_timeline_semaphores([gpu::semaphore_create_info(&mut id, 3)])?;
         Ok(id)
     });
     let mut timeline_value = 3;
@@ -193,7 +189,7 @@ fn main() {
     let sat: f32 = 94.0 / 100.0;
     let val: f32 = 97.0 / 100.0;
     leimu::Leimu::new(
-        library,
+        entry,
         logical_device,
         leimu::default_attributes(),
         &globals,
@@ -204,103 +200,104 @@ fn main() {
                     if !event_loop.is_window_valid(window) {
                         event_loop.exit();
                     }
-                    let mut commands = event_loop.gpu().schedule_commands();
                     let buffer_id = *buffer;
-                    let fb_state = fb_state.clone();
-                    commands.new_commands::<gpu::NewGraphicsCommands>(
-                        queue.clone(),
-                        move |cmd| {
-                            let mut copy_cmd = cmd.copy_commands();
-                            let buffer_offset = timeline_value % 3 * 12.max(
-                                min_uniform_buffer_offset_alignment
-                            );
-                            copy_cmd.update_buffer(
-                                buffer_id,
-                                buffer_offset,
-                                &[
-                                    hsva_to_srgb_pack32(hues[0], sat, val),
-                                    hsva_to_srgb_pack32(hues[1], sat, val),
-                                    hsva_to_srgb_pack32(hues[2], sat, val),
-                                ],
-                                gpu::CommandOrdering::Lenient,
-                            )?;
-                            let (image_view, format) = cmd.swapchain_image_view(
-                                window.surface_id()
-                            )?;
-                            cmd.render(
-                                gpu::RenderingInfo::default(),
-                                &[
-                                    gpu::PassAttachment
-                                        ::new(image_view)
-                                        .with_load_op(gpu::AttachmentLoadOp::Clear)
-                                        .with_clear_value(
-                                            gpu::ClearColorValue::Float([0.01, 0.01, 0.01, 0.5])
-                                        ),
-                                ],
-                                &gpu::DepthStencilAttachment::None,
-                                |pass| {
-                                    let frame_buffer_size = fb_state.extent.load(
-                                        atomic::Ordering::Acquire
-                                    );
-                                    let (width, height) = (
-                                        (frame_buffer_size & 0xFFFFFFFF) as u32,
-                                        (frame_buffer_size >> 32) as u32,
-                                    );
-                                    pass.dynamic_draw(|cmd| {
-                                        let mut pipeline_cmd = cmd.bind_pipeline(
-                                            *fb_state.pipelines.load().get(&format).unwrap(),
-                                            &[gpu::Viewport
-                                                ::default()
-                                                .width(width as f32)
-                                                .height(height as f32)
-                                            ],
-                                            &[gpu::Scissor
-                                                ::default()
-                                                .width(width)
-                                                .height(height)
-                                            ],
-                                        )?;
-                                        pipeline_cmd.push_descriptor_bindings(&[
-                                            gpu::PushDescriptorBinding::new(
-                                                c"colors",
-                                                0,
-                                                gpu::DescriptorInfos::buffers(&[
-                                                    gpu::DescriptorBufferInfo::default()
-                                                    .buffer_id(buffer_id)
-                                                    .offset(buffer_offset)
-                                                    .size(12)
-                                                ]),
-                                                gpu::CommandBarrierInfo::new(
-                                                    gpu::CommandOrdering::Strict,
-                                                    gpu::ExplicitAccess::SHADER_READ,
-                                                )
-                                            )?,
-                                        ])?;
-                                        pipeline_cmd.begin_drawing(
-                                            gpu::DrawInfo
-                                                ::default()
-                                                .vertex_count(3),
-                                                &[], None,
-                                                |cmd| {
-                                                    cmd.draw()?;
-                                                    Ok(())
-                                                }
+                    let fb_state = fb_state.clone(); 
+                    event_loop.gpu().schedule_commands(|schduler| {
+                        schduler.new_commands::<gpu::NewGraphicsCommands>(
+                            queue.clone(),
+                            move |cmd| {
+                                let mut copy_cmd = cmd.copy_commands();
+                                let buffer_offset = timeline_value % 3 * 12.max(
+                                    min_uniform_buffer_offset_alignment
+                                );
+                                copy_cmd.update_buffer(
+                                    buffer_id,
+                                    buffer_offset,
+                                    &[
+                                        hsva_to_srgb_pack32(hues[0], sat, val),
+                                        hsva_to_srgb_pack32(hues[1], sat, val),
+                                        hsva_to_srgb_pack32(hues[2], sat, val),
+                                    ],
+                                    gpu::CommandOrdering::Lenient,
+                                )?;
+                                let (image_view, format) = cmd.swapchain_image_view(
+                                    window.surface_id()
+                                )?;
+                                cmd.render(
+                                    gpu::RenderingInfo::default(),
+                                    &[
+                                        gpu::PassAttachment
+                                            ::new(image_view)
+                                            .with_load_op(gpu::AttachmentLoadOp::Clear)
+                                            .with_clear_value(
+                                                gpu::ClearColorValue::Float([0.01, 0.01, 0.01, 0.5])
+                                            ),
+                                    ],
+                                    &gpu::DepthStencilAttachment::None,
+                                    |pass| {
+                                        let frame_buffer_size = fb_state.extent.load(
+                                            atomic::Ordering::Acquire
+                                        );
+                                        let (width, height) = (
+                                            (frame_buffer_size & 0xFFFFFFFF) as u32,
+                                            (frame_buffer_size >> 32) as u32,
+                                        );
+                                        pass.dynamic_draw(|cmd| {
+                                            let mut pipeline_cmd = cmd.bind_pipeline(
+                                                *fb_state.pipelines.load().get(&format).unwrap(),
+                                                &[gpu::Viewport
+                                                    ::default()
+                                                    .width(width as f32)
+                                                    .height(height as f32)
+                                                ],
+                                                &[gpu::Scissor
+                                                    ::default()
+                                                    .width(width)
+                                                    .height(height)
+                                                ],
                                             )?;
+                                            pipeline_cmd.push_descriptor_bindings(&[
+                                                gpu::PushDescriptorBinding::new(
+                                                    c"colors",
+                                                    0,
+                                                    gpu::DescriptorInfos::buffers(&[
+                                                        gpu::descriptor_buffer_info(buffer_id)
+                                                            .offset(buffer_offset)
+                                                        .range(12)
+                                                    ]),
+                                                    gpu::CommandBarrierInfo::new(
+                                                        gpu::CommandOrdering::Strict,
+                                                        gpu::ExplicitAccess::SHADER_READ,
+                                                    )
+                                                )?,
+                                            ])?;
+                                            pipeline_cmd.begin_drawing(
+                                                gpu::DrawInfo
+                                                    ::default()
+                                                    .vertex_count(3),
+                                                    &[], None,
+                                                    |cmd| {
+                                                        cmd.draw()?;
+                                                        Ok(())
+                                                    }
+                                                )?;
+                                            Ok(())
+                                        })?;
                                         Ok(())
-                                    })?;
-                                    Ok(())
-                                }
-                            )?;
-                            Ok(())
-                        },
-                    )?.with_wait_semaphore(
-                        *timeline_semaphore,
-                        timeline_value - 2,
-                        gpu::MemoryDependencyHint::TRANSFER,
-                    ).with_signal_semaphore(
-                        *timeline_semaphore,
-                        timeline_value + 1,
-                    );
+                                    }
+                                )?;
+                                Ok(())
+                            },
+                        )?.with_wait_semaphore(
+                            *timeline_semaphore,
+                            timeline_value - 2,
+                            gpu::MemoryDependencyHint::TRANSFER,
+                        ).with_signal_semaphore(
+                            *timeline_semaphore,
+                            timeline_value + 1,
+                        );
+                        Ok(())
+                    })?;
                     timeline_value += 1;
                     for hue in &mut hues {
                         *hue = (*hue + event_loop.delta_time_secs_f32()) % TAU;
@@ -348,5 +345,6 @@ fn main() {
                 _ => Ok(())
             }
         }
-    ).unwrap().run();
+    )?.run()?;
+    Ok(())
 }
