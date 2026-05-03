@@ -6,16 +6,12 @@ members = [
 	"crates/leimu-proc",
 	"crates/leimu-core",
 	"crates/leimu-mem",
-	"crates/leimu-ash",
-	"crates/leimu-error",
-	"crates/leimu-threads",
 	"crates/leimu-log",
 	"crates/leimu",
 	"crates/leimu-geom",
 	"crates/leimu-font",
 	"crates/leimu-gui",
-]
-
-exclude = [
-	"examples",
+	"examples/triangle",
+	"examples/flame",
+	"examples/mesh-shader"
 ]
