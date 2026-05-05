@@ -3,7 +3,7 @@ mod shader_types;
 mod host_to_gpu;
 
 use std::env;
-use core::f32::consts::{PI, TAU};
+use core::f32::consts::{PI, TAU, FRAC_PI_3};
 
 use leimu::{
     EventError, EventResult,
@@ -13,18 +13,40 @@ use leimu::{
     mem::{
         vec::ArrayVec
     },
-    sync::{Arc, RwLock, atomic::{self, AtomicU64}},
+    sync::{
+        Arc, RwLock,
+        atomic::{self, AtomicU64},
+        SwapLock,
+    },
     win,
 };
 
 use mesh::Mesh;
 
+#[inline]
+fn rgb_from_hsv(hue: f32, sat: f32, val: f32) -> glam::Vec3 {
+    let map = |n: f32| -> f32 {
+        let k = (n + hue / FRAC_PI_3) % 6.0;
+        let ch = val - val * sat * k.min(4.0 - k).clamp(0.0, 1.0);
+        if ch <= 0.04045 {
+            ch / 12.92
+        } else {
+            ((ch + 0.055) / 1.055).powf(2.4)
+        }
+    };
+    glam::vec3(map(5.0), map(3.0), map(1.0))
+}
+
 fn main() -> EventResult<()> {
     env_logger::init();
     let entry = leimu::Entry::new()?;
     let mut layers = Vec::new();
-    if env::args().any(|arg| arg == "with_validation") {
-        layers.push(gpu::layer_khronos_validation(false));
+    for arg in env::args().skip(1) {
+        if arg == "with_validation" {
+            layers.push(gpu::layer_khronos_validation(false));
+        } else {
+            log::error!("invalid argument {arg}");
+        }
     }
     let instance = entry.create_instance(
         c"mesh shader",
@@ -63,43 +85,31 @@ fn main() -> EventResult<()> {
     )?;
     let queue = queue.get()?;
     let globals = leimu::create_globals();
-    #[repr(C)]
-    #[repr(align(16))]
-    #[derive(Clone, Copy)]
-    struct Meshlet {
-        debug_color: [f32; 3],
-        vertex_count: u32,
-        triangle_count: u32,
-        vertices: [u32; 6],
-        triangles: [[u32; 3]; 2],
-    }
-    #[repr(C)]
-    #[derive(Clone, Copy)]
-    struct Mvp {
-        m: glam::Mat4,
-        v: glam::Mat4,
-        p: glam::Mat4,
-        imv: glam::Mat4
-    }
+    let max_local_vertices = 128;
+    let max_local_primitives = 256;
+    let mesh_shader_header = format!(
+"#version 450
+
+#extension GL_EXT_mesh_shader : require
+
+const uint MAX_VERTICES = {max_local_vertices};
+const uint MAX_PRIMITIVES = {max_local_primitives};
+"   );
     let shader_set = globals.add(|event_loop| {
         let gpu = event_loop.gpu();
         let mesh = gpu::default_shader_attributes()
             .with_stage(gpu::ShaderStage::MeshEXT)
             .with_name("mesh shader")
-            .with_glsl("
-                #version 450
-
-                #extension GL_EXT_mesh_shader : require
-
-                layout(local_size_x = 32) in;
-                layout(triangles, max_vertices = 64, max_primitives = 128) out;
+            .with_glsl(&(mesh_shader_header + "
+                layout(local_size_x = 128) in;
+                layout(triangles, max_vertices = MAX_VERTICES, max_primitives = MAX_PRIMITIVES) out;
 
                 struct Meshlet {
                     vec3 debug_color;
                     uint vertex_count;
-                    uint triangle_count;
-                    uint vertices[6];
-                    uint triangles[2][3];
+                    uint primitive_count;
+                    uint vertices[MAX_VERTICES];
+                    uint primitives[MAX_PRIMITIVES][3];
                 };
 
                 struct Vertex {
@@ -118,9 +128,7 @@ fn main() -> EventResult<()> {
                 } vertices;
 
                 layout(set = 0, binding = 2) uniform Mvp {
-                    mat4 m;
-                    mat4 v;
-                    mat4 p;
+                    mat4 mvp;
                     mat4 imv;
                 } mvp;
                 
@@ -132,25 +140,26 @@ fn main() -> EventResult<()> {
                         return;
                     }
                     Meshlet m = meshlets.data[meshlet_id];
-                    SetMeshOutputsEXT(m.vertex_count, m.triangle_count);
-                    mat4 transform = mvp.p * mvp.m;
+                    SetMeshOutputsEXT(m.vertex_count, m.primitive_count);
                     uint tid = gl_LocalInvocationIndex;
                     if (tid < m.vertex_count) {
                         Vertex vertex = vertices.data[m.vertices[tid]];
-                        gl_MeshVerticesEXT[tid].gl_Position =
-                            transform * vec4(vertex.position, 1.0f);
+                        gl_MeshVerticesEXT[tid].gl_Position = mvp.mvp * vec4(vertex.position, 1.0f);
                     }
-                    if (tid < m.triangle_count) {
-                        gl_PrimitiveTriangleIndicesEXT[tid] =
-                            uvec3(
-                                m.triangles[tid][0],
-                                m.triangles[tid][1],
-                                m.triangles[tid][2]
-                            );
-                        out_color[tid] = m.debug_color;
+                    for (uint i = 0; i < 2; ++i) {
+                        uint prim_id = tid + i * 128;
+                        if (prim_id < m.primitive_count) {
+                            gl_PrimitiveTriangleIndicesEXT[prim_id] =
+                                uvec3(
+                                    m.primitives[prim_id][0],
+                                    m.primitives[prim_id][1],
+                                    m.primitives[prim_id][2]
+                                );
+                            out_color[prim_id] = m.debug_color;
+                        }
                     }
                 }
-            ").build(gpu)?;
+            ")).build(gpu)?;
         let fragment = gpu::default_shader_attributes()
             .with_stage(gpu::ShaderStage::Fragment)
             .with_name("fragment shader")
@@ -175,14 +184,29 @@ fn main() -> EventResult<()> {
         )?;
         Ok(shader_set)
     });
-    let mesh = Mesh::from_obj(include_str!("../low-poly-sphere.obj"))?;
     #[derive(Clone, Copy)]
-    struct Buffers {
+    struct MeshBuffers {
+        n_meshlets: u32,
+        scale: glam::Vec3,
+        translation: glam::Vec3,
         meshlet: gpu::BufferId,
         vertex: gpu::BufferId,
         mvp: gpu::BufferId,
     }
-    let mut buffers: Option<Buffers> = None;
+    let sphere = Mesh::from_obj(
+        "low-poly-sphere.obj", include_str!("../low-poly-sphere.obj"),
+        max_local_vertices, max_local_primitives,
+    )?;
+    let bunny = Mesh
+        ::from_obj(
+            "stanford-bunny.obj", include_str!("../stanford-bunny.obj"),
+            max_local_vertices, max_local_primitives,
+        )?
+        .with_scale(glam::vec3(0.8, 0.8, 0.8))
+        .with_translation(glam::vec3(0.0, -1.0, -3.0));
+    let meshes = [sphere, bunny];
+    let mut current_mesh: usize = 1;
+    let mesh_buffers: Arc<SwapLock<Vec<MeshBuffers>>> = default();
     let mut graphics_pipelines = AHashMap::new();
     #[derive(Default)]
     struct SwapchainDependent {
@@ -222,7 +246,9 @@ fn main() -> EventResult<()> {
         gpu::MemoryProperties::DEVICE_LOCAL,
         gpu::MemoryProperties::DEVICE_LOCAL
     );
-    let mut rot = 0.0;
+    let mut y_rot = 0.0;
+    let mut rot = glam::Quat::IDENTITY;
+    let mut cursor_pos = glam::Vec2::default();
     leimu::Leimu::new(
         entry,
         device,
@@ -243,89 +269,104 @@ fn main() -> EventResult<()> {
                 window.close();
                 return Ok(())
             }
+            if window.key_state(win::KeyCode::ArrowLeft).pressed() {
+                current_mesh = current_mesh.wrapping_sub(1).clamp(0, meshes.len() - 1);
+                rot = glam::Quat::IDENTITY;
+            } else if window.key_state(win::KeyCode::ArrowRight).pressed() {
+                current_mesh += 1;
+                if current_mesh >= meshes.len() {
+                    current_mesh = 0;
+                }
+                rot = glam::Quat::IDENTITY;
+            }
+            let new_cursor_pos = window.cursor_position_f32().into();
+            if window.mouse_button_state(win::MouseButton::Left).held() {
+                let delta_cursor_pos: glam::Vec2 = (new_cursor_pos - cursor_pos) / 500.0;
+                if delta_cursor_pos.length_squared() > f32::EPSILON {
+                    let right = glam::Vec2::from_angle(PI / 2.0).rotate(glam::vec2(delta_cursor_pos.x, -delta_cursor_pos.y)).normalize();
+                    rot = glam::Quat::from_axis_angle(glam::vec3(right.x, right.y, 0.0).normalize(), delta_cursor_pos.length()) * rot;
+                    rot = rot.normalize();
+                }
+            }
+            cursor_pos = new_cursor_pos;
             let gpu = event_loop.gpu();
             let current_frame = frame.load(atomic::Ordering::Relaxed);
             host_to_gpu.set_frame(current_frame);
-            rot = (rot + window.delta_time_secs_f32()) % TAU;
+            y_rot = (y_rot + window.delta_time_secs_f32()) % TAU;
             match event {
                 leimu::Event::Initialized => {
                     let _ = leimu::block_on(gpu.get_shader_set(*shader_set))?;
                     Ok(())
                 },
                 leimu::Event::Update => {
-                    let buffers = if let Some(buffers) = buffers {
-                        buffers
-                    } else {
-                        let [mut meshlet, mut vertex, mut mvp] = default();
-                        gpu.create_resources(
-                            [
-                                gpu::BufferCreateInfo::new(
-                                    &mut meshlet,
-                                    &device_local_binder,
-                                    (align_of::<Meshlet>() + size_of::<Meshlet>() * mesh.meshlets.len()) as u64,
-                                    gpu::BufferUsages::TRANSFER_DST | gpu::BufferUsages::STORAGE_BUFFER
-                                ).unwrap(),
-                                gpu::BufferCreateInfo::new(
-                                    &mut vertex,
-                                    &device_local_binder,
-                                    size_of_val(mesh.vertices.as_slice()) as u64,
-                                    gpu::BufferUsages::TRANSFER_DST | gpu::BufferUsages::STORAGE_BUFFER
-                                ).unwrap(),
-                                gpu::BufferCreateInfo::new(
-                                    &mut mvp,
-                                    &device_local_binder,
-                                    size_of::<Mvp>() as u64,
-                                    gpu::BufferUsages::TRANSFER_DST | gpu::BufferUsages::UNIFORM_BUFFER
-                                ).unwrap()
-                            ],
-                            [],
-                        )?;
-                        let debug_colors = [
-                            glam::vec3(
-                                19.0 / 255.0,
-                                214.0 / 255.0, 
-                                156.0 / 255.0
-                            ),
-                            glam::vec3(
-                                214.0 / 255.0,
-                                19.0 / 255.0,
-                                154.0 / 255.0
-                            ),
-                            glam::vec3(
-                                202.0 / 255.0,
-                                214.0 / 255.0,
-                                19.0 / 255.0
-                            )
-                        ];
-                        let meshlets: Vec<Meshlet> = mesh.meshlets
-                            .iter().enumerate().map(|(i, meshlet)| {
-                                Meshlet {
-                                    debug_color: debug_colors[i % 3].into(),
-                                    vertex_count: meshlet.local_vertices.len() as u32,
-                                    triangle_count: meshlet.local_triangles.len() as u32,
-                                    vertices: unsafe {
-                                        meshlet.local_vertices.clone().assume_init_array()
-                                    },
-                                    triangles: unsafe {
-                                        meshlet.local_triangles.clone().assume_init_array()
-                                    },
+                    if mesh_buffers.load().len() != meshes.len() {
+                        mesh_buffers.modify(|mesh_buffers| {
+                            for mesh in meshes.iter().skip(mesh_buffers.len()) {
+                                let [mut meshlet, mut vertex, mut mvp] = default();
+                                gpu.create_resources(
+                                    [
+                                        gpu::BufferCreateInfo::new(
+                                            &mut meshlet,
+                                            &device_local_binder,
+                                            (
+                                                align_of::<shader_types::Meshlet>() +
+                                                shader_types::Meshlet::array_stride(max_local_vertices, max_local_primitives) *
+                                                mesh.meshlets.len()
+                                            ) as u64,
+                                            gpu::BufferUsages::TRANSFER_DST | gpu::BufferUsages::STORAGE_BUFFER
+                                        ).unwrap(),
+                                        gpu::BufferCreateInfo::new(
+                                            &mut vertex,
+                                            &device_local_binder,
+                                            size_of_val(mesh.vertices.as_slice()) as u64,
+                                            gpu::BufferUsages::TRANSFER_DST | gpu::BufferUsages::STORAGE_BUFFER
+                                        ).unwrap(),
+                                        gpu::BufferCreateInfo::new(
+                                            &mut mvp,
+                                            &device_local_binder,
+                                            size_of::<shader_types::Mvp>() as u64,
+                                            gpu::BufferUsages::TRANSFER_DST | gpu::BufferUsages::UNIFORM_BUFFER
+                                        ).unwrap()
+                                    ],
+                                    [],
+                                )?;
+                                let mut hue = 0.0;
+                                let hue_step = TAU / mesh.meshlets.len() as f32;
+                                let mut buffer: Vec<_> = vec![];
+                                let stride = shader_types::Meshlet::array_stride(max_local_vertices, max_local_primitives);
+                                for meshlet in &mesh.meshlets {
+                                    let start = buffer.len();
+                                    buffer.extend_from_slice(shader_types::Meshlet {
+                                        debug_color: rgb_from_hsv(hue, 0.6, rand::random_range(0.7..1.0)).into(),
+                                        vertex_count: meshlet.local_vertices().len() as u32,
+                                        triangle_count: meshlet.local_triangles().len() as u32,
+                                    }.as_inline_bytes());
+                                    buffer.extend_from_slice(meshlet.local_vertices_full_as_bytes());
+                                    buffer.extend_from_slice(meshlet.local_triangles_full_as_bytes());
+                                    buffer.extend(((buffer.len() - start)..stride).map(|_| 0));
+                                    assert!(buffer.len() - start == stride);
+                                    hue += hue_step;
                                 }
-                            }).collect();
-                        host_to_gpu.buffer_to_buffer(
-                            meshlet,
-                            16, &meshlets
-                        )?;
-                        host_to_gpu.buffer_to_buffer(
-                            vertex,
-                            0, &mesh.vertices,
-                        )?;
-                        *buffers.insert(Buffers {
-                            meshlet,
-                            vertex,
-                            mvp,
-                        })
-                    };
-                    let n_meshlets = mesh.meshlets.len() as u32;
+                                host_to_gpu.buffer_to_buffer(
+                                    meshlet,
+                                    align_of::<shader_types::Meshlet>() as u64, &buffer
+                                )?;
+                                host_to_gpu.buffer_to_buffer(
+                                    vertex,
+                                    0, &mesh.vertices,
+                                )?;
+                                mesh_buffers.push(MeshBuffers {
+                                    scale: mesh.scale,
+                                    translation: mesh.translation,
+                                    n_meshlets: mesh.meshlets.len() as u32,
+                                    meshlet,
+                                    vertex,
+                                    mvp,
+                                });
+                            }
+                            EventResult::Ok(())
+                        })?;
+                    }
                     gpu.schedule_commands(|scheduler| {
                         let cmd0 = if host_to_gpu.is_empty() {
                             None
@@ -346,35 +387,38 @@ fn main() -> EventResult<()> {
                         };
                         let sc_dependent = sc_dependent.clone();
                         let frame = frame.clone();
+                        let mesh_buffers = mesh_buffers.clone();
                         let cmd1 = scheduler.new_commands::<gpu::NewGraphicsCommands>(
                             queue.clone(),
                             move |cmd| {
                                 let SwapchainDependent { current_pipeline, depth_images, resolution }
                                     = &*sc_dependent.read();
                                 let mut copy_commands = cmd.copy_commands();
-                                let mvp = Mvp {
-                                    m: glam::Mat4::from_rotation_translation(
-                                        glam::Quat::from_axis_angle(
-                                            glam::vec3(0.0, 1.0, 0.0),
-                                            rot,
-                                        ),
-                                        glam::vec3(0.0, 0.0, -3.0),
-                                    ),
-                                    v: glam::Mat4::IDENTITY,
-                                    p: glam::Mat4::perspective_rh(
-                                        PI / 2.0,
-                                        resolution.0 as f32 / resolution.1 as f32,
-                                        0.1, 100.0
-                                    ),
+                                let mesh_buffers = mesh_buffers.load();
+                                let mesh_buffers = mesh_buffers[current_mesh];
+                                let m = glam::Mat4::from_scale_rotation_translation(
+                                    mesh_buffers.scale,
+                                    //glam::Quat::from_axis_angle(glam::vec3(0.0, 1.0, 0.0), y_rot) * rot,
+                                    rot,
+                                    mesh_buffers.translation,
+                                );
+                                let v = glam::Mat4::IDENTITY;
+                                let p = glam::Mat4::perspective_rh(
+                                    PI / 2.0,
+                                    resolution.0 as f32 / resolution.1 as f32,
+                                    0.1, 100.0
+                                );
+                                let mvp = shader_types::Mvp {
+                                    mvp:  p * v * m,
                                     imv: glam::Mat4::IDENTITY,
                                 };
                                 copy_commands.update_buffer(
-                                    buffers.meshlet,
-                                    0, &[n_meshlets],
+                                    mesh_buffers.meshlet,
+                                    0, &[mesh_buffers.n_meshlets],
                                     gpu::CommandOrdering::Lenient
                                 )?;
                                 copy_commands.update_buffer(
-                                    buffers.mvp,
+                                    mesh_buffers.mvp,
                                     0, &[mvp],
                                     gpu::CommandOrdering::Lenient,
                                 )?;
@@ -400,7 +444,8 @@ fn main() -> EventResult<()> {
                                                 *current_pipeline,
                                                 &[gpu::Viewport::default()
                                                     .width(resolution.0 as f32)
-                                                    .height(resolution.1 as f32)
+                                                    .height(-(resolution.1 as f32))
+                                                    .y(resolution.1 as f32)
                                                 ],
                                                 &[gpu::Scissor::default()
                                                     .width(resolution.0)
@@ -412,19 +457,19 @@ fn main() -> EventResult<()> {
                                                     gpu::PushDescriptorBinding::new(
                                                         c"meshlets",
                                                         0,
-                                                        &gpu::descriptor_buffer_info(buffers.meshlet),
+                                                        &gpu::descriptor_buffer_info(mesh_buffers.meshlet),
                                                         None
                                                     )?,
                                                     gpu::PushDescriptorBinding::new(
                                                         c"vertices",
                                                         0,
-                                                        &gpu::descriptor_buffer_info(buffers.vertex),
+                                                        &gpu::descriptor_buffer_info(mesh_buffers.vertex),
                                                         None
                                                     )?,
                                                     gpu::PushDescriptorBinding::new(
                                                         c"mvp",
                                                         0,
-                                                        &gpu::descriptor_buffer_info(buffers.mvp),
+                                                        &gpu::descriptor_buffer_info(mesh_buffers.mvp),
                                                         gpu::CommandBarrierInfo::new(
                                                             gpu::CommandOrdering::Strict,
                                                             gpu::ExplicitAccess::SHADER_READ
@@ -433,7 +478,7 @@ fn main() -> EventResult<()> {
                                                 ]
                                             )?;
                                             cmd.draw_mesh_tasks_ext(
-                                                n_meshlets, 1, 1,
+                                                mesh_buffers.n_meshlets, 1, 1,
                                             )?;
                                             Ok(())
                                         })?;
@@ -487,7 +532,7 @@ fn main() -> EventResult<()> {
                                         .max(1.0)
                                     )).compare_op(gpu::CompareOp::LESS)
                                     .write_enable(true)
-                                )
+                                ).with_front_face(gpu::FrontFace::CLOCK_WISE),
                             ]);
                             let _ = batch.build()?;
                             EventResult::Ok(id)
