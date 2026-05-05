@@ -49,7 +49,7 @@ mod std_features {
         };
     }
 
-    pub use super::alloc_vec::Vec32;
+    pub use super::alloc_vec::{Vec32, StdVecBase};
 }
 
 #[cfg(feature = "std")]

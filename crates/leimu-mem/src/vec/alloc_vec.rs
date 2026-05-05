@@ -1235,7 +1235,46 @@ mod std_features {
         alloc::StdAlloc,
         conditional::True,
     };
-
+    
+    /// A base for vectors using [`GlobalAlloc`][1].
+    ///
+    /// To use this, you must specify a size type ([`usize`] or [`u32`]) and a [`policy`][2] used to
+    /// grow the vector.
+    ///
+    /// # Example
+    /// ``` rust
+    /// use leimu_mem::vec::StdVecBase;
+    /// use leimu_mem::reserve::{ReservePolicy, ReserveError};
+    ///
+    /// pub struct Policy;
+    ///
+    /// unsafe impl ReservePolicy<u32> for Policy {
+    ///
+    ///     fn can_grow() -> bool {
+    ///         true
+    ///     }
+    ///
+    ///     fn grow(current: u32, required: usize) -> Result<u32, ReserveError<()>> {
+    ///         if required > current as usize {
+    ///             Err(ReserveError::max_capacity_exceeded(current, required, ()))
+    ///         } else {
+    ///             Ok(current)
+    ///         }
+    ///     }
+    ///
+    ///     fn grow_infallible(current: u32, required: usize) -> u32 {
+    ///         if required > current as usize {
+    ///             panic!("maximum capacity of {current} exceeded")
+    ///         }
+    ///         current
+    ///     }
+    /// }
+    ///
+    /// pub type FixedBuffer<T> = StdVecBase<T, u32, Policy>;
+    /// ```
+    ///
+    /// [1]: std::alloc::alloc
+    /// [2]: ReservePolicy
     pub type StdVecBase<T, SizeType, ReservePol> = AllocVec<T, StdAlloc, ReservePol, True, SizeType>;
 
     /// A vector that stores its capacity and length as [`u32`] instead of [`usize`] resulting in the
@@ -1344,7 +1383,7 @@ mod std_features {
             if capacity == SizeType::ZERO {
                 return Default::default()
             }
-            let capacity = ReservePol::grow_infallible(SizeType::ZERO, capacity.into_usize());
+            let capacity = ReservePol::grow_infallible(capacity, capacity.into_usize());
             let data = unsafe { StdAlloc
                 .alloc_uninit(capacity.into_usize())
                 .expect("global alloc failed").into()
