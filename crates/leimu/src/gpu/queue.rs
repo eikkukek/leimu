@@ -110,7 +110,7 @@ impl Debug for DeviceQueue {
 impl Display for DeviceQueue {
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({}, {})", self.id, self.name)
+        write!(f, "DeviceQueue({}, {})", self.id, self.name)
     }
 }
 

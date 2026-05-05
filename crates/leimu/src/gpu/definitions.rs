@@ -8,6 +8,8 @@ use tuhka::vk;
 use leimu_proc::BuildStructure;
 use leimu_mem::int::NonZeroOption;
 
+use crate::core::slice;
+
 use super::{
     ext::MissingDeviceFeatureError,
     *
@@ -2229,4 +2231,77 @@ impl PhysicalDeviceLimits {
     pub fn non_coherent_atom_size(&self) -> DeviceSize {
         self.0.non_coherent_atom_size
     }
+}
+
+/// Specifies a specialization map entry.
+#[repr(C)]
+#[derive(Default, Clone, Copy, BuildStructure)]
+pub struct SpecializationMapEntry {
+    /// The constant id this entry maps to.
+    pub constant_id: u32,
+    /// The offset to of the specialization constant value within `data`.
+    pub offset: u32,
+    /// The size to of the specialization constant value within `data`.
+    pub size: usize,
+}
+
+/// Creates a new specialization [`map entry`][1].
+///
+/// [1]: SpecializationMapEntry
+pub fn specialization_map_entry(
+    constant_id: u32,
+    offset: u32,
+    size: usize,
+) -> SpecializationMapEntry {
+    SpecializationMapEntry { constant_id, offset, size }
+}
+
+/// Specifies shader specialization info.
+///
+/// See [`specialization_info`] for full explanation.
+#[derive(Clone)]
+pub struct SpecializationInfo {
+    pub(crate) map_entries: Box<[SpecializationMapEntry]>,
+    pub(crate) data: Box<[u8]>,
+}
+
+/// Creates new [`specialization info`][1], which **can** be used to specify the values of
+/// specialization constants in a shader.
+///
+/// # Parameters
+/// - `map_entries`: Specifies how [`constant ids`][2] map to `data`.
+/// - `data`: A slice to a buffer, which will be copied byte-by-byte and used as the buffer
+///   `map_entries` map to.
+///
+/// # Valid usage
+/// - Each [`offset`][3] + [`size`][4] **must** not be greater than the size of `data`, in bytes.
+///
+/// [1]: SpecializationInfo
+/// [2]: SpecializationMapEntry::constant_id
+/// [3]: SpecializationMapEntry::offset
+/// [4]: SpecializationMapEntry::size
+#[inline]
+pub fn specialization_info<M, T>(
+    map_entries: M,
+    data: &[T],
+) -> Result<SpecializationInfo>
+    where
+        M: IntoIterator<Item = SpecializationMapEntry>,
+        T: Copy + 'static,
+{
+    let map_entries: Box<_> = map_entries
+        .into_iter()
+        .collect();
+    let data: Box<_> = slice::as_bytes(
+        data
+    ).into_iter().copied().collect();
+    for entry in &map_entries {
+        if entry.offset as usize + entry.size > data.len() {
+            return Err(Error::just_context(format!(
+                "entry offset {} + size {} is larger than data size {}",
+                entry.offset, entry.size, data.len()
+            )))
+        }
+    }
+    Ok(SpecializationInfo { map_entries, data })
 }

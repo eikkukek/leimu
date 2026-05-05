@@ -1,4 +1,6 @@
 //! Provided by VK_EXT_descriptor_heap.
+//!
+//! Due to missing driver support, this extension is not yet fully supported.
 
 use tuhka::ext::descriptor_heap;
 use super::*;
@@ -9,19 +11,19 @@ pub use descriptor_heap::Device;
 pub struct Properties {
     /// Specifies the required alignment of buffers used for [`binding`][1] sampler heaps.
     ///
-    /// [1]: PipelineCommands::bind_sampler_heap_ext
+    /// [1]: Device::cmd_bind_sampler_heap
     pub sampler_heap_alignment: DeviceSize,
     /// Specifies the required alignment of buffers used for [`binding`][1] resource heaps.
     ///
-    /// [1]: PipelineCommands::bind_resource_heap_ext
+    /// [1]: Device::cmd_bind_resource_heap
     pub resource_heap_alignment: DeviceSize,
     /// Specifies the maximum size of the range used to [`bind`][1] sampler heaps.
     ///
-    /// [1]: PipelineCommands::bind_sampler_heap_ext
+    /// [1]: Device::cmd_bind_sampler_heap
     pub max_sampler_heap_size: DeviceSize,
     /// Specifies the maximum size of the range used to [`bind`][1] resource heaps.
     ///
-    /// [1]: PipelineCommands::bind_resource_heap_ext
+    /// [1]: Device::cmd_bind_resource_heap
     pub max_resource_heap_size: DeviceSize,
     /// Specifies the minimum amount of data needed to be reserved within a bound sampler heap
     /// range when embedded samplers are not used.
@@ -32,19 +34,19 @@ pub struct Properties {
     /// Specifies the minimum amount of data needed to be reserved within a bound resource heap
     /// range.
     pub min_resource_heap_reserved_range: DeviceSize,
-    /// Specifies the size of sampler descriptors written by [`write_sampler_descriptors_ext`][1].
+    /// Specifies the size of sampler descriptors written by [`write_sampler_descriptors`][1].
     ///
-    /// [1]: Gpu::write_sampler_descriptors_ext
+    /// [1]: Device::write_sampler_descriptors
     pub sampler_descriptor_size: DeviceSize,
     /// Specifies the maximum size of image and texel buffer descriptors written by
-    /// [`write_resource_descriptors_ext`][1].
+    /// [`write_resource_descriptors`][1].
     ///
-    /// [1]: Gpu::write_resource_descriptors_ext
+    /// [1]: Device::write_resource_descriptors
     pub image_descriptor_size: DeviceSize,
     /// Specifies the maximum size of unformatted buffer descriptors or acceleration structures
-    /// written by [`write_resource_descriptors_ext`][1].
+    /// written by [`write_resource_descriptors`][1].
     ///
-    /// [1]: Gpu::write_resource_descriptors_ext
+    /// [1]: Device::write_resource_descriptors
     pub buffer_descriptor_size: DeviceSize,
     /// Specifies the required alignment of sampler descriptors within a sampler heap.
     pub sampler_descriptor_alignment: DeviceSize,

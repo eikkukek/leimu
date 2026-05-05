@@ -67,6 +67,14 @@ impl<T> Deref for SwapLockGuard<T> {
     }
 }
 
+impl<T> AsRef<T> for SwapLockGuard<T> {
+
+    #[inline]
+    fn as_ref(&self) -> &T {
+        &self.inner
+    }
+}
+
 impl<T> SwapLockGuard<T> {
 
     #[inline]
@@ -111,6 +119,16 @@ impl<T, U> Deref for MappedSwapLockGuard<T, U>
 
     #[inline]
     fn deref(&self) -> &Self::Target {
+        unsafe {
+            &*self.u
+        }
+    }
+}
+
+impl<T, U> AsRef<U> for MappedSwapLockGuard<T, U> {
+
+    #[inline]
+    fn as_ref(&self) -> &U {
         unsafe {
             &*self.u
         }

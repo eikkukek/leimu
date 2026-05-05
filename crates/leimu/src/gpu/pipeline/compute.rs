@@ -1,7 +1,10 @@
 use tuhka::vk;
 
-use crate::gpu::prelude::*;
-use crate::error::*;
+use crate::{
+    gpu::prelude::*,
+    error::*,
+    core::OptionExt,
+};
 
 /// Contains the handle of a compute pipeline.
 #[derive(Clone)]
@@ -39,6 +42,8 @@ mod base {
         pub(crate) meta: Meta,
         pub(crate) shader_set_id: ShaderSetId,
         pub(crate) robustness_info: vk::PipelineRobustnessCreateInfo<'static>,
+        pub(crate) spec_info: Option<SpecializationInfo>,
+        pub(crate) vk_spec_info: Option<vk::SpecializationInfo>,
     }
 
     impl<Meta> Template<Meta> {
@@ -107,6 +112,7 @@ mod base {
                     stage: vk::ShaderStageFlags::COMPUTE,
                     module: module.handle(),
                     p_name: module.entry_point().as_ptr(),
+                    p_specialization_info: self.vk_spec_info.as_ref().as_ptr(),
                     ..Default::default()
                 },
                 layout: shader_set.pipeline_layout(), 
@@ -124,37 +130,61 @@ impl<'a> ComputePipelineCreateInfo<'a> {
 
     /// Creates new compute pipeline create info.
     ///
-    ///
     /// When added to a [`PipelineBatch`] with [`PipelineBatchBuilder::with_compute_pipelines`],
     /// the id of the to be created [`ComputePipeline`] is returned to `out_id`.
     ///
     /// # Valid usage
     /// - `shader_set_id` *must* be a valid [`ShaderSetId`] and the shader set *must* contain
     ///   [`ShaderStage::Compute`].
-    #[inline(always)]
+    #[inline]
     pub fn new(out_id: &'a mut ComputePipelineId, shader_set_id: ShaderSetId) -> Self {
         Self {
             meta: out_id,
             shader_set_id,
             robustness_info: PipelineRobustnessInfo::default().into(),
+            spec_info: None,
+            vk_spec_info: None,
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub(crate) fn into_template(self) -> ComputePipelineCreateTemplate {
         ComputePipelineCreateTemplate {
             meta: (),
             shader_set_id: self.shader_set_id,
             robustness_info: self.robustness_info,
+            spec_info: self.spec_info,
+            vk_spec_info: self.vk_spec_info,
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn with_robustness_info(
         mut self,
         robustness_info: PipelineRobustnessInfo,
     ) -> Self {
         self.robustness_info = robustness_info.into();
         self
-    } 
+    }
+
+    /// Adds [`specialization info`][1] for the compute shader stage.
+    ///
+    /// # Valid usage
+    /// All valid usages in [`specialization_info`] apply here.
+    ///
+    /// [1]: SpecializationInfo
+    #[inline]
+    pub fn with_specialization_info(
+        mut self,
+        info: SpecializationInfo,
+    ) -> Self {
+        let spec_info = self.spec_info.insert(info);
+        self.vk_spec_info = Some(vk::SpecializationInfo {
+            map_entry_count: spec_info.map_entries.len() as u32,
+            p_map_entries: spec_info.map_entries.as_ptr().cast(),
+            data_size: spec_info.data.len(),
+            p_data: spec_info.data.as_ptr().cast(),
+        });
+        self
+    }
 }

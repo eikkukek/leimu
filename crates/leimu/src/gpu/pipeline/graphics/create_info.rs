@@ -33,6 +33,7 @@ mod base {
         pub(crate) depth_clamp: bool,
         pub(crate) rasterizer_discard: bool,
         pub(crate) robustness_info: PipelineRobustnessInfo,
+        pub(crate) spec_info: Vec32<(ShaderStage, SpecializationInfo)>,
     } 
 }
 
@@ -125,6 +126,7 @@ impl<Meta: Send + Sync> base::Template<Meta> {
             depth_clamp: self.depth_clamp,
             rasterizer_discard: self.rasterizer_discard,
             robustness_info: self.robustness_info,
+            spec_info: vec32![],
         }
     }
 
@@ -150,6 +152,7 @@ impl<Meta: Send + Sync> base::Template<Meta> {
             depth_clamp: false,
             rasterizer_discard: false,
             robustness_info: PipelineRobustnessInfo::default(),
+            spec_info: vec32![],
         }
     }
 
@@ -384,6 +387,25 @@ impl<Meta: Send + Sync> base::Template<Meta> {
         self
     }
 
+    /// Adds [`specialization info`][1] for the given [`shader stage`][2].
+    ///
+    /// # Valid usage
+    /// All valid usages in [`specialization_info`] apply here.
+    ///
+    /// In addition:
+    /// - `shader_stage` **must** be a stage that's included in the supplied shader set.
+    ///
+    /// [1]: SpecializationInfo
+    /// [2]: ShaderStage
+    #[inline]
+    pub fn with_specialization_info(mut self,
+        shader_stage: ShaderStage,
+        info: SpecializationInfo
+    ) -> Self {
+        self.spec_info.push((shader_stage, info));
+        self
+    }
+
     pub(crate) async fn prepare<'a, Alloc>(
         &self,
         gpu: &Gpu,
@@ -403,6 +425,25 @@ impl<Meta: Send + Sync> base::Template<Meta> {
 
         let mut fragment_shader_included = false;
 
+        let mut spec_info = NonNullVec32::with_capacity(
+            self.spec_info.len(),
+            alloc
+        ).context("alloc failed")?;
+
+        for (stage, info) in &self.spec_info {
+            if !shaders.iter().any(|shader| shader.stage() == *stage) {
+                return Err(Error::just_context(format!(
+                    "included specialization info for a shader stage {stage} that's not included in the pipeline"
+                )))
+            }
+            spec_info.push((*stage, vk::SpecializationInfo {
+                map_entry_count: info.map_entries.len() as u32,
+                p_map_entries: info.map_entries.as_ptr().cast(),
+                data_size: info.data.len(),
+                p_data: info.data.as_ptr().cast(),
+            }));
+        }
+
         for module in shaders {
             match module.stage() {
                 ShaderStage::Fragment => {
@@ -420,13 +461,21 @@ impl<Meta: Send + Sync> base::Template<Meta> {
                     )))
                 }
             }
-            shader_stage_infos.push(vk::PipelineShaderStageCreateInfo {
+            let mut info = vk::PipelineShaderStageCreateInfo {
                 s_type: vk::StructureType::PIPELINE_SHADER_STAGE_CREATE_INFO,
                 stage: module.stage().into(),
                 p_name: module.entry_point().as_ptr(),
                 module: module.handle(),
                 ..Default::default()
-            });
+            };
+            if let Some(spec_info) = spec_info
+                .iter()
+                .find_map(|(stage, info)| {
+                    (*stage == module.stage()).then_some(info)
+            }) {
+                info = info.p_specialization_info(spec_info)
+            }
+            shader_stage_infos.push(info);
         }
 
         let input_assembly_state = vk::PipelineInputAssemblyStateCreateInfo {
@@ -645,6 +694,7 @@ impl<Meta: Send + Sync> base::Template<Meta> {
             _vertex_input_bindings: vertex_input_bindings,
             _vertex_input_attributes: vertex_input_attributes,
             _dynamic_states: dynamic_states,
+            _spec_info: spec_info,
             alloc,
         }, shader_set))
     }
@@ -671,6 +721,7 @@ pub(crate) struct PreparedCreateInfos<'a, Alloc>
     pub _vertex_input_attributes: NonNullVec32<'a, vk::VertexInputAttributeDescription>,
     pub _dynamic_states: NonNullVec32<'a, vk::DynamicState>,
     pub _color_output_formats: NonNullVec32<'a, vk::Format>,
+    pub _spec_info: NonNullVec32<'a, (ShaderStage, vk::SpecializationInfo)>,
     pub alloc: &'a Alloc,
 }
 

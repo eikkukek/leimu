@@ -257,6 +257,13 @@ pub struct SuitablePhysicalDevices {
 
 impl SuitablePhysicalDevices {
 
+    /// Gets the number of suitable physical devices.
+    #[allow(clippy::len_without_is_empty)]
+    #[inline]
+    pub fn len(&self) -> u32 {
+        self.devices.len()
+    }
+
     /// Returns an iterator over all suitable physical devices.
     #[inline]
     pub fn enumerate(&self) -> impl Iterator<Item = (u32, &PhysicalDevice)> {

@@ -473,6 +473,14 @@ impl Window {
     }
 
     #[inline]
+    pub fn cursor_position_f32(&self) -> (f32, f32) {
+        (
+            self.cursor_position.0 as f32,
+            self.cursor_position.1 as f32,
+        )
+    }
+
+    #[inline]
     pub fn normalized_cursor_position(&self) -> (f64, f64) {
         (
             self.cursor_position.0 / self.size.0 as f64,

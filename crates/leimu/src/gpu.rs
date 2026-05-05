@@ -1054,15 +1054,7 @@ impl Gpu {
             }
         }
         Ok(())
-    } 
-
-    pub fn write_sampler_descriptors_ext(
-        &self,
-    ) -> Result<()> { Ok(()) }
-
-    pub fn write_resource_descriptors_ext(
-        &self,
-    ) -> Result<()> { Ok(()) }
+    }
 
     #[inline]
     pub(crate) fn reserve_pipeline_batch_slot(&self) -> PipelineBatchId {

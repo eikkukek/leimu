@@ -456,12 +456,4 @@ impl<'a, 'b> PipelineCommands<'a, 'b> {
         }
         Ok(self)
     }
-
-    pub fn bind_sampler_heap_ext(&mut self) -> Result<()> {
-        Ok(())
-    }
-
-    pub fn bind_resource_heap_ext(&mut self) -> Result<()> {
-        Ok(())
-    }
 }

@@ -254,12 +254,12 @@ impl<'a> DrawCommands<'a> {
     /// Binds a graphics pipeline used for all subsequent draw commands.
     ///
     /// # Valid usage
-    /// - `id` *must* be a valid [`GraphicsPipelineId`].
-    /// - The bound pipeline's sample count *must* match the sample counts defined when creating
+    /// - `id` **must** be a valid [`GraphicsPipelineId`].
+    /// - The bound pipeline's sample count **must** match the sample counts defined when creating
     ///   the [`draw commands`][1].
-    /// - The bound pipeline's color output formats *must* match the color output formats defined
+    /// - The bound pipeline's color output formats **must** match the color output formats defined
     ///   when creating the [`draw commands`][1].
-    /// - The bound pipeline's depth and stencil formats *must* match the respective formats
+    /// - The bound pipeline's depth and stencil formats **must** match the respective formats
     ///   defined when creating the [`draw commands`][1].
     /// - The valid usage section of [`DrawCommands::set_multi_viewport`] apply when the number of
     ///   viewports and scissors is not one.
@@ -390,10 +390,10 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// Dynamically sets the line width for subsequent drawing commands.
     ///
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic state 
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic state 
     ///   includes [`line width`][2] and if subsequent drawing commands generate line primitives.
     /// - If the [`wide lines`][3] feature of [`enabled base features`][4] is set to `false`, `line_width`
-    ///   *must* be 1.0.
+    ///   **must** be 1.0.
     ///
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetLineWidth.html>
@@ -429,10 +429,10 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// - `depth_bias_slope_factor`: a scalar applied to a fragment's slope in depth bias
     ///   calculations
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic state
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic state
     ///   includes [`depth bias`][2] and if subsequent drawing commands have depth bias enabled.
     /// - If the [`depth bias clamp`][3] feature of [`enabled base features`][4] is set to `false`,
-    ///   `depth_bias_clamp` *must* be 0.0.
+    ///   `depth_bias_clamp` **must** be 0.0.
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthBias.html>
     ///
@@ -470,7 +470,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// - `blend_constants`: specifies the `[R, G, B, A]` color components of the blend constant
     ///   color used in blending, depending on the [`blend factor`][1].
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][2] dynamic state
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][2] dynamic state
     ///   includes [`blend constants`][3] and if subsequent drawing commands have blending
     ///   enabled with blend functions using a blend constant.
     ///
@@ -496,7 +496,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// Dynamically sets the depth bounds range.
     ///
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic state
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic state
     ///   includes [`depth bounds`][2] and if subsequent drawing commands have depth
     ///   bounds test enabled.
     /// - `min_depth_bounds` must be less than or equal to `max_depth_bounds` and both bounds need to be
@@ -541,12 +541,12 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// Dynamically sets the stencil compare mask.
     ///
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic
     ///   state inludes [`stencil compare mask`][2] and if subsequent drawing commands
     ///   have stencil test enabled.
-    /// - Both [`front and back faces`][3] *must* be set (either together or separately) if
+    /// - Both [`front and back faces`][3] **must** be set (either together or separately) if
     ///   stencil test is enabled.
-    /// - `face_mask` *must* not be empty and *must* be a valid [`stencil face`][3] bitmask.
+    /// - `face_mask` **must** not be empty and **must** be a valid [`stencil face`][3] bitmask.
     ///
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetStencilCompareMask.html>
@@ -578,12 +578,12 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// Dynamically sets stencil write mask.
     ///
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic
     ///   state includes [`stencil write mask`][2] and if subsequent drawing commands have
     ///   stencil test enabled.
-    /// - Both [`front and back faces`][3] *must* be set (either together or separately) if
+    /// - Both [`front and back faces`][3] **must** be set (either together or separately) if
     ///   stencil test is enabled.
-    /// - `face_mask` *must* not be empty and *must* be a valid [`stencil face`][3] bitmask.
+    /// - `face_mask` **must** not be empty and **must** be a valid [`stencil face`][3] bitmask.
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetStencilWriteMask.html>
     ///
@@ -614,12 +614,12 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// Dynamically sets stencil reference.
     ///
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic
     ///   state includes [`stencil reference`][3] and if subsequent drawing commands have
     ///   stencil test enabled.
-    /// - Both [`front and back faces`][3] *must* be set (either together or separately) if
+    /// - Both [`front and back faces`][3] **must** be set (either together or separately) if
     ///   stencil test is enabled.
-    /// - `face_mask` *must* not be empty and *must* be a valid [`stencil face`][3] bitmask.
+    /// - `face_mask` **must** not be empty and **must** be a valid [`stencil face`][3] bitmask.
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetStencilReference.html>
     ///
@@ -650,10 +650,10 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// Dynamically sets cull mode.
     ///
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic
     ///   state includes [`cull mode`][2] and if there are *any* subsequent drawing commands
     ///   using the pipeline.
-    /// - `cull_mode` *must* be a valid [`cull mode`][3] bitmask.
+    /// - `cull_mode` **must** be a valid [`cull mode`][3] bitmask.
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetCullMode.html>
     ///
@@ -677,7 +677,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// Dynamically sets front face orientation.
     ///
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic
     ///   state includes [`front face`][2] and if there are *any* subsequent drawing commands
     ///   using the pipeline.
     /// # Vulkan docs
@@ -702,7 +702,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// Dynamically sets primitive topology.
     ///
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic
     ///   state includes [`primitive topology`][2] and if there are *any* subsequent drawing
     ///   commands using the pipeline.
     ///
@@ -775,9 +775,9 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// This is automatically called when binding a [`pipeline`][4] with more than one viewports.
     ///
     /// # Valid usage
-    /// - The number of viewports and scissors *must* match.
+    /// - The number of viewports and scissors **must** match.
     /// - If [`multi viewport`][5] feature of [`enabled base features`][6] is set to `false`,
-    ///   the number of viewports *must* be 1. Otherwise the number of viewports *must* be
+    ///   the number of viewports **must** be 1. Otherwise the number of viewports **must** be
     ///   between 1 and [`the maximum supported viewports`][7].
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetViewportWithCount.html>
@@ -846,7 +846,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// Dynamically enables depth test.
     ///
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic
     ///   state includes [`depth test enable`][2] and if there are *any* subsequent drawing
     ///   commands using the pipeline.
     /// # Vulkan docs
@@ -871,7 +871,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// Dynamically enables depth write.
     ///
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic
     ///   state includes [`depth write enable`][2] and if there are *any* subsequent drawing
     ///   commands using the pipeline.
     /// # Vulkan docs
@@ -896,7 +896,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// Dynamically sets the depth compare operation.
     ///
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic
     ///   state includes [`depth compare op`][2] and if there are *any* subsequent drawing
     ///   commands using the pipeline.
     /// # Vulkan docs
@@ -921,7 +921,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// Dynamically enables depth bounds test.
     ///
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic
     ///   state includes [`depth bounds test enable`][2] and if there are *any* subsequent drawing
     ///   commands using the pipeline.
     /// # Vulkan docs
@@ -946,7 +946,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// Dynamically enables stencil test.
     ///
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic
     ///   state includes [`stencil test enable`][2] and if there are *any* subsequent drawing
     ///   commands using the pipeline.
     /// # Vulkan docs
@@ -970,12 +970,12 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
 
     /// Dynamically sets the stencil operation.
     /// # Valid usage
-    /// - This *must* be set if and only if the currently bound [`pipeline's`][1] dynamic
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic
     ///   state includes [`stencil op`][2] and if there are *any* subsequent drawing
     ///   commands using the pipeline with stencil test enabled.
-    /// - Both [`front and back faces`][3] *must* be set (either together or separately) if
+    /// - Both [`front and back faces`][3] **must** be set (either together or separately) if
     ///   stencil test is enabled.
-    /// - `face_mask` *must* not be empty and *must* be a valid [`stencil face`][3] bitmask.
+    /// - `face_mask` **must** not be empty and **must** be a valid [`stencil face`][3] bitmask.
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetStencilOp.html>
     ///
@@ -1079,16 +1079,16 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// Binds vertex buffers and allows performing draw calls within the closure.
     ///
     /// # Valid usage
-    /// - Each vertex binding's buffer id *must* be a valid [`BufferId`].
-    /// - Each vertex buffer *must* have been created with [`BufferUsages::VERTEX_BUFFER`] bit
+    /// - Each vertex binding's buffer id **must** be a valid [`BufferId`].
+    /// - Each vertex buffer **must** have been created with [`BufferUsages::VERTEX_BUFFER`] bit
     ///   set.
-    /// - Each vertex binding's offset + size *must* be less than or equal to the buffer's size.
+    /// - Each vertex binding's offset + size **must** be less than or equal to the buffer's size.
     /// - If and only if currently bound [`pipeline's`][1] dynamic state includes
     ///   [`vertex input binding stride`][2], `vertex_strides` needs to be [`Some`] and
-    ///   the number of vertex strides *must* be equal to the number of vertex bindings.
+    ///   the number of vertex strides **must** be equal to the number of vertex bindings.
     /// - If [`robust buffer access`][3] or [`robust buffer access 2`][4] are not enabled and the
     ///   [`pipeline`][1] was not created with [`vertex input behavior`][5] value other than
-    ///   [`disabled`][6] then, for a given vertex buffer binding, any attribute data fetched *must*
+    ///   [`disabled`][6] then, for a given vertex buffer binding, any attribute data fetched **must**
     ///   be entirely contained within the corresponding vertex buffer binding.
     ///
     /// # Vulkan docs
@@ -1201,7 +1201,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// This is only usable in a closure passed to [`begin_drawing`][1].
     ///
     /// # Valid usage
-    /// - All [`dynamic states`][2] of the currently bound [`pipeline`][3] *must* be defined before
+    /// - All [`dynamic states`][2] of the currently bound [`pipeline`][3] **must** be defined before
     ///   performing any draw calls.
     ///
     /// # Vulkan docs
@@ -1230,23 +1230,23 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// closure.
     ///
     /// # Valid usage
-    /// - If the [`index type uint8`][2] device extension is not enabled, [`index type`][3] *must*
+    /// - If the [`index type uint8`][2] device extension is not enabled, [`index type`][3] **must**
     ///   not be [`IndexType::U8`].
-    /// - Index buffer id *must* be a valid [`BufferId`].
-    /// - The index buffer *must* have been created with [`BufferUsages::INDEX_BUFFER`] bit
+    /// - Index buffer id **must** be a valid [`BufferId`].
+    /// - The index buffer **must** have been created with [`BufferUsages::INDEX_BUFFER`] bit
     ///   set.
-    /// - Index buffer offset + [`index size`][4] * ([`first index`][5] + [`index count`][6]) *must*
+    /// - Index buffer offset + [`index size`][4] * ([`first index`][5] + [`index count`][6]) **must**
     ///   be less than or equal to the index buffer's size.
-    /// - Each vertex binding's buffer id *must* be a valid [`BufferId`].
-    /// - Each vertex buffer *must* have been created with [`BufferUsages::VERTEX_BUFFER`] bit
+    /// - Each vertex binding's buffer id **must** be a valid [`BufferId`].
+    /// - Each vertex buffer **must** have been created with [`BufferUsages::VERTEX_BUFFER`] bit
     ///   set.
-    /// - Each vertex binding's offset + size *must* be less than or equal to the buffer's size.
+    /// - Each vertex binding's offset + size **must** be less than or equal to the buffer's size.
     /// - If and only if currently bound [`pipeline's`][1] dynamic state includes
     ///   [`vertex input binding stride`][7], `vertex_strides` needs to be [`Some`] and
-    ///   the number of vertex strides *must* be equal to the number of vertex bindings.
+    ///   the number of vertex strides **must** be equal to the number of vertex bindings.
     /// - If [`robust buffer access`][8] or [`robust buffer access 2`][9] are not enabled and the
     ///   [`pipeline`][1] was not created with [`vertex input behavior`][10] value other than
-    ///   [`disabled`][11] then, for a given vertex buffer binding, any attribute data fetched *must*
+    ///   [`disabled`][11] then, for a given vertex buffer binding, any attribute data fetched **must**
     ///   be entirely contained within the corresponding vertex buffer binding.
     /// 
     /// # Vulkan docs
@@ -1386,7 +1386,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
     /// This is only usable in a closure passed to [`begin_drawing_indexed`][1].
     ///
     /// # Valid usage
-    /// - All [`dynamic states`][2] of the currently bound [`pipeline`][3] *must* be defined before
+    /// - All [`dynamic states`][2] of the currently bound [`pipeline`][3] **must** be defined before
     ///   performing any draw calls.
     ///
     /// # Vulkan docs
@@ -1413,6 +1413,25 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
         Ok(())
     } 
 
+    /// Dispatches [`mesh shader`][1] thread groups.
+    ///
+    /// # Valid usage
+    /// - The [`mesh shader device extension`][1] **must** be enabled.
+    /// - All [`dynamic states`][2] of the currently bound [`pipeline`][3] **must** be defined
+    ///   before performing any draw calls.
+    /// - The currently bound pipeline **must** contain the [`mesh shader stage`][4].
+    /// - If the currently bound pipeline contains a [`task shader stage`][5], each group count
+    ///   dimension **must** be less than the corresponding index in
+    ///   [`max_task_work_group_count`][6], otherwise each group count dimension **must** be less
+    ///   than the corresponding index in [`max_mesh_work_group_count`][7].
+    ///
+    /// [1]: ext::mesh_shader
+    /// [2]: DynamicState
+    /// [3]: GraphicsPipeline
+    /// [4]: ShaderStage::MeshEXT
+    /// [5]: ShaderStage::TaskEXT
+    /// [6]: ext::mesh_shader::Properties::max_task_work_group_count
+    /// [7]: ext::mesh_shader::Properties::max_mesh_work_group_count
     #[inline]
     pub fn draw_mesh_tasks_ext(
         &mut self,
