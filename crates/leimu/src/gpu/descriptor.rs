@@ -1,5 +1,6 @@
 use core::{
     ptr::NonNull,
+    slice,
     marker::PhantomData,
     ops::{Deref, DerefMut},
     fmt::{self, Display},
@@ -17,11 +18,11 @@ use leimu_mem::{
 use tuhka::vk;
 
 use crate::{
-    core::{slice, TryExtend},
-    gpu::prelude::*,
+    core::{SliceCast, TryExtend},
     error::*,
-    sync::*,
+    gpu::prelude::*,
     macros::impl_id_display,
+    sync::*
 };
 
 macro_rules! match_display {
@@ -652,7 +653,7 @@ impl<'a> DescriptorInfos<'a> {
     pub fn inline_uniform_block<T: Copy>(data: &'a [T]) -> Result<Self>
     {
         let bytes = unsafe {
-            slice::cast(data)
+            data.cast()
         }.ok_or_else(||
             if !size_of::<T>().is_multiple_of(4) {
                 Error::just_context(format!(

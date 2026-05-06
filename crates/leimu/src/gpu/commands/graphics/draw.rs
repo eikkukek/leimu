@@ -17,7 +17,7 @@ use leimu_mem::{
 };
 
 use crate::{
-    core::slice,
+    core::SliceCast,
     gpu::{
         prelude::*,
         command_cache::PipelineCommandCache,
@@ -833,7 +833,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
         unsafe {
             self.gpu.device().cmd_set_viewport_with_count(
                 self.command_buffer,
-                slice::cast(viewports).unwrap_unchecked(),
+                viewports.cast().unwrap_unchecked(),
             );
             self.gpu.device().cmd_set_scissor_with_count(
                 self.command_buffer,

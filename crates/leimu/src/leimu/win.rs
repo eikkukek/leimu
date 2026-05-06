@@ -496,11 +496,28 @@ impl Window {
         )
     }
 
+    /// The difference in mouse scroll state this frame, in units of [`f64`] pixels.
+    ///
+    /// Positive values indicate that the scrolled content should move right/down.
     #[inline]
     pub fn mouse_scroll_delta_pixels(&self) -> (f64, f64) {
         self.mouse_scroll_delta_pixels
     }
 
+    /// The difference in mouse scroll state this frame, in units of [`f32`] pixels. 
+    ///
+    /// Positive values indicate that the scrolled content should move right/down.
+    #[inline]
+    pub fn mouse_scroll_delta_pixels_f32(&self) -> (f32, f32) {
+        (
+            self.mouse_scroll_delta_pixels.0 as f32,
+            self.mouse_scroll_delta_pixels.1 as f32,
+        )
+    }
+
+    /// The difference in mouse scroll state this frame, in units of rows/lines.
+    ///
+    /// Positive values indicate that the scrolled content should move right/down.
     #[inline]
     pub fn mouse_scroll_delta_lines(&self) -> (f32, f32) {
         self.mouse_scroll_line_delta

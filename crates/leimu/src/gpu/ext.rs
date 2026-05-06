@@ -82,7 +82,7 @@ use {
         gpu::prelude::*,
         core::{
             OptionExt,
-            collections::EntryExt,
+            EntryExt,
         },
         sync::Mutex,
     },

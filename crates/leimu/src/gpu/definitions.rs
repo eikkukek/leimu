@@ -8,7 +8,7 @@ use tuhka::vk;
 use leimu_proc::BuildStructure;
 use leimu_mem::int::NonZeroOption;
 
-use crate::core::slice;
+use crate::core::*;
 
 use super::{
     ext::MissingDeviceFeatureError,
@@ -2292,9 +2292,11 @@ pub fn specialization_info<M, T>(
     let map_entries: Box<_> = map_entries
         .into_iter()
         .collect();
-    let data: Box<_> = slice::as_bytes(
-        data
-    ).into_iter().copied().collect();
+    let data: Box<_> = data
+        .as_bytes()
+        .into_iter()
+        .copied()
+        .collect();
     for entry in &map_entries {
         if entry.offset as usize + entry.size > data.len() {
             return Err(Error::just_context(format!(

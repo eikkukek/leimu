@@ -54,7 +54,7 @@ use crate::{
     error::*,
     sync::{atomic::AtomicU64, *},
     executor::{ThreadPool, block_on},
-    core::collections::EntryExt,
+    core::EntryExt,
 };
 
 /// Vulkan bindings used by leimu.

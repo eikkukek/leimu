@@ -1,10 +1,4 @@
-//! An extension of [`collections`][1].
-//!
-//! [1]: std::collections
-
-pub use std::collections::*;
-
-use hash_map::Entry;
+use std::collections::hash_map::Entry;
 
 /// An extension trait for [`Entry`].
 pub trait EntryExt<'a, K, V> {
@@ -58,5 +52,3 @@ impl<'a, K, V> EntryExt<'a, K, V> for Entry<'a, K, V> {
         }
     }
 }
-
-pub use ahash::{AHashMap, AHashSet};

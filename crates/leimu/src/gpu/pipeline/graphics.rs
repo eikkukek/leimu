@@ -12,7 +12,7 @@ use leimu_mem::{
 };
 
 use crate::{
-    core::slice,
+    core::SliceCast,
     error::*,
     gpu::prelude::*,
     sync::Arc,
@@ -52,7 +52,7 @@ impl GraphicsPipeline {
             for (i, (format, _)) in create_info.color_outputs.iter().enumerate() {
                 ptr.add(i).write(format.as_raw());
             }
-            slice::cast::<_, i32>(&create_info.dynamic_states).unwrap().as_ptr()
+            create_info.dynamic_states.as_ptr().cast::<i32>()
                 .copy_to_nonoverlapping(
                     ptr.add(n_color_output_formats),
                     create_info.dynamic_states.len() as usize
@@ -107,9 +107,9 @@ impl GraphicsPipeline {
     #[inline]
     pub fn color_output_formats(&self) -> &[Format] {
         unsafe {
-            slice::cast(
-                &self.color_outputs_and_dynamic_states[0..self.n_color_output_formats as usize]
-            ).unwrap()
+            self.color_outputs_and_dynamic_states[0..self.n_color_output_formats as usize]
+                .cast()
+                .unwrap()
         }
     }
 
@@ -126,9 +126,9 @@ impl GraphicsPipeline {
     #[inline]
     pub fn dynamic_states(&self) -> &[DynamicState] {
         unsafe {
-            slice::cast(
-                &self.color_outputs_and_dynamic_states[self.n_color_output_formats as usize..]
-            ).unwrap()
+            self.color_outputs_and_dynamic_states[self.n_color_output_formats as usize..]
+                .cast()
+                .unwrap()
         }
     }
 

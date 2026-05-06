@@ -6,7 +6,7 @@ use leimu_mem::{
 };
 
 use crate::{
-    core::{slice, OptionExt},
+    core::*,
     error::*,
     gpu::prelude::*,
 };
@@ -165,7 +165,7 @@ impl<'a, 'b> CopyCommands<'a, 'b> {
     ) -> Result<()> {
         self.wait_scope |= vk::PipelineStageFlags2::COPY;
         self.signal_scope |= vk::PipelineStageFlags2::COPY;
-        let data = slice::as_bytes(data);
+        let data = data.as_bytes();
         let data_size = data.len() as DeviceSize;
         if !dst_offset.is_multiple_of(4) {
             return Err(Error::just_context(format!(
