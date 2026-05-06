@@ -1,27 +1,28 @@
-mod mesh;
+mod meshlet;
+mod obj;
 mod shader_types;
 mod host_to_gpu;
 
 use std::env;
+use std::sync::{Arc, atomic::{self, AtomicU64}};
 use core::f32::consts::{PI, TAU, FRAC_PI_3};
 
 use leimu::{
     EventError, EventResult,
-    core::{TryExtend, collections::{AHashMap, EntryExt}},
+    core::*,
     default,
     gpu::{self, MemoryBinder, ext},
     mem::{
         vec::ArrayVec
     },
     sync::{
-        Arc, RwLock,
-        atomic::{self, AtomicU64},
         SwapLock,
     },
     win,
 };
 
-use mesh::Mesh;
+use ahash::AHashMap;
+use parking_lot::RwLock;
 
 #[inline]
 fn rgb_from_hsv(hue: f32, sat: f32, val: f32) -> glam::Vec3 {
@@ -59,6 +60,9 @@ fn main() -> EventResult<()> {
                 required_features: ext::mesh_shader::Features::default()
                     .mesh_shader(true)
             }).with_device_extension(ext::push_descriptor::Extension)
+            .with_required_device_features(gpu::BaseDeviceFeatures::default()
+                .fragment_stores_and_atomics(true)
+            )
     )?;
     let mut selected = 0;
     for (idx, device) in devices.enumerate() {
@@ -131,8 +135,10 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                     mat4 mvp;
                     mat4 imv;
                 } mvp;
-                
+ 
                 layout(location = 0) perprimitiveEXT out vec3 out_color[];
+                layout(location = 1) perprimitiveEXT flat out uint out_meshlet_id[];
+                layout(location = 2) out vec2 out_ndc[];
 
                 void main() {
                     uint meshlet_id = gl_WorkGroupID.x;
@@ -144,7 +150,9 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                     uint tid = gl_LocalInvocationIndex;
                     if (tid < m.vertex_count) {
                         Vertex vertex = vertices.data[m.vertices[tid]];
-                        gl_MeshVerticesEXT[tid].gl_Position = mvp.mvp * vec4(vertex.position, 1.0f);
+                        vec4 pos = mvp.mvp * vec4(vertex.position, 1.0f);
+                        gl_MeshVerticesEXT[tid].gl_Position = pos;
+                        out_ndc[tid] = pos.xy / pos.w;
                     }
                     for (uint i = 0; i < 2; ++i) {
                         uint prim_id = tid + i * 128;
@@ -156,6 +164,7 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                                     m.primitives[prim_id][2]
                                 );
                             out_color[prim_id] = m.debug_color;
+                            out_meshlet_id[prim_id] = meshlet_id;
                         }
                     }
                 }
@@ -169,10 +178,33 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                 #extension GL_EXT_mesh_shader : require
 
                 layout(location = 0) perprimitiveEXT in vec3 in_color;
+                layout(location = 1) perprimitiveEXT flat in uint in_meshlet_id;
+                layout(location = 2) in vec2 in_ndc;
                 layout(location = 0) out vec4 out_color;
 
+                layout(push_constant) uniform Meta {
+                    vec2 norm_cursor_pos;
+                } meta;
+
+                layout(set = 0, binding = 3) buffer Highlights1 {
+                    uint data[];
+                } highlights_in;
+
+                layout(set = 0, binding = 4) buffer Highlights2 {
+                    uint data[];
+                } highlights_out;
+
                 void main() {
-                    out_color = vec4(in_color, 1.0f);
+                    vec2 norm_coord = (in_ndc + vec2(1.0f)) * 0.5f;
+                    norm_coord.y = 1.0 - norm_coord.y; 
+                    if (length(norm_coord - meta.norm_cursor_pos) < 0.001f) {
+                        highlights_out.data[in_meshlet_id] = 1;
+                    }
+                    if (highlights_in.data[in_meshlet_id] != 0) {
+                        out_color = vec4(1.0f);
+                    } else {
+                        out_color = vec4(in_color, 1.0f);
+                    }
                 }
             ").build(gpu)?;
         let shader_set = gpu.create_shader_set(
@@ -187,25 +219,24 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
     #[derive(Clone, Copy)]
     struct MeshBuffers {
         n_meshlets: u32,
-        scale: glam::Vec3,
-        translation: glam::Vec3,
         meshlet: gpu::BufferId,
         vertex: gpu::BufferId,
         mvp: gpu::BufferId,
+        highlights: [gpu::BufferId; 3],
     }
-    let sphere = Mesh::from_obj(
-        "low-poly-sphere.obj", include_str!("../low-poly-sphere.obj"),
+    let bunny = obj::parse(include_str!("../stanford-bunny.obj"))?;
+    let mut bunny = meshlet::Mesh::new(
+        "stanford-bunny.obj", bunny,
         max_local_vertices, max_local_primitives,
-    )?;
-    let bunny = Mesh
-        ::from_obj(
-            "stanford-bunny.obj", include_str!("../stanford-bunny.obj"),
-            max_local_vertices, max_local_primitives,
-        )?
-        .with_scale(glam::vec3(0.8, 0.8, 0.8))
-        .with_translation(glam::vec3(0.0, -1.0, -3.0));
-    let meshes = [sphere, bunny];
-    let mut current_mesh: usize = 1;
+    );
+    bunny.recenter();
+    let sphere = obj::parse(include_str!("../low-poly-sphere.obj"))?;
+    let sphere = meshlet::Mesh::new(
+        "low-poly-sphere.obj", sphere,
+        max_local_vertices, max_local_primitives
+    );
+    let meshes = [bunny, sphere];
+    let mut current_mesh: usize = 0;
     let mesh_buffers: Arc<SwapLock<Vec<MeshBuffers>>> = default();
     let mut graphics_pipelines = AHashMap::new();
     #[derive(Default)]
@@ -247,6 +278,7 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
         gpu::MemoryProperties::DEVICE_LOCAL
     );
     let mut y_rot = 0.0;
+    let mut cam_pos_z = 0.0;
     let mut rot = glam::Quat::IDENTITY;
     let mut cursor_pos = glam::Vec2::default();
     leimu::Leimu::new(
@@ -279,16 +311,24 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                 }
                 rot = glam::Quat::IDENTITY;
             }
+            let delta_lines = window.mouse_scroll_delta_lines().1;
+            let delta_pixels = window.mouse_scroll_delta_pixels_f32().1 / 100.0;
+            let mut delta_scroll = delta_lines;
+            if delta_lines.abs() < delta_pixels.abs() {
+                delta_scroll = delta_pixels;
+            }
+            cam_pos_z = (cam_pos_z + delta_scroll).clamp(0.0, 2.0);
             let new_cursor_pos = window.cursor_position_f32().into();
             if window.mouse_button_state(win::MouseButton::Left).held() {
                 let delta_cursor_pos: glam::Vec2 = (new_cursor_pos - cursor_pos) / 500.0;
                 if delta_cursor_pos.length_squared() > f32::EPSILON {
-                    let right = glam::Vec2::from_angle(PI / 2.0).rotate(glam::vec2(delta_cursor_pos.x, -delta_cursor_pos.y)).normalize();
+                    let right = glam::Vec2::from_angle(PI / 2.0).rotate(glam::vec2(delta_cursor_pos.x, delta_cursor_pos.y)).normalize();
                     rot = glam::Quat::from_axis_angle(glam::vec3(right.x, right.y, 0.0).normalize(), delta_cursor_pos.length()) * rot;
                     rot = rot.normalize();
                 }
             }
             cursor_pos = new_cursor_pos;
+            let norm_cursor_pos = window.normalized_cursor_position_f32();
             let gpu = event_loop.gpu();
             let current_frame = frame.load(atomic::Ordering::Relaxed);
             host_to_gpu.set_frame(current_frame);
@@ -311,14 +351,14 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                                             (
                                                 align_of::<shader_types::Meshlet>() +
                                                 shader_types::Meshlet::array_stride(max_local_vertices, max_local_primitives) *
-                                                mesh.meshlets.len()
+                                                mesh.meshlets().len()
                                             ) as u64,
                                             gpu::BufferUsages::TRANSFER_DST | gpu::BufferUsages::STORAGE_BUFFER
                                         ).unwrap(),
                                         gpu::BufferCreateInfo::new(
                                             &mut vertex,
                                             &device_local_binder,
-                                            size_of_val(mesh.vertices.as_slice()) as u64,
+                                            size_of_val(mesh.vertices()) as u64,
                                             gpu::BufferUsages::TRANSFER_DST | gpu::BufferUsages::STORAGE_BUFFER
                                         ).unwrap(),
                                         gpu::BufferCreateInfo::new(
@@ -326,15 +366,27 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                                             &device_local_binder,
                                             size_of::<shader_types::Mvp>() as u64,
                                             gpu::BufferUsages::TRANSFER_DST | gpu::BufferUsages::UNIFORM_BUFFER
-                                        ).unwrap()
+                                        ).unwrap(),
                                     ],
                                     [],
                                 )?;
+                                let mut highlights = [default(); 3];
+                                gpu.create_resources(
+                                    highlights.iter_mut().map(|id| {
+                                        gpu::BufferCreateInfo::new(
+                                            id,
+                                            &device_local_binder,
+                                            mesh.meshlets().len() as u64 * 4,
+                                            gpu::BufferUsages::TRANSFER_DST | gpu::BufferUsages::STORAGE_BUFFER
+                                        ).unwrap()
+                                    }),
+                                    []
+                                )?;
                                 let mut hue = 0.0;
-                                let hue_step = TAU / mesh.meshlets.len() as f32;
+                                let hue_step = TAU / mesh.meshlets().len() as f32;
                                 let mut buffer: Vec<_> = vec![];
                                 let stride = shader_types::Meshlet::array_stride(max_local_vertices, max_local_primitives);
-                                for meshlet in &mesh.meshlets {
+                                for meshlet in mesh.meshlets() {
                                     let start = buffer.len();
                                     buffer.extend_from_slice(shader_types::Meshlet {
                                         debug_color: rgb_from_hsv(hue, 0.6, rand::random_range(0.7..1.0)).into(),
@@ -353,15 +405,14 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                                 )?;
                                 host_to_gpu.buffer_to_buffer(
                                     vertex,
-                                    0, &mesh.vertices,
+                                    0, mesh.vertices(),
                                 )?;
                                 mesh_buffers.push(MeshBuffers {
-                                    scale: mesh.scale,
-                                    translation: mesh.translation,
-                                    n_meshlets: mesh.meshlets.len() as u32,
+                                    n_meshlets: mesh.meshlets().len() as u32,
                                     meshlet,
                                     vertex,
                                     mvp,
+                                    highlights,
                                 });
                             }
                             EventResult::Ok(())
@@ -376,7 +427,7 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                                 queue.clone(),
                                 move |cmd| {
                                     unsafe {
-                                        host_to_gpu.flush(current_frame - 2)?;
+                                        host_to_gpu.flush(current_frame - 3)?;
                                     }
                                     host_to_gpu.record_copies(cmd)
                                 }
@@ -396,13 +447,16 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                                 let mut copy_commands = cmd.copy_commands();
                                 let mesh_buffers = mesh_buffers.load();
                                 let mesh_buffers = mesh_buffers[current_mesh];
-                                let m = glam::Mat4::from_scale_rotation_translation(
-                                    mesh_buffers.scale,
+                                let m = glam::Mat4::from_rotation_translation(
                                     //glam::Quat::from_axis_angle(glam::vec3(0.0, 1.0, 0.0), y_rot) * rot,
                                     rot,
-                                    mesh_buffers.translation,
+                                    glam::vec3(0.0, 0.0, 3.0),
                                 );
-                                let v = glam::Mat4::IDENTITY;
+                                let v = glam::Mat4::look_to_rh(
+                                    glam::vec3(0.0, 0.0, cam_pos_z),
+                                    glam::vec3(0.0, 0.0, 1.0),
+                                    glam::vec3(0.0, 1.0, 0.0)
+                                );
                                 let p = glam::Mat4::perspective_rh(
                                     PI / 2.0,
                                     resolution.0 as f32 / resolution.1 as f32,
@@ -424,6 +478,13 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                                 )?;
                                 let frame = frame.fetch_add(1, atomic::Ordering::Relaxed) + 1;
                                 let frame_idx = (frame % 3) as usize;
+                                let hl_out = mesh_buffers.highlights[frame_idx];
+                                let hl_in = mesh_buffers.highlights[if frame_idx == 0 { 2 } else { frame_idx - 1 }];
+                                copy_commands.fill_buffer(
+                                    hl_out,
+                                    0, None, 0,
+                                    gpu::CommandOrdering::Lenient,
+                                )?;
                                 let (swapchain_image, _) = cmd.swapchain_image_view(surface_id)?;
                                 cmd.render(
                                     default(),
@@ -452,6 +513,10 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                                                     .height(resolution.1)
                                                 ]
                                             )?;
+                                            cmd.push_constants(
+                                                0,
+                                                &[norm_cursor_pos]
+                                            )?;
                                             cmd.push_descriptor_bindings(
                                                 &[
                                                     gpu::PushDescriptorBinding::new(
@@ -474,6 +539,24 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                                                             gpu::CommandOrdering::Strict,
                                                             gpu::ExplicitAccess::SHADER_READ
                                                         ),
+                                                    )?,
+                                                    gpu::PushDescriptorBinding::new(
+                                                        c"highlights_in",
+                                                        0,
+                                                        &gpu::descriptor_buffer_info(hl_in),
+                                                        gpu::CommandBarrierInfo::new(
+                                                            gpu::CommandOrdering::Strict,
+                                                            gpu::ExplicitAccess::SHADER_READ_AND_WRITE
+                                                        )
+                                                    )?,
+                                                    gpu::PushDescriptorBinding::new(
+                                                        c"highlights_out",
+                                                        0,
+                                                        &gpu::descriptor_buffer_info(hl_out),
+                                                        gpu::CommandBarrierInfo::new(
+                                                            gpu::CommandOrdering::Strict,
+                                                            gpu::ExplicitAccess::SHADER_READ_AND_WRITE
+                                                        )
                                                     )?,
                                                 ]
                                             )?;

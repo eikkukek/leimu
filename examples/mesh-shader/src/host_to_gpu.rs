@@ -1,9 +1,12 @@
+use std::sync::{Arc, atomic::{self, AtomicU64}};
+
 use leimu::{
     EventError, EventResult,
-    core::slice, default, gpu::{self, MemoryBinder},
+    core::AsBytes, default, gpu::{self, MemoryBinder},
     mem::align_up_u64,
-    sync::{Arc, RwLock, atomic::{self, AtomicU64}},
 };
+
+use parking_lot::RwLock;
 
 #[derive(Clone, Copy)]
 struct BufferToBuffer {
@@ -75,7 +78,7 @@ impl Scheduler {
         ).ok_or_else(|| EventError::just_context("no data provided"))?], [])?;
         let mut map = inner.gpu.map_buffer(staging)?;
         unsafe {
-            map.write_bytes(0, slice::as_bytes(data));
+            map.write_bytes(0, data.as_bytes());
         }
         if !map.is_coherent {
             inner.gpu.flush_mapped_memory_ranges(&[gpu::MappedBufferMemoryRange::new(

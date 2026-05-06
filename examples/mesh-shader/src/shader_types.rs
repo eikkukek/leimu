@@ -1,5 +1,5 @@
 use leimu::mem::align_up;
-use leimu::core::slice;
+use leimu::core::*;
 
 #[repr(C)]
 #[repr(align(8))]
@@ -29,11 +29,12 @@ pub struct Vec3 {
     pub x: f32,
     pub y: f32,
     pub z: f32,
+    _pad: [u8; 4],
 }
 
 #[inline]
 pub const fn vec3(x: f32, y: f32, z: f32) -> Vec3 {
-    Vec3 { x, y, z }
+    Vec3 { x, y, z, _pad: [0; 4] }
 }
 
 impl Vec3 {
@@ -52,6 +53,14 @@ impl From<[f32; 3]> for Vec3 {
     }
 }
 
+impl From<Vec3> for [f32; 3] {
+
+    #[inline]
+    fn from(value: Vec3) -> Self {
+        [value.x, value.y, value.z]
+    }
+}
+
 #[repr(C)]
 #[repr(align(16))]
 #[derive(Clone, Copy)]
@@ -65,7 +74,7 @@ impl Meshlet {
 
     #[inline]
     pub fn as_inline_bytes(&self) -> &[u8] {
-        &slice::value_as_bytes(self)[0..20]
+        &self.as_bytes()[0..20]
     }
 
     #[inline]
