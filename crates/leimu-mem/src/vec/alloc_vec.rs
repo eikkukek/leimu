@@ -558,7 +558,7 @@ impl<T, Alloc, ReservePol, IsStd, SizeType> AllocVec<T, Alloc, ReservePol, IsStd
     /// [2]: Self::try_reserve
     pub fn reserve_exact(&mut self, capacity: SizeType) {
         if capacity <= self.capacity { return }
-        if !ReservePol::can_grow() {
+        if !ReservePol::can_grow() && self.capacity != SizeType::ZERO {
             panic!(
                 "maximum capacity of {} exceeded, requested capacity was {}",
                 self.capacity, capacity,
@@ -729,6 +729,33 @@ impl<T, Alloc, ReservePol, IsStd, SizeType> AllocVec<T, Alloc, ReservePol, IsStd
         }
         unsafe { self.data.add(self.len.into_usize()).write(value) };
         self.len += SizeType::ONE;
+    }
+
+    /// Appends an element to the end of the vector, returning a mutable reference to the newly
+    /// written value.
+    ///
+    /// This may panic if [`reserve'][1] fails.
+    ///
+    /// [1]: Self::reserve
+    pub fn push_mut(&mut self, value: T) -> &mut T {
+        if self.len >= self.capacity() {
+            if self.capacity == SizeType::ZERO {
+                self.reserve(SizeType::from_usize(2));
+            } else {
+                let capacity = ReservePol
+                    ::grow(
+                        self.capacity,
+                        self.capacity.into_usize() * 2
+                    ).unwrap();
+                self.reserve_exact(capacity);
+            }
+        }
+        unsafe {
+            let mut ptr = self.data.add(self.len.into_usize());
+            ptr.write(value);
+            self.len += SizeType::ONE;
+            ptr.as_mut()
+        }
     }
 
     /// Inserts an element to the specified index.

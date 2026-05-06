@@ -1,10 +1,11 @@
 # Cangelog
 All changes to this project will be documented in this file.
 
-## [0.2.4] - 2026-05-05
+## [0.2.4] - 2026-05-06
 
 ### Changed
 - Exposed StdVecBase
+- Added push_mut to AllocVec and ArrayVec
 
 ## [0.2.3] - 2026-04-26
 

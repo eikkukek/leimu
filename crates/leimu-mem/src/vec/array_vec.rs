@@ -1,5 +1,5 @@
 use core::{
-    borrow::{Borrow, BorrowMut}, fmt::{self, Debug, Display, Formatter}, hash::{Hash, Hasher}, mem::{ManuallyDrop, MaybeUninit}, ops::{Deref, DerefMut}, ptr::{self}, slice
+    borrow::{Borrow, BorrowMut}, fmt::{self, Debug, Display, Formatter}, hash::{Hash, Hasher}, mem::{ManuallyDrop, MaybeUninit}, ops::{Deref, DerefMut}, panic, ptr::{self}, slice
 };
 
 use crate::reserve::ReserveError;
@@ -149,7 +149,7 @@ impl<T, const N: usize> ArrayVec<T, N>
             T: Clone
     {
         if len > N {
-            panic!("maximum capacity {N} exceeded with len {len}")
+            panic!("maximum capacity of {N} exceeded with len {len}")
         };
         let ptr = self.data.as_mut_ptr();
         if len > self.len {
@@ -175,7 +175,7 @@ impl<T, const N: usize> ArrayVec<T, N>
             F: FnMut() -> T
     {
         if len > N {
-            panic!("maximum capacity {N} exceeded with len {len}")
+            panic!("maximum capacity of {N} exceeded with len {len}")
         }
         let ptr = unsafe {
             Pointer::new(self.as_mut_ptr()).unwrap_unchecked()
@@ -235,11 +235,27 @@ impl<T, const N: usize> ArrayVec<T, N>
     /// This panics if the length of the vector exceeds `N`.
     pub fn push(&mut self, value: T) {
         if self.len >= N {
-            panic!("maximum capacity {N} exceeded")
+            panic!("maximum capacity of {N} exceeded")
         }
         let ptr = unsafe { self.as_mut_ptr().add(self.len) };
-        unsafe { ptr::write(ptr, value) };
+        unsafe { ptr.write(value); };
         self.len += 1;
+    }
+
+    /// Appends an element to the end of the vector, returning a mutable reference to the newly
+    /// written value.
+    ///
+    /// This panics if the length of the vector exceeds `N`.
+    pub fn push_mut(&mut self, value: T) -> &mut T {
+        if self.len >= N {
+            panic!("maximum capacity of {N} exceeded")
+        }
+        unsafe {
+            let ptr = self.as_mut_ptr().add(self.len);
+            ptr.write(value);
+            self.len += 1;
+            &mut *ptr
+        }
     }
 
     /// Inserts an element to the specified index.
@@ -251,7 +267,7 @@ impl<T, const N: usize> ArrayVec<T, N>
             panic!("index {} was out of bounds with len {} when inserting", index, self.len)
         }
         if self.len >= N {
-            panic!("maximum capacity {N} exceeded")
+            panic!("maximum capacity of {N} exceeded")
         }
         unsafe {
             Pointer
@@ -275,7 +291,7 @@ impl<T, const N: usize> ArrayVec<T, N>
     {
         let len = self.len + slice.len();
         if len > N {
-            panic!("maximum capacity {N} exceeded with len {len}")
+            panic!("maximum capacity of {N} exceeded with len {len}")
         }
         unsafe {
             Pointer
@@ -302,7 +318,7 @@ impl<T, const N: usize> ArrayVec<T, N>
     {
         let len = self.len + slice.len();
         if len > N {
-            panic!("maximum capacity {N} exceeded with len {len}")
+            panic!("maximum capacity of {N} exceeded with len {len}")
         }
         unsafe {
             Pointer
