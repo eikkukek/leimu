@@ -67,7 +67,7 @@ impl From<Vec3> for [f32; 3] {
 pub struct Meshlet {
     pub debug_color: [f32; 3], // vec3
     pub vertex_count: u32,
-    pub triangle_count: u32,
+    pub primitive_count: u32,
 }
 
 impl Meshlet {

@@ -311,7 +311,7 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                 }
                 rot = glam::Quat::IDENTITY;
             }
-            let delta_lines = window.mouse_scroll_delta_lines().1;
+            let delta_lines = window.mouse_scroll_delta_lines().1 / 5.0;
             let delta_pixels = window.mouse_scroll_delta_pixels_f32().1 / 100.0;
             let mut delta_scroll = delta_lines;
             if delta_lines.abs() < delta_pixels.abs() {
@@ -389,12 +389,12 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                                 for meshlet in mesh.meshlets() {
                                     let start = buffer.len();
                                     buffer.extend_from_slice(shader_types::Meshlet {
-                                        debug_color: rgb_from_hsv(hue, 0.6, rand::random_range(0.7..1.0)).into(),
+                                        debug_color: rgb_from_hsv(hue, 0.4, rand::random_range(0.7..1.0)).into(),
                                         vertex_count: meshlet.local_vertices().len() as u32,
-                                        triangle_count: meshlet.local_triangles().len() as u32,
+                                        primitive_count: meshlet.local_primitives().len() as u32,
                                     }.as_inline_bytes());
                                     buffer.extend_from_slice(meshlet.local_vertices_full_as_bytes());
-                                    buffer.extend_from_slice(meshlet.local_triangles_full_as_bytes());
+                                    buffer.extend_from_slice(meshlet.local_primitives_full_as_bytes());
                                     buffer.extend(((buffer.len() - start)..stride).map(|_| 0));
                                     assert!(buffer.len() - start == stride);
                                     hue += hue_step;
