@@ -367,6 +367,7 @@ struct UnresolvedCmd {
     rs_def: TokenStream,
     rs_def_ext: Option<TokenStream>,
     rs_def_get_data: Option<TokenStream>,
+    rs_def_get_data_ext: Option<TokenStream>,
     num_arguments: u32,
 }
 struct ResolvedCmd {
@@ -376,6 +377,7 @@ struct ResolvedCmd {
     rs_def: TokenStream,
     rs_def_ext: Option<TokenStream>,
     rs_def_get_data: Option<TokenStream>,
+    rs_def_get_data_ext: Option<TokenStream>,
 }
 impl UnresolvedCmd {
 
@@ -388,6 +390,7 @@ impl UnresolvedCmd {
             rs_def,
             rs_def_ext,
             rs_def_get_data,
+            rs_def_get_data_ext,
             num_arguments,
         } = self;
         let allow_too_many_arguments = (*num_arguments > 7).then(|| {
@@ -395,15 +398,19 @@ impl UnresolvedCmd {
                 #[allow(clippy::too_many_arguments)]
             }
         });
-        let rs_def_get_data =
+        let (rs_def_get_data, rs_def_get_data_ext) =
             if let Some(rs_get_data)  = rs_def_get_data {
                 let get_data = quote! {
                     #allow_too_many_arguments
                     pub unsafe fn #name_rs #rs_get_data
                 };
+                let get_data_ext = quote! {
+                    #allow_too_many_arguments
+                    pub unsafe fn #name_rs #rs_def_get_data_ext
+                };
                 name_rs = Ident::new(&format!("{name_rs}_len"), Span::call_site());
-                Some(get_data)
-            } else { None };
+                (Some(get_data), Some(get_data_ext))
+            } else { (None, None) };
         ResolvedCmd {
             original_name: original_name.clone(),
             pfn_def: pfn_def.clone(),
@@ -416,6 +423,7 @@ impl UnresolvedCmd {
                 #allow_too_many_arguments
                 pub unsafe fn #name_rs #def
             }),
+            rs_def_get_data_ext,
             rs_def_get_data,
         }
     }
@@ -2765,6 +2773,7 @@ fn main() -> std::io::Result<()> {
         let mut fn_maps = vec![];
         let mut get_lens = vec![];
         let mut rs_def_get_data = None;
+        let mut rs_def_get_data_ext = None;
         let mut ret =
             if success_filter.is_none() {
                 pfn_ret.clone()
@@ -2938,6 +2947,16 @@ fn main() -> std::io::Result<()> {
                                 unsafe {
                                     let mut len = #get_len_name.len() as _;
                                     (self.#fp.#name_rs)(
+                                        #(#fn_maps2)*
+                                    )#with_result
+                                }
+                            }
+                        });
+                        rs_def_get_data_ext = Some(quote! {
+                            (#(#fn_params2)*) #ret {
+                                unsafe {
+                                    let mut len = #get_len_name.len() as _;
+                                    (self.fp.#name_rs)(
                                         #(#fn_maps2)*
                                     )#with_result
                                 }
@@ -3141,6 +3160,7 @@ fn main() -> std::io::Result<()> {
             rs_def,
             rs_def_ext,
             rs_def_get_data,
+            rs_def_get_data_ext,
             num_arguments,
         });
         write!(type_defs, "{def}")?;
@@ -3296,12 +3316,6 @@ fn main() -> std::io::Result<()> {
                     buffer.push_str(&format!("//!\n//! Promoted to core {}.\n",
                         ext.promoted_to.as_ref().unwrap(),
                     ));
-                    if !ext.commands.is_empty() {
-                        buffer.push_str(
-                            "//!\n//! See [`Instance`][1] for any commands included in this extension.\n",
-                        );
-                        buffer.push_str("//!\n//! [1]: crate::Instance\n");
-                    }
                 }
                 buffer.push_str("use super::*;");
                 write_constants(buffer)?;
@@ -3380,8 +3394,10 @@ fn main() -> std::io::Result<()> {
                         let unresolved = command.unresolved
                             .as_ref().unwrap();
                         let ResolvedCmd {
-                            pfn_def, pfn_default, rs_def, rs_def_ext, rs_def_get_data,
+                            pfn_def, pfn_default, rs_def, rs_def_ext,
+                            rs_def_get_data_ext,
                             original_name,
+                            ..
                         } = unresolved
                             .resolve(name_rs.clone());
                         pfn_defs.push(pfn_def);
@@ -3406,7 +3422,7 @@ fn main() -> std::io::Result<()> {
                             #doc
                             #rs_def
                         };
-                        let rs_def2 = rs_def_get_data
+                        let rs_def2 = rs_def_get_data_ext
                             .map(|def| quote! {
                                 #doc
                                 #def
@@ -3499,207 +3515,201 @@ fn main() -> std::io::Result<()> {
             "device" => {
                 buffer.push_str(&format!("//! {} device extension.\n", name));
                 if promoted_to_core {
-                    buffer.push_str(&format!("//!\n//! Promoted to core {}\n",
+                    buffer.push_str(&format!("//!\n//! Promoted to core {}.\n",
                         ext.promoted_to.as_ref().unwrap(),
                     ));
-                    if !ext.commands.is_empty() {
-                        buffer.push_str("//!\n//!See [`Device`][1] for any commands included in this extension.\n");
-                        buffer.push_str("//!\n//![1]: crate::Device\n");
-                    }
                 }
                 buffer.push_str("use super::*;");
                 write_constants(buffer)?;
-                if !promoted_to_core {
-                    let mut pfn_defs = vec![];
-                    let mut load_fns = vec![];
-                    let mut rs_defs = vec![];
-                    for command in &ext.commands {
-                        ext_fns.insert(&command.name);
-                        let name_rs = Ident::new(&lower_snake_case(
-                            command.name.trim_start_matches("vk")
-                            .trim_end_matches(&prefix)
-                        ), Span::call_site());
-                        let cname = std::ffi::CString::from_str(&command.name).unwrap();
-                        let link = doc_link(&command.name)
-                            .map(|link| quote! {
-                                /// # Vulkan docs
-                                #[doc = #link]
-                            });
-                        let cmd = commands
-                            .get(&command.name)
-                            .unwrap();
-                        let mut success_doc = vec![];
-                        let mut success_doc_links = vec![];
-                        for (i, code) in cmd.success_codes.iter().enumerate() {
-                            let code = code.trim_start_matches("VK_");
-                            success_doc.push(format!("* [`{code}`][{i}]"));
-                            success_doc_links.push(format!("[{i}]: Result::{code}"));
-                        }
-                        let success_doc = if !success_doc.is_empty() {
-                            Some(quote! {
-                                #[doc = "# Success codes"]
-                                #(#[doc = #success_doc])*
-                                ///
-                                #(#[doc = #success_doc_links])*
-                            })
-                        } else { None };
-                        let doc = if !command.depends_on.is_empty() {
-                            let dep = command.depends_on
-                                .iter()
-                                .enumerate()
-                                .map(|(i, dep)| {
-                                    if i != command.depends_on.len() - 1 {
-                                        format!("* {dep} or")
-                                    } else {
-                                        format!("* {dep}")
-                                    }
-                                });
-                            quote! {
-                                /// # Depends on
-                                #(#[doc = #dep])*
-                                #success_doc
-                                #fn_safety
-                                #link
-                                ///
-                                #(#[doc = #success_doc_links])*
-                            }
-                        } else {
-                            quote! {
-                                #success_doc
-                                #fn_safety
-                                #link
-                                ///
-                                #(#[doc = #success_doc_links])*
-                            }
-                        };
-                        let command = cmd;
-                        let command = match &command.body {
-                            CommandBody::Func(_) => command,
-                            CommandBody::Alias(name) => {
-                                let command = commands
-                                    .get(name)
-                                    .unwrap();
-                                assert!(matches!(command.body, CommandBody::Func(_)));
-                                command
-                            }
-                        };
-                        let unresolved = command.unresolved
-                            .as_ref().unwrap();
-                        let ResolvedCmd { 
-                            pfn_def, pfn_default, rs_def, rs_def_ext, rs_def_get_data,
-                            original_name,
-                        } = unresolved
-                            .resolve(name_rs.clone());
-                        let rs_def = rs_def_ext.unwrap_or(rs_def);
-                        pfn_defs.push(pfn_def);
-                        let pfn = &unresolved.pfn_name;
-                        let load_fn = quote! {
-                            #original_name: unsafe {
-                                #pfn_default
-                                let f = f(#cname);
-                                if f.is_null() {
-                                    #original_name
-                                } else {
-                                    ::core::mem::transmute::<
-                                        *const ffi::c_void,
-                                        #pfn,
-                                    >(f)
-                                }
-                            },
-                        };
-                        load_fns.push(load_fn);
-                        let rs_def1 = quote! {
-                            #doc
-                            #rs_def
-                        };
-                        let rs_def2 = rs_def_get_data
-                            .map(|def| quote! {
-                                #doc
-                                #def
-                            });
-                        rs_defs.push(quote! {
-                            #rs_def1
-                            #rs_def2
+                let mut pfn_defs = vec![];
+                let mut load_fns = vec![];
+                let mut rs_defs = vec![];
+                for command in &ext.commands {
+                    ext_fns.insert(&command.name);
+                    let name_rs = Ident::new(&lower_snake_case(
+                        command.name.trim_start_matches("vk")
+                        .trim_end_matches(&prefix)
+                    ), Span::call_site());
+                    let cname = std::ffi::CString::from_str(&command.name).unwrap();
+                    let link = doc_link(&command.name)
+                        .map(|link| quote! {
+                            /// # Vulkan docs
+                            #[doc = #link]
                         });
+                    let cmd = commands
+                        .get(&command.name)
+                        .unwrap();
+                    let mut success_doc = vec![];
+                    let mut success_doc_links = vec![];
+                    for (i, code) in cmd.success_codes.iter().enumerate() {
+                        let code = code.trim_start_matches("VK_");
+                        success_doc.push(format!("* [`{code}`][{i}]"));
+                        success_doc_links.push(format!("[{i}]: Result::{code}"));
                     }
-                    if !ext.commands.is_empty() {
-                        let def = quote! {
-                            #[derive(Clone, Copy)]
-                            pub struct DeviceFp {
-                                #(#pfn_defs),*
+                    let success_doc = if !success_doc.is_empty() {
+                        Some(quote! {
+                            #[doc = "# Success codes"]
+                            #(#[doc = #success_doc])*
+                            ///
+                            #(#[doc = #success_doc_links])*
+                        })
+                    } else { None };
+                    let doc = if !command.depends_on.is_empty() {
+                        let dep = command.depends_on
+                            .iter()
+                            .enumerate()
+                            .map(|(i, dep)| {
+                                if i != command.depends_on.len() - 1 {
+                                    format!("* {dep} or")
+                                } else {
+                                    format!("* {dep}")
+                                }
+                            });
+                        quote! {
+                            /// # Depends on
+                            #(#[doc = #dep])*
+                            #success_doc
+                            #fn_safety
+                            #link
+                            ///
+                            #(#[doc = #success_doc_links])*
+                        }
+                    } else {
+                        quote! {
+                            #success_doc
+                            #fn_safety
+                            #link
+                            ///
+                            #(#[doc = #success_doc_links])*
+                        }
+                    };
+                    let command = cmd;
+                    let command = match &command.body {
+                        CommandBody::Func(_) => command,
+                        CommandBody::Alias(name) => {
+                            let command = commands
+                                .get(name)
+                                .unwrap();
+                            assert!(matches!(command.body, CommandBody::Func(_)));
+                            command
+                        }
+                    };
+                    let unresolved = command.unresolved
+                        .as_ref().unwrap();
+                    let ResolvedCmd { 
+                        pfn_def, pfn_default, rs_def, rs_def_ext, rs_def_get_data_ext,
+                        original_name, ..
+                    } = unresolved
+                        .resolve(name_rs.clone());
+                    let rs_def = rs_def_ext.unwrap_or(rs_def);
+                    pfn_defs.push(pfn_def);
+                    let pfn = &unresolved.pfn_name;
+                    let load_fn = quote! {
+                        #original_name: unsafe {
+                            #pfn_default
+                            let f = f(#cname);
+                            if f.is_null() {
+                                #original_name
+                            } else {
+                                ::core::mem::transmute::<
+                                    *const ffi::c_void,
+                                    #pfn,
+                                >(f)
                             }
-                            unsafe impl Send for DeviceFp {}
-                            unsafe impl Sync for DeviceFp {}
-                            impl DeviceFp {
+                        },
+                    };
+                    load_fns.push(load_fn);
+                    let rs_def1 = quote! {
+                        #doc
+                        #rs_def
+                    };
+                    let rs_def2 = rs_def_get_data_ext
+                        .map(|def| quote! {
+                            #doc
+                            #def
+                        });
+                    rs_defs.push(quote! {
+                        #rs_def1
+                        #rs_def2
+                    });
+                }
+                if !ext.commands.is_empty() {
+                    let def = quote! {
+                        #[derive(Clone, Copy)]
+                        pub struct DeviceFp {
+                            #(#pfn_defs),*
+                        }
+                        unsafe impl Send for DeviceFp {}
+                        unsafe impl Sync for DeviceFp {}
+                        impl DeviceFp {
 
-                                pub fn load(
-                                    f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
-                                ) -> Self {
-                                    Self {
-                                        #(#load_fns)*
-                                    }
+                            pub fn load(
+                                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                            ) -> Self {
+                                Self {
+                                    #(#load_fns)*
                                 }
                             }
-                            #[derive(Clone)]
-                            pub struct Device<Ext = nop::Device> {
-                                handle: crate::vk::Device,
-                                fp: DeviceFp,
-                                _ext: Ext,
-                            }
-                            impl Device {
-                                #[inline]
-                                pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
-                                    Self {
-                                        handle: device.handle(),
-                                        fp: DeviceFp::load(
-                                            &mut |cname| unsafe {
-                                                device.get_device_proc_addr(cname)
-                                                    as *const ffi::c_void
-                                            },
-                                        ),
-                                        _ext: nop::Device,
-                                    }
-                                }
-                            }
-                            impl<Ext> Device<Ext> {
-                                #[inline]
-                                pub fn handle(&self) -> crate::vk::Device {
-                                    self.handle
-                                }
-                                #[inline]
-                                pub fn fp(&self) -> &DeviceFp {
-                                    &self.fp
-                                }
-                                #(#rs_defs)*
-                            }
-                            #[cfg(feature = "ext-load-with")]
-                            impl<Ext> LoadWith for Device<Ext>
-                                where Ext: LoadWith<Handle = crate::vk::Device>
-                            {
-                                type Handle = crate::vk::Device;
-                                unsafe fn load_with(
-                                    f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
-                                    handle: Self::Handle
-                                ) -> Self {
-                                    Self {
-                                        handle,
-                                        fp: DeviceFp::load(f),
-                                        _ext: unsafe {
-                                            Ext::load_with(f, handle)
+                        }
+                        #[derive(Clone)]
+                        pub struct Device<Ext = nop::Device> {
+                            handle: crate::vk::Device,
+                            fp: DeviceFp,
+                            _ext: Ext,
+                        }
+                        impl Device {
+                            #[inline]
+                            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
+                                Self {
+                                    handle: device.handle(),
+                                    fp: DeviceFp::load(
+                                        &mut |cname| unsafe {
+                                            device.get_device_proc_addr(cname)
+                                                as *const ffi::c_void
                                         },
-                                    }
+                                    ),
+                                    _ext: nop::Device,
                                 }
                             }
-                            #[cfg(feature = "ext-load-with")]
-                            impl<Ext> Deref for Device<Ext> {
-                                type Target = Ext;
-                                fn deref(&self) -> &Ext {
-                                    &self._ext
+                        }
+                        impl<Ext> Device<Ext> {
+                            #[inline]
+                            pub fn handle(&self) -> crate::vk::Device {
+                                self.handle
+                            }
+                            #[inline]
+                            pub fn fp(&self) -> &DeviceFp {
+                                &self.fp
+                            }
+                            #(#rs_defs)*
+                        }
+                        #[cfg(feature = "ext-load-with")]
+                        impl<Ext> LoadWith for Device<Ext>
+                            where Ext: LoadWith<Handle = crate::vk::Device>
+                        {
+                            type Handle = crate::vk::Device;
+                            unsafe fn load_with(
+                                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                                handle: Self::Handle
+                            ) -> Self {
+                                Self {
+                                    handle,
+                                    fp: DeviceFp::load(f),
+                                    _ext: unsafe {
+                                        Ext::load_with(f, handle)
+                                    },
                                 }
                             }
-                        };
-                        buffer.push_str(&def.to_string());
-                    }
+                        }
+                        #[cfg(feature = "ext-load-with")]
+                        impl<Ext> Deref for Device<Ext> {
+                            type Target = Ext;
+                            fn deref(&self) -> &Ext {
+                                &self._ext
+                            }
+                        }
+                    };
+                    buffer.push_str(&def.to_string());
                 }
             },
             _ => unreachable!(),
@@ -3773,7 +3783,7 @@ use {{
                     .unwrap();
                 let ResolvedCmd { 
                     pfn_def, pfn_default, mut rs_def, mut rs_def_get_data,
-                    original_name, rs_def_ext,
+                    original_name, rs_def_ext, rs_def_get_data_ext,
                 } = unresolved
                     .resolve(name_rs.clone());
                 let counter_part = feature.commands
@@ -3891,7 +3901,7 @@ use {{
                 let f = CoreFn {
                     core: ResolvedCmd { 
                         pfn_def, pfn_default, rs_def, rs_def_get_data,
-                        original_name, rs_def_ext,
+                        original_name, rs_def_ext, rs_def_get_data_ext,
                     },
                     load_fn,
                     ext_counter_part: counter_part,

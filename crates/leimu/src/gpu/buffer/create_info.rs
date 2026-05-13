@@ -9,7 +9,12 @@ use crate::{
     error,
 };
 
-/// The create info structure for buffers. See [`BufferCreateInfo::new`] for full description.
+/// Parameters for [`creating`][1] a [`buffer object`][2].
+///
+/// See [`new`][Self::new] for full description.
+///
+/// [1]: Gpu::create_resources
+/// [2]: Buffer
 pub struct BufferCreateInfo<'a> {
     pub(crate) out: &'a mut BufferId,
     pub(crate) memory_binder: &'a dyn MemoryBinder,
@@ -50,7 +55,7 @@ impl<'a> BufferCreateInfo<'a> {
         &self,
         device: Device,
         bind_memory_info: &mut vk::BindBufferMemoryInfo<'static>,
-    ) -> error::Result<BufferMeta> {
-        BufferMeta::new(device, self, bind_memory_info)
+    ) -> error::Result<Buffer> {
+        Buffer::new(device, self, bind_memory_info)
     }
 }

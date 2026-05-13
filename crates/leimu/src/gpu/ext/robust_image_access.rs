@@ -1,26 +1,32 @@
 //! Provided by Vulkan 1.3 or VK_EXT_image_robustness.
 
-use super::*;
+use super::{*, device::*};
 
 use tuhka::ext;
 
-pub struct Attributes;
+/// [`Device attribute`][1] name of an attribute which specifies the [`requirements`][2] of
+/// robust image access.
+///
+/// [1]: DeviceAttributes::with_device_extension
+/// [2]: FeatureRequirements
+pub const SUPPORT: AttributeName<FeatureRequirements>
+    = AttributeName::new("robust_image_access supported");
 
-impl Attributes {
-
-    /// Attribute type `bool`.
-    pub const IS_SUPPORTED: ConstName
-        = ConstName::new("robust_image_access supported");
-
-    /// Attribute type `bool`.
-    pub const IS_ENABLED: ConstName
-        = ConstName::new("robust_image_access enabled");
+/// Creates the [`extension type`][1].
+///
+/// [1]: DeviceAttributes::with_device_extension
+pub const fn extension(
+    robust_image_access: FeatureRequirements,
+) -> impl DeviceExtension
+{
+    Extension {
+        robust_image_access
+    }
 }
 
-/// The extension type.
 #[derive(Clone, Copy)]
-pub struct Extension {
-    pub robust_image_access: RobustAccessRequirements,
+struct Extension {
+    robust_image_access: FeatureRequirements,
 }
 
 unsafe impl DeviceExtension for Extension {
@@ -46,24 +52,22 @@ unsafe impl DeviceExtension for Extension {
 
     fn register(
         &self,
-        context: &mut PhysicalDeviceContext<'_>,
+        ctx: &mut PhysicalDeviceContext<'_>,
     ) -> Option<ExtendsDeviceCreateInfoObj> {
-        let mut features = vk::PhysicalDeviceImageRobustnessFeatures::default();
-        context.get_features(&mut features);
-        if features.robust_image_access != 0 {
-            context.register_attribute(DeviceAttribute::new_bool(
-                Attributes::IS_SUPPORTED, true
-            ));
+        match self.robust_image_access {
+            FeatureRequirements::DontCare => None,
+            FeatureRequirements::Require => {
+                ctx.register_attribute(Attribute::new(SUPPORT, FeatureRequirements::Require));
+                None
+            },
+            FeatureRequirements::Enable => {
+                ctx.register_attribute(Attribute::new(SUPPORT, FeatureRequirements::Enable));
+                Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceImageRobustnessFeatures
+                    ::default()
+                    .robust_image_access(true)
+                ))
+            },
         }
-        matches!(self.robust_image_access, RobustAccessRequirements::Enabled).then(|| {
-            context.register_attribute(DeviceAttribute::new_bool(
-                Attributes::IS_ENABLED, true
-            ));
-            ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceImageRobustnessFeatures
-                ::default()
-                .robust_image_access(true)
-            )
-        })
     }
 
     fn boxed(&self) -> Box<dyn DeviceExtension> {

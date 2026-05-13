@@ -1,21 +1,60 @@
 use tuhka::vk;
 use leimu_proc::BuildStructure;
 
+use crate::bitflags;
+
 use crate::gpu::prelude::*;
 
+/// A structure specfying [`depth bias info`][1].
+///
+/// [1]: GraphicsPipelineCreateInfo::with_depth_bias
 #[derive(Default, Clone, Copy, BuildStructure)]
 pub struct DepthBiasInfo {
+    /// A scalar factor controlling the constant depth value added to each fragment.
     pub constant_factor: f32,
+    /// The maximum (or minimum) depth bias of a fragment.
+    ///
+    /// If the [`depth_bias_clamp`][1] feature is not enabled, this **must** be 0.0.
+    ///
+    /// [1]: vulkan_10::depth_bias_clamp
     pub clamp: f32,
+    /// A scalar factor applied to a fragment’s slope in depth bias calculations.
     pub slope_factor: f32,
 }
 
-#[derive(Default, Clone, Copy, BuildStructure)]
+#[derive(Default, Clone, BuildStructure)]
 pub struct SampleShadingInfo {
+    /// Specifies the number of samples used in rasterization.
+    ///
+    /// # Valid usage
+    /// - `samples` **must** contain exactly one valid [`MsaaSamples`] bit set.
     pub samples: MsaaSamples,
+    /// Specifies minimum fraction of samples shading.
     pub min_shading: f32,
+    /// An optional bitmask used in sample mask test.
+    #[skip]
+    pub sample_mask: Option<Box<[u32]>>,
+    /// Controls whether a temporary coverage value is generated based on the alpha component of the
+    /// fragment’s first color output.
     pub alpha_to_coverage: bool,
+    /// Controls whether the alpha component of the fragment’s first color output is replaced with
+    /// one.
     pub alpha_to_one: bool,
+}
+
+impl SampleShadingInfo {
+
+    /// An optional bitmask used in sample mask test.
+    ///
+    /// # Valid usage
+    /// - The length of `mask` **must** be equal to `samples.div_ceil(32)`
+    #[inline]
+    pub fn sample_mask<I>(mut self, mask: I) -> Self
+        where I: IntoIterator<Item = u32>
+    {
+        self.sample_mask = Some(mask.into_iter().collect());
+        self
+    }
 }
 
 #[derive(Default, Clone, Copy, BuildStructure)]

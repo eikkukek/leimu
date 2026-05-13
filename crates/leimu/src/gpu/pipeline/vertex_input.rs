@@ -106,33 +106,40 @@ pub trait VertexInput<const N_ATTRIBUTES: usize> {
 /// [1]: GraphicsPipeline
 /// [2]: Self::stride
 /// [3]: DynamicState::VertexInputBindingStride
-#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, BuildStructure)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, BuildStructure)]
 pub struct VertexInputBinding {
+    /// The binding this structure describes.
     pub binding: u32,
-    pub input_rate: VertexInputRate,
-    #[skip]
+    /// The byte stride between consecutive elements within the buffer.
     pub stride: u32,
+    /// Specifies whether [`vertex attributes`][1] are consumed [`per vertex`][2] or
+    /// [`per instance`][3].
+    ///
+    /// [1]: VertexInputAttribute
+    /// [2]: VertexInputRate::Vertex
+    /// [3]: VertexInputRate::Instance
+    pub input_rate: VertexInputRate,
 }
 
-impl VertexInputBinding {
-
-    pub fn new<T>(binding: u32, input_rate: VertexInputRate) -> Self
-    {
-        Self {
-            binding,
-            input_rate,
-            stride: size_of::<T>() as u32,
-        }
-    }
-
-    pub fn stride<T>(mut self) -> Self {
-        self.stride = size_of::<T>() as u32;
-        self
+/// Creates a new [`VertexInputBinding`].
+///
+/// See [`VertexInputBinding`] for full description.
+#[inline]
+pub fn vertex_input_binding(
+    binding: u32,
+    stride: u32,
+    input_rate: VertexInputRate,
+) -> VertexInputBinding {
+    VertexInputBinding {
+        binding,
+        stride,
+        input_rate,
     }
 }
 
 impl From<VertexInputBinding> for vk::VertexInputBindingDescription {
 
+    #[inline]
     fn from(value: VertexInputBinding) -> Self {
         Self {
             binding: value.binding,
@@ -140,4 +147,43 @@ impl From<VertexInputBinding> for vk::VertexInputBindingDescription {
             input_rate: value.input_rate.into(),
         }
     }
+}
+
+impl From<VertexInputBinding> for vk::VertexInputBindingDescription2EXT<'_> {
+
+    #[inline]
+    fn from(value: VertexInputBinding) -> Self {
+        Self {
+            binding: value.binding,
+            stride: value.stride,
+            input_rate: value.input_rate.into(),
+            ..Default::default()
+        }
+    }
+}
+
+/// Specifies a devisior used in instanced rendering.
+#[derive(Clone, Copy, BuildStructure)]
+pub struct VertexInputBindingDivisor {
+    /// The binding for which the divisor is specified.
+    pub binding: u32,
+    /// Specifies the number of successive instances that will use the [`vertex attribute`][1] when
+    /// [`instanced rendering`][2] is enabled.
+    ///
+    /// # Valid usage
+    /// - This **must** be 1 if the [`vertex_attribute_instance_rate_divisor`][3] [`feature`][4]
+    ///   is not enabled.
+    /// - A value of 0 **can** be specified if and only if the
+    ///   [`vertex_attribute_instance_rate_zero_devisior`][5] [`feature`][4] is enabled.
+    /// - This **must** be less than [`max_vertex_attrib_divisor`][6]
+    ///
+    /// [1]: VertexInputAttribute
+    /// [2]: VertexInputRate::Instance
+    /// [3]: vulkan_14::vertex_attribute_instance_rate_divisor
+    /// [4]: DeviceAttributes::with_features
+    /// [5]: vulkan_14::vertex_attribute_instance_rate_zero_divisor
+    /// [6]:
+    /// vulkan_14::vertex_attribute_instance_rate_divisor::Properties::max_vertex_attrib_divisor
+    #[default(1)]
+    pub divisor: u32,
 }

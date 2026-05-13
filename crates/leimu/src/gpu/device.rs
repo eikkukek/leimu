@@ -1,5 +1,7 @@
 use core::ops::Deref;
 
+use ahash::AHashSet;
+
 use leimu_mem::{
     vec::Vec32, vec32,
 };
@@ -15,11 +17,10 @@ use crate::{
 
 /// Alias for chained [`tuhka::Device`].
 ///
-/// The chain includes [`swapchain`][1] and [`present_wait2`][2].
+/// The chain includes [`swapchain`][1].
 ///
 /// [1]: khr::swapchain
-/// [2]: khr::present_wait2
-pub type VkDevice = tuhka::Device<khr::swapchain::Device<khr::present_wait2::Device>>;
+pub type VkDevice = tuhka::Device<khr::swapchain::Device>;
 
 struct Inner {
     id: DeviceId,
@@ -28,8 +29,8 @@ struct Inner {
     device_queues: Box<[DeviceQueue]>,
     max_memory_allocation_size: DeviceSize,
     frame_timeout: u64,
-    enabled_device_extensions: ext::EnabledDeviceExtensions,
-    base_device_features: BaseDeviceFeatures,
+    enabled_device_extensions: ext::device::EnabledDeviceExtensions,
+    enabled_features: AHashSet<ConstName>,
     supported_depth_resolve_modes: vk::ResolveModeFlags,
     supported_stencil_resolve_modes: vk::ResolveModeFlags,
     instance: Instance,
@@ -85,27 +86,36 @@ impl Device {
         let instance = suitable.instance.clone();
         let mut vulkan_12_features = None;
         let mut vulkan_14_features = None;
-        let mut enabled_device_extensions = ext::EnabledDeviceExtensions::new();
-        let mut physical_device_context = ext::PhysicalDeviceContext::new(
+        let mut enabled_device_extensions = ext::device::EnabledDeviceExtensions::new();
+        let mut physical_device_context = ext::device::PhysicalDeviceContext::new(
             &instance,
             physical_device,
             &mut vulkan_12_features,
             &mut vulkan_14_features,
             Some(&mut enabled_device_extensions),
         );
-        let mut enable_features = Vec32::<ext::ExtendsDeviceCreateInfoObj>::with_capacity(
+        let mut enable_features = Vec32::<ext::device::ExtendsDeviceCreateInfoObj>::with_capacity(
             suitable.device_extensions.len()
         );
         for ext in &suitable.device_extensions {
-            if let Some(feature) = ext.register(&mut physical_device_context) {
+            let ext::device::RegisteredExtension {
+                name,
+                extends_create_info,
+            } = ext.register(&mut physical_device_context);
+            if let Some(feature) = extends_create_info {
                 let s_type = feature.s_type();
                 if enable_features.iter().any(|f| f.s_type() == s_type) {
                     return Err(Error::just_context(format!(
-                        "device feature with structure type {:?} included twice when resolving device extensions",
+                        "device feature with structure type {} included twice when resolving device extensions",
                         feature.s_type(),
                     )))
                 }
                 enable_features.push(feature);
+            }
+            if !enabled_device_extensions.add_extension(name) {
+                return Err(Error::just_context(format!(
+                    "extension with name {name} included twice"
+                )))
             }
         }
         let features = suitable.attributes.required_features.into();
@@ -179,69 +189,81 @@ impl Device {
     /// A [`DeviceId`] assigned to this device.
     ///
     /// Note that this does *not* come from Vulkan.
-    #[inline(always)]
+    #[inline]
     pub fn id(&self) -> DeviceId {
         self.inner.id
     }
 
     /// Returns the [`Instance`] used to create this device.
-    #[inline(always)]
+    #[inline]
     pub fn instance(&self) -> &Instance {
         &self.inner.instance
     }
 
     /// Returns the [`PhysicalDevice`] used to create this device.
-    #[inline(always)]
+    #[inline]
     pub fn physical_device(&self) -> &PhysicalDevice {
         &self.inner.physical_device
     }
 
     /// Returns the api version of this device.
-    #[inline(always)]
+    #[inline]
     pub fn api_version(&self) -> Version {
         self.inner.physical_device.api_version()
     }
 
     /// Returns the raw handle of this device.
-    #[inline(always)]
+    #[inline]
     pub fn handle(&self) -> vk::Device {
         self.inner.device.handle()
     }
 
-    /// Returns the [`base device features`][1] enabled for this device.
+    /// Returns whether a [`feature`][1] with `name` is enabled.
     ///
-    /// [1]: BaseDeviceFeatures
-    #[inline(always)]
-    pub fn base_device_features(&self) -> &BaseDeviceFeatures {
-        &self.inner.base_device_features
+    /// [1]: DeviceAttributes::with_features
+    #[inline]
+    pub fn is_feature_enabled(&self, name: ConstName) -> bool {
+        self.inner.enabled_features.contains(&name)
+    }
+
+    #[inline]
+    pub fn is_extension_enable(&self, name: &ext::prelude::ConstName) -> bool {
+        self.inner.enabled_device_extensions
+            .contains_extension(name)
     }
 
     /// Gets a device attribute registered by an [`extension`][ext].
-    #[inline(always)]
-    pub fn get_device_attribute(&self, name: ext::ConstName) -> &ext::DeviceAttribute {
-        self.inner.enabled_device_extensions.get_attribute(name)
+    #[inline]
+    pub fn get_device_attribute<T>(&self, name: ext::prelude::AttributeName<T>) -> Option<&T>
+        where T: Send + Sync + 'static
+    {
+        self.inner.enabled_device_extensions
+            .get_attribute(name.name())
+            .get()
     }
 
-    /// Gets a device created by an enabled [`extension`][ext].
-    #[inline(always)]
-    pub fn get_extension_device<T: ext::ExtensionDevice>(&self) -> Option<&T> {
+    /// Gets a device associated with an [`extension`][ext].
+    ///
+    /// If the extension is not enabled, this returns [`None`].
+    #[inline]
+    pub fn get_extension_device<T: ext::device::ExtensionDevice>(&self) -> Option<&T> {
         self.inner.enabled_device_extensions.get_device(self)
     }
 
     /// Returns the maximum memory allocation size supported by this device.
-    #[inline(always)]
+    #[inline]
     pub fn max_memory_allocation_size(&self) -> vk::DeviceSize {
         self.inner.max_memory_allocation_size
     }
 
     /// Returns a slice over all created [`DeviceQueue`]s.
-    #[inline(always)]
+    #[inline]
     pub fn device_queues(&self) -> &[DeviceQueue] {
         &self.inner.device_queues
     }
 
     /// Searches for any [`DeviceQueue`] satisfying the specified [`QueueFlags`].
-    #[inline(always)]
+    #[inline]
     pub fn any_device_queue(
         &self,
         flags: QueueFlags,
@@ -254,7 +276,7 @@ impl Device {
     }
 
     /// Searches for a [`DeviceQueue`] that supports presentation for the given `surface`.
-    #[inline(always)]
+    #[inline]
     pub fn get_present_queue(&self, surface: vk::SurfaceKHR) -> Result<DeviceQueue> {
         for queue in &self.inner.device_queues {
             let index = queue.family_index();
@@ -274,7 +296,7 @@ impl Device {
     /// Returns the [`user-defined`][1] frame timeout assigned for this device.
     ///
     /// [1]: DeviceAttributes::with_frame_timeout
-    #[inline(always)]
+    #[inline]
     pub fn frame_timeout(&self) -> u64 {
         self.inner.frame_timeout
     }
@@ -282,7 +304,7 @@ impl Device {
     /// Returns a bitmask of suppoted depth [`resolve modes`][1].
     ///
     /// [1]: vk::ResolveModeFlags
-    #[inline(always)]
+    #[inline]
     pub fn supported_depth_resolve_modes(&self) -> vk::ResolveModeFlags {
         self.inner.supported_depth_resolve_modes
     }
@@ -290,7 +312,7 @@ impl Device {
     /// Returns a bitmask of suppoted stencil [`resolve modes`][1].
     ///
     /// [1]: vk::ResolveModeFlags
-    #[inline(always)]
+    #[inline]
     pub fn supported_stencil_resolve_modes(&self) -> vk::ResolveModeFlags {
         self.inner.supported_stencil_resolve_modes
     }
@@ -298,7 +320,7 @@ impl Device {
     /// Returns the number of [`user-defined`][1] command workers assigned for this device.
     ///
     /// [1]: DeviceAttributes::with_command_workers
-    #[inline(always)]
+    #[inline]
     pub fn command_workers(&self) -> u32 {
         self.inner.command_workers
     }

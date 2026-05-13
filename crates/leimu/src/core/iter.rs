@@ -6,7 +6,7 @@
 ///
 /// # Example
 /// ``` rust
-/// use nox_mem::iter::TryExtend;
+/// use leimu::core::TryExtend;
 ///
 /// let mut vec = vec![];
 /// let iter = [Ok(1), Ok(2), Ok(3), Err(4), Ok(5)];

@@ -27,7 +27,7 @@ pub trait OptionExt<T> {
     /// Gets a pointer to the value contained if [`Some`] and a null pointer otherwise.
     /// # Example
     /// ``` rust
-    /// use nox_mem::option::OptionExt;
+    /// use leimu::core::OptionExt;
     ///
     /// let value = 10;
     /// let opt = Some(&value);

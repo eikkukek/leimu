@@ -1004,47 +1004,22 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
         Ok(())
     }
 
-    /// Dynamically sets whether rasterizer discard is enabled.
-    ///
-    /// # Valid usage
-    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic state
-    ///   includes [`rasterizer discard enable`][2].
-    ///
-    /// # Vulkan docs
-    /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetRasterizerDiscardEnable.html>
-    ///
-    /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::RASTERIZER_DISCARD_ENABLE
-    pub fn set_rasterizer_discard_enable(
-        &mut self,
-        enabled: bool,
-    ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::RASTERIZER_DISCARD_ENABLE)?;
-        unsafe {
-            self.gpu.device().cmd_set_rasterizer_discard_enable(
-                self.command_buffer,
-                enabled
-            );
-        }
-        Ok(())
-    }
-
     /// Dynamically sets whether depth bias is enabled.
     ///
     /// # Valid usagge
     /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic state
-    ///   includes [`depth bias enable`][2].
+    ///   includes [`DepthBiasEnable`][2].
     ///
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetDepthBiasEnable.html>
     ///
     /// [1]: GraphicsPipeline
-    /// [2]: DynamicState::DEPTH_BIAS_ENABLE
+    /// [2]: DynamicState::DepthBiasEnable
     pub fn set_depth_bias_enable(
         &mut self,
         enabled: bool,
     ) -> Result<()> {
-        self.check_dynamic_state(DynamicState::DEPTH_BIAS_ENABLE)?;
+        self.check_dynamic_state(DynamicState::DepthBiasEnable)?;
         unsafe {
             self.gpu.device().cmd_set_depth_bias_enable(
                 self.command_buffer,
@@ -1075,6 +1050,44 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
         }
         Ok(())
     }
+
+    /// Dynamically sets whether rasterizer discard is enabled.
+    ///
+    /// # Valid usage
+    /// - This **must** be set if and only if the currently bound [`pipeline's`][1] dynamic state
+    ///   includes [`rasterizer discard enable`][2].
+    ///
+    /// # Vulkan docs
+    /// <https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdSetRasterizerDiscardEnable.html>
+    ///
+    /// [1]: GraphicsPipeline
+    /// [2]: DynamicState::RASTERIZER_DISCARD_ENABLE
+    pub fn set_rasterizer_discard_enable(
+        &mut self,
+        enabled: bool,
+    ) -> Result<()> {
+        self.check_dynamic_state(DynamicState::RASTERIZER_DISCARD_ENABLE)?;
+        unsafe {
+            self.gpu.device().cmd_set_rasterizer_discard_enable(
+                self.command_buffer,
+                enabled
+            );
+        }
+        Ok(())
+    }
+
+    pub fn set_logic_op_ext(&mut self) { todo!() }
+    pub fn set_patch_control_points_ext(&mut self) { todo!() }
+
+    pub fn set_alpha_to_coverage_enable_ext(&mut self) { todo!() }
+    pub fn set_alpha_to_one_enable_ext(&mut self) { todo!() }
+    pub fn set_color_blend_equation_ext(&mut self) { todo!() }
+    pub fn set_color_write_mask_ext(&mut self) { todo!() }
+    pub fn set_depth_clamp_enable_ext(&mut self) { todo!() }
+    pub fn set_logic_op_enable_ext(&mut self) { todo!() }
+    pub fn set_polygon_mode_ext(&mut self) { todo!() }
+    pub fn set_rasterization_samples_ext(&mut self) { todo!() }
+    pub fn set_sample_mask_ext(&mut self) { todo!() }
 
     /// Binds vertex buffers and allows performing draw calls within the closure.
     ///
@@ -1442,8 +1455,7 @@ impl<'a, 'b, State> DrawPipelineCommands<'a, 'b, State> {
         where State: state::CanBeginDraw
     {
         let properties = self.gpu
-            .get_device_attribute(ext::mesh_shader::Attributes::PROPERTIES)
-            .structure::<ext::mesh_shader::Properties>()
+            .get_device_attribute(ext::mesh_shader::PROPERTIES)
             .ok_or_else(||
                 Error::just_context("the mesh shader feature is not enabled")
             )?;

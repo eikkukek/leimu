@@ -1,7 +1,10 @@
 mod definitions;
+mod vertex_input_state;
+mod state;
 mod create_info;
 
 pub use definitions::*;
+pub use state::*;
 pub use create_info::*;
 
 use tuhka::vk;
@@ -26,7 +29,6 @@ pub struct GraphicsPipeline {
     handle: PipelineHandle,
     samples: MsaaSamples,
     stage_flags: ShaderStageFlags,
-    vertex_input_bindings: Arc<[VertexInputBinding]>,
     color_outputs_and_dynamic_states: Arc<[i32]>,
     n_color_output_formats: u32,
     depth_output_format: Format,
@@ -71,12 +73,6 @@ impl GraphicsPipeline {
             samples: create_info.sample_shading_info
                 .map(|info| info.samples)
                 .unwrap_or(MsaaSamples::X1),
-            vertex_input_bindings: 
-                create_info.vertex_input_bindings
-                .iter()
-                .cloned()
-                .collect()
-            ,
             color_outputs_and_dynamic_states,
             n_color_output_formats: n_color_output_formats as u32,
             depth_output_format: create_info.depth_output_format,
@@ -97,11 +93,6 @@ impl GraphicsPipeline {
     #[inline]
     pub fn stage_flags(&self) -> ShaderStageFlags {
         self.stage_flags
-    }
-
-    #[inline]
-    pub fn vertex_input_bindings(&self) -> &[VertexInputBinding] {
-        &self.vertex_input_bindings
     }
 
     #[inline]

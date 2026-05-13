@@ -1,9 +1,12 @@
+use core::ptr::NonNull;
+
 use leimu_mem::{
     vec::NonNullVec32,
+    alloc::LocalAllocExt,
     arena,
 };
 
-use crate::gpu::ext;
+use crate::default;
 
 use super::*;
 
@@ -14,10 +17,9 @@ mod base {
     #[derive(Clone)]
     pub struct Template<Meta: Send + Sync> {
         pub(crate) meta: Meta,
-        pub(crate) shader_set_id: ShaderSetId,
+        pub(crate) shader_stages: PipelineShaderStages,
+        pub(crate) vertex_input_state: Option<PipelineVertexInputState>,
         pub(crate) dynamic_states: Vec32<DynamicState>,
-        pub(crate) vertex_input_bindings: Vec32<VertexInputBinding>,
-        pub(crate) vertex_input_attributes: Vec32<VertexInputAttributeInternal>,
         pub(crate) polygon_mode: PolygonMode,
         pub(crate) cull_mode: CullModes,
         pub(crate) front_face: FrontFace,
@@ -43,8 +45,8 @@ pub type GraphicsPipelineCreateTemplate = base::Template<()>;
 impl GraphicsPipelineCreateTemplate {
     
     #[inline]
-    pub fn new(shader_set_id: ShaderSetId) -> Self {
-        Self::_new((), shader_set_id)
+    pub fn new(shader_stages: PipelineShaderStages) -> Self {
+        Self::_new((), shader_stages)
     }
 }
 
@@ -67,9 +69,9 @@ impl<'a> GraphicsPipelineCreateInfo<'a> {
     #[inline]
     pub fn new(
         out_id: &'a mut GraphicsPipelineId,
-        shader_set_id: ShaderSetId,
+        shader_stages: PipelineShaderStages,
     ) -> Self {
-        Self::_new(out_id, shader_set_id)
+        Self::_new(out_id, shader_stages)
     }
 
     /// Creates a new [`GraphicsPipelineCreateInfo`] from a [`GraphicsPipelineCreateTemplate`].
@@ -107,10 +109,9 @@ impl<Meta: Send + Sync> base::Template<Meta> {
     fn cast<T: Send + Sync>(self, meta: T) -> base::Template<T> {
         base::Template {
             meta,
-            shader_set_id: self.shader_set_id,
+            shader_stages: self.shader_stages,
+            vertex_input_state: self.vertex_input_state,
             dynamic_states: self.dynamic_states,
-            vertex_input_bindings: self.vertex_input_bindings,
-            vertex_input_attributes: self.vertex_input_attributes,
             polygon_mode: self.polygon_mode,
             cull_mode: self.cull_mode,
             front_face: self.front_face,
@@ -130,14 +131,13 @@ impl<Meta: Send + Sync> base::Template<Meta> {
         }
     }
 
-    fn _new(meta: Meta, shader_set_id: ShaderSetId) -> Self {
+    fn _new(meta: Meta, shader_stages: PipelineShaderStages) -> Self {
         Self {
             meta,
-            shader_set_id,
+            shader_stages,
+            vertex_input_state: Some(default()),
             dynamic_states: vec32![],
             color_outputs: vec32![],
-            vertex_input_bindings: vec32![],
-            vertex_input_attributes: vec32![],
             polygon_mode: PolygonMode::default(),
             cull_mode: CullModes::default(),
             front_face: FrontFace::default(),
@@ -170,69 +170,21 @@ impl<Meta: Send + Sync> base::Template<Meta> {
     pub fn with_shader_set(mut self, id: ShaderSetId) -> Self {
         self.shader_set_id = id;
         self
-    }
+    } 
 
-    /// Adds vertex input to the pipeline.
+    /// Adds [`dynamic states`][1] to the pipeline.
     ///
-    /// The binding must be unique and input [`locations`][1].
+    /// Dynamic states indicate which pipeline state is taken from dynamic state
+    /// [`commands`][2].
     ///
-    /// [1]: VertexInputAttribute::locationv
-    pub fn with_vertex_input(
-        mut self,
-        binding: VertexInputBinding,
-        attributes: &mut [VertexInputAttribute],
-    ) -> Result<Self> {
-        if self.vertex_input_bindings
-            .iter()
-            .any(|b| binding.binding == b.binding)
-        {
-            return Err(Error::just_context(format!(
-                "binding {} already exists in pipeline", binding.binding
-            )))
-        }
-        self.vertex_input_bindings.push(binding);
-        if attributes.is_empty() {
-            return Ok(self)
-        }
-        attributes.sort_unstable_by_key(|a| a.location);
-        if let Some((_, attr)) = attributes[0..attributes.len() - 1]
-            .iter().enumerate()
-            .find(|&(i, a)|
-                attributes[i + 1..]
-                    .iter()
-                    .any(|b| a.location == b.location)
-            )
-        {
-            return Err(Error::just_context(format!(
-                "location {} duplicated in attributes",
-                attr.location,
-            )))
-        }
-        let first_location = unsafe {
-            attributes.first().unwrap_unchecked()
-        }.location;
-        let last_location = unsafe {
-            attributes.last().unwrap_unchecked()
-        }.location;
-        for attr in self.vertex_input_attributes.iter().copied() {
-            if attr.location >= first_location &&
-                attr.location <= last_location
-            {
-                return Err(Error::just_context(format!(
-                    "location {} already exists in pipeline", attr.location
-                )))
-            }
-        }
-        self.vertex_input_attributes
-            .extend(attributes.iter().map(|attr|
-                attr.into_internal(binding.binding
-            )));
-        Ok(self)
-    }
-
+    /// [1]: DynamicState
+    /// [2]: Gpu::schedule_commands
     #[inline]
-    pub fn with_dynamic_states(mut self, dynamic_state: &[DynamicState]) -> Self {
-        self.dynamic_states.fast_append(dynamic_state);
+    pub fn with_dynamic_states<D>(mut self, states: D) -> Self
+        where
+            D: IntoIterator<Item = DynamicState>
+    {
+        self.dynamic_states.extend(states);
         self
     }
 
@@ -415,7 +367,7 @@ impl<Meta: Send + Sync> base::Template<Meta> {
             Alloc: LocalAlloc<Error = arena::Error> + Sync,
     {
         let shader_set = gpu
-            .get_shader_set(self.shader_set_id)
+            .get_shader_set(self.shader_stages.shader_set_id)
             .await?;
 
         let shaders = shader_set.shaders();
@@ -492,6 +444,19 @@ impl<Meta: Send + Sync> base::Template<Meta> {
 
         let depth_bias_info = self.depth_bias_info.unwrap_or_default();
 
+        if !gpu.is_feature_enabled(vulkan_10::wide_lines::NAME) &&
+            self.line_width != 1.0
+        {
+            return Err(Error::just_context(format!(
+                "line width is not equal to 1.0 and wide lines base device feature is not enabled"
+            )))
+        }
+
+        if !gpu.is_feature_enabled(vulkan_10::fill_mode_non_solid::NAME) &&
+            !matches!(self.polygon_mode, PolygonMode::Fill | PolygonMode::FillRectangleNv)
+        {
+        }
+
         let rasterization_state = vk::PipelineRasterizationStateCreateInfo {
             s_type: vk::StructureType::PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
             depth_clamp_enable: self.depth_clamp.into(),
@@ -503,18 +468,35 @@ impl<Meta: Send + Sync> base::Template<Meta> {
             depth_bias_constant_factor: depth_bias_info.constant_factor,
             depth_bias_clamp: depth_bias_info.clamp,
             depth_bias_slope_factor: depth_bias_info.slope_factor,
-            line_width: 1.0,
+            line_width: self.line_width,
             ..Default::default()
         };
 
         let sample_shading_info = self.sample_shading_info.unwrap_or_default();
+
+        if sample_shading_info.samples.count_ones() != 1 {
+            return Err(Error::just_context(format!(
+                "invalid multisample count {}", sample_shading_info.samples,
+            )))
+        }
 
         let multisample_state = vk::PipelineMultisampleStateCreateInfo {
             s_type: vk::StructureType::PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
             rasterization_samples: sample_shading_info.samples.into(),
             sample_shading_enable: self.sample_shading_info.is_some().into(),
             min_sample_shading: sample_shading_info.min_shading,
-            p_sample_mask: core::ptr::null(),
+            p_sample_mask: match &sample_shading_info.sample_mask {
+                Some(mask) => {
+                    if mask.len() != sample_shading_info.samples.as_raw().div_ceil(32) as usize {
+                        return Err(Error::just_context(format!(
+                            "sample mask length {} is not equal to {}.div_ceil(32)",
+                            mask.len(), sample_shading_info.samples.as_raw(),
+                        )))
+                    }
+                    mask.as_ptr()
+                },
+                None => core::ptr::null(),
+            },
             alpha_to_coverage_enable: sample_shading_info.alpha_to_coverage.into(),
             alpha_to_one_enable: sample_shading_info.alpha_to_one.into(),
             ..Default::default()
@@ -525,6 +507,13 @@ impl<Meta: Send + Sync> base::Template<Meta> {
         let stencil_test_info = depth_stencil_info.stencil_test_info.unwrap_or_default();
 
         let depth_bounds = depth_stencil_info.depth_bounds.unwrap_or_default();
+
+        if depth_bounds.min > depth_bounds.max {
+            return Err(Error::just_context(format!(
+                "min depth bounds {} is greater than max depth bounds {}",
+                depth_bounds.min, depth_bounds.max,
+            )))
+        }
 
         let depth_stencil_state = vk::PipelineDepthStencilStateCreateInfo {
             s_type: vk::StructureType::PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
@@ -677,7 +666,10 @@ impl<Meta: Send + Sync> base::Template<Meta> {
 
         Ok((PreparedCreateInfos {
             shader_stage_infos,
-            vertex_input_state,
+            vertex_input_state: match self.vertex_input_state {
+                Some(state) => Some(state.prepare_infos(gpu, alloc)?),
+                None => None,
+            },
             input_assembly_state,
             tesellation_state,
             rasterization_state,
@@ -704,9 +696,10 @@ pub(crate) struct PreparedCreateInfos<'a, Alloc>
     where Alloc: LocalAlloc,
 {
     pub shader_stage_infos: NonNullVec32<'a, vk::PipelineShaderStageCreateInfo<'static>>,
-    pub vertex_input_state: vk::PipelineVertexInputStateCreateInfo<'static>,
+    pub vertex_input_state: Option<PipelineVertexInputStateInfos<'a, Alloc>>,
     pub input_assembly_state: vk::PipelineInputAssemblyStateCreateInfo<'static>,
-    pub tesellation_state: vk::PipelineTessellationStateCreateInfo<'static>,
+    pub tessellation_state: vk::PipelineTessellationStateCreateInfo<'static>,
+    pub tessellation_domain_origin_state: vk::PipelineTessellationDomainOriginStateCreateInfo<'static>,
     pub viewport_state: vk::PipelineViewportStateCreateInfo<'static>,
     pub rasterization_state: vk::PipelineRasterizationStateCreateInfo<'static>,
     pub multisample_state: vk::PipelineMultisampleStateCreateInfo<'static>,
@@ -715,14 +708,38 @@ pub(crate) struct PreparedCreateInfos<'a, Alloc>
     pub dynamic_state: vk::PipelineDynamicStateCreateInfo<'static>,
     pub rendering_info: vk::PipelineRenderingCreateInfo<'static>,
     pub layout: vk::PipelineLayout,
-    pub robustness_info: vk::PipelineRobustnessCreateInfo<'static>,
+    pub _robustness_info: NonNullVec32<'a, vk::PipelineRobustnessCreateInfo<'static>>,
     pub _color_blend_attachment_state: NonNullVec32<'a, vk::PipelineColorBlendAttachmentState>,
     pub _vertex_input_bindings: NonNullVec32<'a, vk::VertexInputBindingDescription>,
     pub _vertex_input_attributes: NonNullVec32<'a, vk::VertexInputAttributeDescription>,
+    pub _vertex_input_divisor_state_create_info: NonNull<vk::PipelineVertexInputDivisorStateCreateInfo<'static>>,
+    pub _vertex_divisors: NonNullVec32<'a, vk::VertexInputBindingDivisorDescription>,
     pub _dynamic_states: NonNullVec32<'a, vk::DynamicState>,
     pub _color_output_formats: NonNullVec32<'a, vk::Format>,
-    pub _spec_info: NonNullVec32<'a, (ShaderStage, vk::SpecializationInfo)>,
+    pub _spec_info: NonNullVec32<'a, vk::SpecializationInfo>,
+    pub _required_subgroup_size: NonNullVec32<'a, vk::PipelineShaderStageRequiredSubgroupSizeCreateInfo<'static>>,
     pub alloc: &'a Alloc,
+}
+
+impl<Alloc> Drop for PreparedCreateInfos<'_, Alloc>
+    where Alloc: LocalAlloc,
+{
+
+    fn drop(&mut self) {
+        unsafe {
+            self.shader_stage_infos.drop_and_free(self.alloc);
+            self._robustness_info.drop_and_free(self.alloc);
+            self._color_blend_attachment_state.drop_and_free(self.alloc);
+            self._vertex_input_bindings.drop_and_free(self.alloc);
+            self._vertex_input_attributes.drop_and_free(self.alloc);
+            self.alloc.free_uninit(self._vertex_input_divisor_state_create_info, 1);
+            self._vertex_divisors.drop_and_free(self.alloc);
+            self._dynamic_states.drop_and_free(self.alloc);
+            self._color_output_formats.drop_and_free(self.alloc);
+            self._spec_info.drop_and_free(self.alloc);
+            self._required_subgroup_size.drop_and_free(self.alloc);
+        }
+    }
 }
 
 unsafe impl<Alloc> Send for PreparedCreateInfos<'_, Alloc>
@@ -745,7 +762,7 @@ impl<'a, Alloc> PreparedCreateInfos<'a, Alloc>
             p_stages: self.shader_stage_infos.as_ptr(),
             p_vertex_input_state: &self.vertex_input_state,
             p_input_assembly_state: &self.input_assembly_state,
-            p_tessellation_state: &self.tesellation_state,
+            p_tessellation_state: &self.tessellation_state,
             p_viewport_state: &self.viewport_state,
             p_rasterization_state: &self.rasterization_state,
             p_multisample_state: &self.multisample_state,
@@ -754,22 +771,6 @@ impl<'a, Alloc> PreparedCreateInfos<'a, Alloc>
             p_dynamic_state: &self.dynamic_state,
             layout: self.layout,
             ..Default::default()
-        }
-    }
-}
-
-impl<Alloc> Drop for PreparedCreateInfos<'_, Alloc>
-    where Alloc: LocalAlloc,
-{
-
-    fn drop(&mut self) {
-        unsafe {
-            self.shader_stage_infos.drop_and_free(self.alloc);
-            self._color_blend_attachment_state.drop_and_free(self.alloc);
-            self._vertex_input_bindings.drop_and_free(self.alloc);
-            self._vertex_input_attributes.drop_and_free(self.alloc);
-            self._dynamic_states.drop_and_free(self.alloc);
-            self._color_output_formats.drop_and_free(self.alloc);
         }
     }
 }

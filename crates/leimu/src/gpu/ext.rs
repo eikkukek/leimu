@@ -16,7 +16,8 @@
 //! - [`VK_KHR_maintenance5`][13]
 //! - [`VK_KHR_maintenance6`][14]
 //! - [`VK_KHR_present_id2`][15]
-//! - [`VK_KHR_present_wait2`][16]
+//! - [`VK_KHR_separate_depth_stencil_layouts`][19]
+//! - [`VK_EXT_separate_stencil_usage`][20]
 //!
 //! # Provided extensions
 //! The following device extensions have been implemented for Leimu and *can* be enabled by
@@ -28,10 +29,14 @@
 //! - [`VK_EXT_pipeline_robustness`][pipeline_robustness]
 //! - [`VK_EXT_descriptor_indexing`][descriptor_indexing]
 //! - [`VK_EXT_mesh_shader`][mesh_shader]
+//! - [`VK_EXT_extended_dynamic_state2`][extended_dynamic_state2]
+//! - [`VK_EXT_extended_dynamic_state3`][extended_dynamic_state3]
 //!
 //! # Future extensions
-//!  *can* be enabled, but doesn't yet have a high level
-//! interface for usage in commands.
+//! These extensions will be added once driver support is more wide spread:
+//! - [`VK_EXT_present_timing`][16]: gives the ability to schedule present operations to happen at a
+//!   specific time.
+//! - [`VK_EXT_descriptor_heap`][17]: replaces [`descriptor sets`][17] with new descriptor heaps.
 //!
 //! [1]: https://docs.vulkan.org/refpages/latest/refpages/source/VK_KHR_timeline_semaphore.html
 //! [2]: BaseDeviceFeatures::multi_viewport
@@ -48,7 +53,10 @@
 //! [13]: https://docs.vulkan.org/refpages/latest/refpages/source/VK_KHR_maintenance5.html
 //! [14]: https://docs.vulkan.org/refpages/latest/refpages/source/VK_KHR_maintenance6.html
 //! [15]: https://docs.vulkan.org/refpages/latest/refpages/source/VK_KHR_present_id2.html
-//! [16]: https://docs.vulkan.org/refpages/latest/refpages/source/VK_KHR_present_wait2.html
+//! [17]: https://docs.vulkan.org/refpages/latest/refpages/source/VK_EXT_descriptor_heap.html
+//! [18]: Gpu::allocate_descriptor_sets
+//! [19]: https://docs.vulkan.org/refpages/latest/refpages/source/VK_KHR_separate_depth_stencil_layouts.html
+//! [20]: https://docs.vulkan.org/refpages/latest/refpages/source/VK_EXT_separate_stencil_usage.html
 
 mod core;
 pub mod push_descriptor;
@@ -59,7 +67,9 @@ pub mod robustness2;
 pub mod pipeline_robustness;
 pub mod descriptor_indexing;
 pub mod mesh_shader;
-pub mod descriptor_heap;
+pub mod extended_dynamic_state2;
+pub mod extended_dynamic_state3;
+//pub mod descriptor_heap;
 
 pub(crate) use core::core_extensions;
 
@@ -72,7 +82,8 @@ use {
         ops::{Deref, DerefMut},
         mem,
         ptr::NonNull,
-        fmt::{self, Display},
+        fmt::{self, Display, Debug},
+        marker::PhantomData,
     },
     ahash::{AHashSet, AHashMap},
     tuhka::{
@@ -88,551 +99,538 @@ use {
     },
 };
 
-pub trait ExtendsDeviceCreateInfoExt {
-
-    fn s_type(&self) -> vk::StructureType;
-    fn as_mut(&mut self) -> &mut dyn vk::ExtendsDeviceCreateInfo;
-    fn to_obj(&self) -> ExtendsDeviceCreateInfoObj;
-}
-
-pub struct ExtendsDeviceCreateInfoObj(Box<dyn ExtendsDeviceCreateInfoExt>);
-
-impl ExtendsDeviceCreateInfoObj {
-
-    #[inline]
-    pub fn new<T>(x: T) -> Self
-        where T: ExtendsDeviceCreateInfoExt + 'static
-    {
-        Self(Box::new(x))
-    }
-}
-
-impl<T> ExtendsDeviceCreateInfoExt for T
-    where T:
-        vk::ExtendsDeviceCreateInfo +
-        Clone + Copy + 'static
-{
-    fn s_type(&self) -> vk::StructureType {
-        self.base_in()
-            .s_type
-    }
-
-    fn as_mut(&mut self) -> &mut dyn vk::ExtendsDeviceCreateInfo {
-        self
-    }
-
-    fn to_obj(&self) -> ExtendsDeviceCreateInfoObj {
-        ExtendsDeviceCreateInfoObj::new(*self)
-    }
-}
-
-impl Deref for ExtendsDeviceCreateInfoObj {
-
-    type Target = dyn ExtendsDeviceCreateInfoExt;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &*self.0
-    }
-}
-
-impl DerefMut for ExtendsDeviceCreateInfoObj {
-
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut *self.0
-    }
-}
-
+/// Specifies requirements of a particular feature.
 #[derive(Clone, Copy)]
-pub enum RobustAccessRequirements {
-    NotRequired,
-    Required,
-    Enabled,
+pub enum FeatureRequirements {
+    /// Support for the feature isn't checked.
+    DontCare,
+    /// The feature is required.
+    Require,
+    /// The feature is required and enabled.
+    Enable,
 }
 
-impl RobustAccessRequirements {
+impl FeatureRequirements {
 
     #[inline]
     pub fn is_required(self) -> bool {
-        matches!(self, Self::Required | Self::Enabled)
+        matches!(self, Self::Require | Self::Enable)
     }
 }
 
-#[derive(Debug)]
-pub struct MissingDeviceFeatureError {
-    missing: String,
-}
+pub mod prelude {
 
-impl Display for MissingDeviceFeatureError {
+    use super::*; 
 
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.missing)
-    }
-}
-
-impl MissingDeviceFeatureError {
-
-    #[inline]
-    pub fn new(missing_features: &str) -> Self
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    pub struct AttributeName<T>
+        where T: Any + Send + Sync
     {
-        Self {
-            missing: missing_features.to_string(),
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct ConstName {
-    name: &'static str,
-    hash: u64,
-}
-
-impl Display for ConstName {
-
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.name)
-    }
-}
-
-impl ConstName {
-
-    /// Uses 64-bit FNV-1 hash.
-    pub const fn new(name: &'static str) -> Self {
-        let mut hash = 0xcbf29ce484222325u64;
-        let len = name.len();
-        let bytes = name.as_bytes();
-        let mut i = 0;
-        while i < len {
-            hash ^= bytes[i] as u64;
-            hash = hash.wrapping_mul(0x00000100000001b3u64);
-            i += 1;
-        }
-        Self {
-            name,
-            hash,
-        }
-    }
-}
-
-impl Hash for ConstName {
-
-    #[inline]
-    fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        self.hash.hash(state);
-    }
-}
-
-impl PartialEq for ConstName {
-
-    #[inline]
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-    }
-}
-
-impl Eq for ConstName {}
-
-enum AttributeType {
-    None,
-    Bool(bool),
-    U32(u32),
-    I32(i32),
-    DeviceSize(vk::DeviceSize),
-    Structure(Box<dyn Any + Send + Sync>),
-}
-
-pub struct DeviceAttribute {
-    name: ConstName,
-    ty: AttributeType,
-}
-
-impl DeviceAttribute {
-
-    #[inline]
-    const fn empty() -> Self {
-        Self {
-            name: ConstName::new(""),
-            ty: AttributeType::None,
-        }
+        name: ConstName,
+        _marker: PhantomData<T>,
     }
 
-    #[inline]
-    pub fn new_bool(name: ConstName, value: bool) -> Self {
-        Self {
-            name,
-            ty: AttributeType::Bool(value),
-        }
-    }
+    impl<T> AttributeName<T> 
+        where T: Any + Send + Sync
+    {
 
-    #[inline]
-    pub fn new_u32(name: ConstName, value: u32) -> Self {
-        Self {
-            name,
-            ty: AttributeType::U32(value),
-        }
-    }
-
-    #[inline]
-    pub fn new_i32(name: ConstName, value: i32) -> Self {
-        Self {
-            name,
-            ty: AttributeType::I32(value),
-        }
-    }
-
-    #[inline]
-    pub fn new_device_size(name: ConstName, value: vk::DeviceSize) -> Self {
-        Self {
-            name,
-            ty: AttributeType::DeviceSize(value),
-        }
-    }
-
-    #[inline]
-    pub fn new_structure<
-        T: Any + Send + Sync
-    >(name: ConstName, value: T) -> Self {
-        Self {
-            name,
-            ty: AttributeType::Structure(Box::new(value)),
-        }
-    }
-
-    #[inline]
-    pub fn bool(&self) -> Option<bool> {
-        match self.ty {
-            AttributeType::Bool(value) => Some(value),
-            _ => None,
-        }
-    }
-
-    #[inline]
-    pub fn u32(&self) -> Option<u32> {
-        match self.ty {
-            AttributeType::U32(value) => Some(value),
-            _ => None,
-        }
-    }
-
-    #[inline]
-    pub fn i32(&self) -> Option<i32> {
-        match self.ty {
-            AttributeType::I32(value) => Some(value),
-            _ => None,
-        }
-    }
-
-    #[inline]
-    pub fn device_size(&self) -> Option<vk::DeviceSize> {
-        match self.ty {
-            AttributeType::DeviceSize(value) => Some(value),
-            _ => None,
-        }
-    }
-
-    #[inline]
-    pub fn structure<T: Any>(&self) -> Option<&T> {
-        match &self.ty {
-            AttributeType::Structure(value) => {
-                if value.is::<T>() {
-                    let ptr: *const dyn Any = value.as_ref();
-                    Some(unsafe {
-                        &*ptr.cast()
-                    })
-                } else {
-                    None
-                }
+        #[inline]
+        pub const fn new(name: &'static str) -> Self {
+            Self {
+                name: ConstName::new(name),
+                _marker: PhantomData,
             }
-            _ => None,
+        }
+
+        #[inline]
+        pub const fn name(&self) -> &ConstName {
+            &self.name
+        }
+    }
+
+    impl<T> Debug for AttributeName<T>
+        where T: Any + Send + Sync
+    {
+
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            Debug::fmt(&self.name, f)
+        }
+    }
+
+    impl<T> Display for AttributeName<T>
+        where T: Any + Send + Sync
+    {
+
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            Display::fmt(&self.name, f)
+        }
+    }
+
+    pub struct Attribute {
+        name: ConstName,
+        inner: Box<dyn Any + Send + Sync>,
+    }
+
+    impl Attribute {
+
+        #[inline]
+        pub fn new<T>(
+            name: AttributeName<T>,
+            value: T,
+        ) -> Self
+            where T: Any + Send + Sync
+        {
+            Self {
+                name: *name.name(),
+                inner: Box::new(value),
+            }
+        }
+
+        #[inline]
+        pub fn get<T: Any>(&self) -> Option<&T> {
+            let value = self.inner.as_ref();
+            if value.is::<T>() {
+                let ptr: *const dyn Any = value;
+                Some(unsafe {
+                    &*ptr.cast()
+                })
+            } else {
+                None
+            }
+        }
+    }
+
+    impl PartialEq for Attribute {
+        
+        #[inline]
+        fn eq(&self, other: &Self) -> bool {
+            self.name == other.name
+        }
+    }
+
+    impl Eq for Attribute {}
+
+    impl Hash for Attribute {
+
+        #[inline]
+        fn hash<H: hash::Hasher>(&self, state: &mut H) {
+            self.name.hash(state);
+        }
+    }
+
+    impl Borrow<ConstName> for Attribute {
+        
+        #[inline]
+        fn borrow(&self) -> &ConstName {
+            &self.name
         }
     }
 }
 
-impl Default for &DeviceAttribute {
+use prelude::*;
 
-    #[inline]
-    fn default() -> Self {
-        static DEFAULT: DeviceAttribute = DeviceAttribute::empty();
-        &DEFAULT
-    }
-}
+/// Prelude for implementing new device extensions.
+pub mod device {
 
-impl PartialEq for DeviceAttribute {
-    
-    #[inline]
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-    }
-}
+    use leimu_mem::vec::ArrayVec;
 
-impl Eq for DeviceAttribute {}
+    use crate::default;
 
-impl Hash for DeviceAttribute {
+    use super::*;
 
-    #[inline]
-    fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
-    }
-}
+    pub trait ExtendsDeviceCreateInfoExt {
 
-impl Borrow<ConstName> for DeviceAttribute {
-    
-    #[inline]
-    fn borrow(&self) -> &ConstName {
-        &self.name
-    }
-}
-
-/// A trait for cloning [`ExtensionDevice`] trait objects.
-pub trait AnyExtensionDevice: Any + Send + Sync {
-
-    /// Clones self to a [`Box`].
-    fn boxed(&self) -> Box<dyn AnyExtensionDevice>;
-}
-
-pub struct ExtensionDeviceObj(Box<dyn AnyExtensionDevice>);
-
-impl Deref for ExtensionDeviceObj {
-
-    type Target = dyn Any;
-    
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &*self.0
-    }
-}
-
-impl Clone for ExtensionDeviceObj {
-
-    #[inline]
-    fn clone(&self) -> Self {
-        Self(self.0.boxed())
-    }
-}
-
-/// A trait for a extension's device-level functions.
-pub trait ExtensionDevice: AnyExtensionDevice + Clone {
-
-    /// The name hash for the device.
-    const NAME: ConstName;
-
-    /// Precondition for using the device.
-    ///
-    /// Should return `true` when the precondition is met.
-    fn precondition<'a, F>(f: F) -> bool
-        where F: Fn(&ConstName) -> Option<&'a DeviceAttribute>;
-
-    /// Creates a new Device from [`Device`].
-    fn new(device: &Device) -> Box<Self>;
-}
-
-#[derive(Default)]
-pub struct EnabledDeviceExtensions {
-    attributes: AHashSet<DeviceAttribute>,
-    extension_devices: Mutex<AHashMap<ConstName, ExtensionDeviceObj>>
-}
-
-impl EnabledDeviceExtensions {
-
-    #[inline]
-    pub fn new() -> Self {
-        Self::default()
-    }
-    
-    #[inline]
-    pub fn add_attribute(&mut self, property: DeviceAttribute) {
-        self.attributes.insert(property);
+        fn s_type(&self) -> vk::StructureType;
+        fn as_mut(&mut self) -> &mut dyn vk::ExtendsDeviceCreateInfo;
+        fn to_obj(&self) -> ExtendsDeviceCreateInfoObj;
     }
 
-    #[inline]
-    pub fn get_attribute(&self, name: ConstName) -> &DeviceAttribute {
-        self.attributes
-            .get(&name)
-            .unwrap_or_default()
-    }
-
-    #[inline]
-    pub(crate) fn get_device<T: ExtensionDevice + 'static>(
-        &self,
-        device: &Device,
-    ) -> Option<&T>
+    impl<T> ExtendsDeviceCreateInfoExt for T
+        where T:
+            vk::ExtendsDeviceCreateInfo +
+            Clone + Copy + 'static
     {
-        let mut devices = self.extension_devices.lock();
-        let obj = devices.entry(T::NAME)
-            .or_try_insert_with(|| {
-                if !T::precondition(|name| {
-                    self.attributes.get(name)
-                }) {
-                    return Err(format!(
-                        "precondition for {} not met", T::NAME.name
-                    ))
-                }
-                Ok(ExtensionDeviceObj(T::new(device)))
-            }).inspect_err(|err| {
-                log::debug!("{}", err);
-            }).ok()?;
-        obj.is::<T>().then(|| unsafe {
-            mem::transmute::<
-                &dyn AnyExtensionDevice,
-                (NonNull<T>, *const ())
-            >(obj.0.deref()).0
-            .as_ref()
-        })
+        fn s_type(&self) -> vk::StructureType {
+            self.base_in()
+                .s_type
+        }
+
+        fn as_mut(&mut self) -> &mut dyn vk::ExtendsDeviceCreateInfo {
+            self
+        }
+
+        fn to_obj(&self) -> ExtendsDeviceCreateInfoObj {
+            ExtendsDeviceCreateInfoObj::new(*self)
+        }
     }
-}
 
-pub struct PhysicalDeviceContext<'a> {
-    instance: &'a Instance,
-    physical_device: &'a PhysicalDevice,
-    vulkan_12_features: &'a mut Option<vk::PhysicalDeviceVulkan12Features<'static>>,
-    vulkan_14_features: &'a mut Option<vk::PhysicalDeviceVulkan14Features<'static>>,
-    enabled_extensions: Option<&'a mut EnabledDeviceExtensions>,
-}
+    pub struct ExtendsDeviceCreateInfoObj(Box<dyn ExtendsDeviceCreateInfoExt>);
 
-impl<'a> PhysicalDeviceContext<'a> {
+    impl ExtendsDeviceCreateInfoObj {
 
-    #[inline]
-    pub fn new(
+        #[inline]
+        pub fn new<T>(x: T) -> Self
+            where T: ExtendsDeviceCreateInfoExt + 'static
+        {
+            Self(Box::new(x))
+        }
+    }
+
+    impl Deref for ExtendsDeviceCreateInfoObj {
+
+        type Target = dyn ExtendsDeviceCreateInfoExt;
+
+        #[inline]
+        fn deref(&self) -> &Self::Target {
+            &*self.0
+        }
+    }
+
+    impl DerefMut for ExtendsDeviceCreateInfoObj {
+
+        #[inline]
+        fn deref_mut(&mut self) -> &mut Self::Target {
+            &mut *self.0
+        }
+    } 
+
+    #[derive(Debug)]
+    pub struct MissingDeviceFeatureError {
+        missing: String,
+    }
+
+    impl Display for MissingDeviceFeatureError {
+
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{}", self.missing)
+        }
+    }
+
+    impl MissingDeviceFeatureError {
+
+        #[inline]
+        pub fn new(missing_features: &str) -> Self
+        {
+            Self {
+                missing: missing_features.to_string(),
+            }
+        }
+    }
+
+    /// A trait for cloning [`ExtensionDevice`] trait objects.
+    pub trait AnyExtensionDevice: Any + Send + Sync {
+
+        /// Clones self to a [`Box`].
+        fn boxed(&self) -> Box<dyn AnyExtensionDevice>;
+    }
+
+    pub struct ExtensionDeviceObj(Box<dyn AnyExtensionDevice>);
+
+    impl Deref for ExtensionDeviceObj {
+
+        type Target = dyn Any;
+        
+        #[inline]
+        fn deref(&self) -> &Self::Target {
+            &*self.0
+        }
+    }
+
+    impl Clone for ExtensionDeviceObj {
+
+        #[inline]
+        fn clone(&self) -> Self {
+            Self(self.0.boxed())
+        }
+    }
+
+    /// A trait for a extension's device-level functions.
+    pub trait ExtensionDevice: AnyExtensionDevice + Clone {
+
+        /// The name hash of the extension this device comes from.
+        const EXT_NAME: ConstName;
+
+        /// Creates a new Device from [`Device`].
+        fn new(device: &Device) -> Box<Self>;
+    }
+
+    pub struct EnabledDeviceExtensions {
+        attributes: AHashSet<Attribute>,
+        enabled_extensions: AHashSet<ConstName>,
+        supported_dynamic_state: ArrayVec<DynamicState, {DynamicState::VARIANT_COUNT}>,
+        extension_devices: Mutex<AHashMap<ConstName, ExtensionDeviceObj>>
+    }
+
+    impl EnabledDeviceExtensions {
+
+        #[inline]
+        pub fn new() -> Self {
+            Self {
+                attributes: default(),
+                enabled_extensions: default(),
+                supported_dynamic_state: [
+                    DynamicState::LineWidth,
+                    DynamicState::DepthBias,
+                    DynamicState::BlendConstants,
+                    DynamicState::DepthBounds,
+                    DynamicState::StencilCompareMask,
+                    DynamicState::StencilWriteMask,
+                    DynamicState::StencilReference,
+                ].into_iter().collect(),
+                extension_devices: default(),
+            }
+        }
+
+        #[inline]
+        pub(crate) fn add_extension(
+            &mut self,
+            name: ConstName
+        ) -> bool {
+            self.enabled_extensions.insert(name)
+        }
+
+        #[inline]
+        pub fn contains_extension(
+            &self,
+            name: &ConstName
+        ) -> bool {
+            self.enabled_extensions.contains(&name)
+        }
+        
+        #[inline]
+        pub fn add_attribute(&mut self, property: Attribute) {
+            self.attributes.insert(property);
+        }
+
+        #[inline]
+        pub fn get_attribute(&self, name: &ConstName) -> &Attribute {
+            self.attributes
+                .get(&name)
+                .unwrap_or_default()
+        }
+
+        #[inline]
+        pub fn add_supported_dynamic_state(&mut self, state: DynamicState) {
+            if !self.supported_dynamic_state.contains(&state) {
+                self.supported_dynamic_state.push(state);
+            }
+        }
+
+        #[inline]
+        pub fn contains_dynamic_state(&self, state: DynamicState) -> bool {
+            self.supported_dynamic_state.contains(&state)
+        }
+
+        #[inline]
+        pub(crate) fn get_device<T: ExtensionDevice + 'static>(
+            &self,
+            device: &Device,
+        ) -> Option<&T>
+        {
+            let mut devices = self.extension_devices.lock();
+            let obj = devices.entry(T::EXT_NAME)
+                .or_try_insert_with(|| {
+                    if !self.enabled_extensions.contains(&T::EXT_NAME) {
+                        return Err(format!("extension {} not enabled", T::EXT_NAME))
+                    }
+                    Ok(ExtensionDeviceObj(T::new(device)))
+                }).inspect_err(|err| {
+                    log::debug!("{}", err);
+                }).ok()?;
+            obj.is::<T>().then(|| unsafe {
+                mem::transmute::<
+                    &dyn AnyExtensionDevice,
+                    (NonNull<T>, *const ())
+                >(obj.0.deref()).0
+                .as_ref()
+            })
+        }
+    }
+
+    pub struct PhysicalDeviceContext<'a> {
         instance: &'a Instance,
         physical_device: &'a PhysicalDevice,
         vulkan_12_features: &'a mut Option<vk::PhysicalDeviceVulkan12Features<'static>>,
+        vulkan_13_features: &'a mut Option<vk::PhysicalDeviceVulkan13Features<'static>>,
         vulkan_14_features: &'a mut Option<vk::PhysicalDeviceVulkan14Features<'static>>,
         enabled_extensions: Option<&'a mut EnabledDeviceExtensions>,
-    ) -> Self {
-        Self {
-            instance,
-            physical_device,
-            vulkan_12_features,
-            vulkan_14_features,
-            enabled_extensions,
+    }
+
+    impl<'a> PhysicalDeviceContext<'a> {
+
+        #[inline]
+        pub fn new(
+            instance: &'a Instance,
+            physical_device: &'a PhysicalDevice,
+            vulkan_12_features: &'a mut Option<vk::PhysicalDeviceVulkan12Features<'static>>,
+            vulkan_13_features: &'a mut Option<vk::PhysicalDeviceVulkan13Features<'static>>,
+            vulkan_14_features: &'a mut Option<vk::PhysicalDeviceVulkan14Features<'static>>,
+            enabled_extensions: Option<&'a mut EnabledDeviceExtensions>,
+        ) -> Self {
+            Self {
+                instance,
+                physical_device,
+                vulkan_12_features,
+                vulkan_13_features,
+                vulkan_14_features,
+                enabled_extensions,
+            }
+        }
+
+        #[inline]
+        pub fn api_version(&self) -> Version {
+            self.physical_device.api_version()
+        }
+
+        #[inline]
+        pub fn get_features<T>(
+            &self,
+            out: &mut T
+        ) where T: vk::ExtendsPhysicalDeviceFeatures2,
+        {
+            let mut features = vk::PhysicalDeviceFeatures2
+                ::default()
+                .push_next(out);
+            unsafe {
+                self.instance.get_physical_device_features2(
+                    self.physical_device.handle(), &mut features,
+                );
+            }
+        }
+
+        #[inline]
+        pub fn get_properties<T>(
+            &self,
+            out: &mut T,
+        ) where T: vk::ExtendsPhysicalDeviceProperties2,
+        {
+            let mut properties = vk::PhysicalDeviceProperties2
+                ::default()
+                .push_next(out);
+            unsafe {
+                self.instance.get_physical_device_properties2(
+                    self.physical_device.handle(),
+                    &mut properties
+                );
+            }
+        }
+
+        #[inline]
+        pub fn vulkan_12_features(&mut self) -> &mut vk::PhysicalDeviceVulkan12Features<'static> {
+            self.vulkan_12_features.get_or_insert_default()
+        }
+
+        #[inline]
+        pub fn vulkan_13_features(&mut self) -> &mut vk::PhysicalDeviceVulkan13Features<'static> {
+            self.vulkan_13_features.get_or_insert_default()
+        }
+
+        #[inline]
+        pub fn vulkan_14_features(&mut self) -> &mut vk::PhysicalDeviceVulkan14Features<'static> {
+            self.vulkan_14_features.get_or_insert_default()
+        }
+
+        #[inline]
+        pub fn register_attribute(&mut self, attribute: Attribute) {
+            self.enabled_extensions.edit(|extensions| {
+                extensions.add_attribute(attribute);
+            });
+        }
+
+        #[inline]
+        pub fn add_supported_dynamic_state<I>(&mut self, states: I)
+            where I: IntoIterator<Item = DynamicState>
+        {
+            self.enabled_extensions.edit(|extensions| {
+                for state in states {
+                    extensions.add_supported_dynamic_state(state);
+                }
+            });
         }
     }
 
-    #[inline]
-    pub fn api_version(&self) -> Version {
-        self.physical_device.api_version()
-    }
+    type FnPrecondition = dyn Fn(&PhysicalDeviceContext<'_>) -> Option<MissingDeviceFeatureError>;
 
-    #[inline]
-    pub fn get_features<T>(
-        &self,
-        out: &mut T
-    ) where T: vk::ExtendsPhysicalDeviceFeatures2,
-    {
-        let mut features = vk::PhysicalDeviceFeatures2
-            ::default()
-            .push_next(out);
-        unsafe {
-            self.instance.get_physical_device_features2(
-                self.physical_device.handle(), &mut features,
-            );
+    pub struct Precondition(Box<FnPrecondition>);
+
+    impl Precondition {
+
+        #[inline]
+        pub fn new<F>(f: F) -> Option<Self>
+            where F: Fn(&PhysicalDeviceContext<'_>) -> Option<MissingDeviceFeatureError> + 'static
+        {
+            Some(Self(Box::new(f)))
+        }
+
+        #[inline]
+        pub fn call(&self, ctx: &PhysicalDeviceContext<'_>) -> Option<MissingDeviceFeatureError> {
+            (self.0)(ctx)
         }
     }
 
+    #[derive(Default)]
+    pub struct DeviceExtensionInfo {
+        pub name: &'static CStr,
+        pub deprecation_version: Version,
+        pub precondition: Option<Precondition>,
+    }
+
+    pub struct RegisteredExtension {
+        pub name: ConstName,
+        pub extends_create_info: Option<ExtendsDeviceCreateInfoObj>,
+    }
+
     #[inline]
-    pub fn get_properties<T>(
-        &self,
-        out: &mut T,
-    ) where T: vk::ExtendsPhysicalDeviceProperties2,
-    {
-        let mut properties = vk::PhysicalDeviceProperties2
-            ::default()
-            .push_next(out);
-        unsafe {
-            self.instance.get_physical_device_properties2(
-                self.physical_device.handle(),
-                &mut properties
-            );
+    pub fn registered_extension(
+        name: ConstName,
+        extends_create_info: Option<ExtendsDeviceCreateInfoObj>,
+    ) -> RegisteredExtension {
+        RegisteredExtension { name, extends_create_info }
+    }
+
+    /// # Safety
+    /// You should only implement this trait if you know what you are doing.
+    pub unsafe trait DeviceExtension: 'static + Send + Sync {
+
+        /// Conditionally gets info about the extension.
+        fn get_info(&self, attributes: &DeviceAttributes) -> Option<DeviceExtensionInfo>;
+
+        /// Registers the extension and optionally returns a structure extending
+        /// [`vk::DeviceCreateInfo`].
+        fn register(
+            &self,
+            ctx: &mut PhysicalDeviceContext<'_>,
+        ) -> RegisteredExtension;
+
+        /// Clones self to a box.
+        fn boxed(&self) -> Box<dyn DeviceExtension>;
+    }
+
+    pub struct DeviceExtensionObj(Box<dyn DeviceExtension>);
+
+    impl From<Box<dyn DeviceExtension>> for DeviceExtensionObj {
+
+        #[inline]
+        fn from(value: Box<dyn DeviceExtension>) -> Self {
+            Self(value)
         }
     }
 
-    #[inline]
-    pub fn vulkan_12_features(&mut self) -> &mut vk::PhysicalDeviceVulkan12Features<'static> {
-        self.vulkan_12_features.get_or_insert_default()
+    impl Clone for DeviceExtensionObj {
+
+        #[inline]
+        fn clone(&self) -> Self {
+            Self(self.0.boxed())
+        }
     }
 
-    #[inline]
-    pub fn vulkan_14_features(&mut self) -> &mut vk::PhysicalDeviceVulkan14Features<'static> {
-        self.vulkan_14_features.get_or_insert_default()
-    }
+    impl Deref for DeviceExtensionObj {
 
-    #[inline]
-    pub fn register_attribute(&mut self, attribute: DeviceAttribute) {
-        self.enabled_extensions.edit(|extensions| {
-            extensions.add_attribute(attribute);
-        });
-    }
-}
+        type Target = dyn DeviceExtension;
 
-type FnPrecondition = dyn Fn(&PhysicalDeviceContext<'_>) -> Option<MissingDeviceFeatureError>;
-
-pub struct Precondition(Box<FnPrecondition>);
-
-impl Precondition {
-
-    #[inline]
-    pub fn new<F>(f: F) -> Option<Self>
-        where F: Fn(&PhysicalDeviceContext<'_>) -> Option<MissingDeviceFeatureError> + 'static
-    {
-        Some(Self(Box::new(f)))
-    }
-
-    #[inline]
-    pub fn call(&self, ctx: &PhysicalDeviceContext<'_>) -> Option<MissingDeviceFeatureError> {
-        (self.0)(ctx)
-    }
-}
-
-#[derive(Default)]
-pub struct DeviceExtensionInfo {
-    pub name: &'static CStr,
-    pub deprecation_version: Version,
-    pub precondition: Option<Precondition>,
-}
-
-/// # Safety
-/// You should only implement this trait if you know what you are doing.
-pub unsafe trait DeviceExtension: 'static + Send + Sync {
-
-    /// Conditionally gets info about the extension.
-    fn get_info(&self, attributes: &DeviceAttributes) -> Option<DeviceExtensionInfo>;
-
-    /// Registers the extension and optionally returns a structure extending
-    /// [`vk::DeviceCreateInfo`].
-    fn register(
-        &self,
-        ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<ExtendsDeviceCreateInfoObj>;
-
-    /// Clones self to a box.
-    fn boxed(&self) -> Box<dyn DeviceExtension>;
-}
-
-pub struct DeviceExtensionObj(Box<dyn DeviceExtension>);
-
-impl From<Box<dyn DeviceExtension>> for DeviceExtensionObj {
-
-    #[inline]
-    fn from(value: Box<dyn DeviceExtension>) -> Self {
-        Self(value)
-    }
-}
-
-impl Clone for DeviceExtensionObj {
-
-    #[inline]
-    fn clone(&self) -> Self {
-        Self(self.0.boxed())
-    }
-}
-
-impl Deref for DeviceExtensionObj {
-
-    type Target = dyn DeviceExtension;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &*self.0
+        #[inline]
+        fn deref(&self) -> &Self::Target {
+            &*self.0
+        }
     }
 }

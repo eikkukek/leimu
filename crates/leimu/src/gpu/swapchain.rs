@@ -24,7 +24,7 @@ pub struct SwapchainFrameData {
     pub extent: (u32, u32),
 }
 
-pub struct Swapchain {
+pub(crate) struct Swapchain {
     image_count: u32,
     images: NonNull<vk::Image>,
     fences: NonNull<vk::Fence>,
@@ -36,7 +36,7 @@ pub struct Swapchain {
     present_id: Option<NonZeroU64>,
 }
 
-pub struct SwapchainImages<'a> {
+pub(crate) struct SwapchainImages<'a> {
     pub handles: &'a [vk::Image],
     pub format: vk::Format,
     pub extent: vk::Extent2D,

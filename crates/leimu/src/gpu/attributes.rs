@@ -12,15 +12,14 @@ use {
 
 use super::{
     ext,
-    BaseDeviceFeatures,
+    features::{DeviceFeature, core_features},
 };
 
-#[derive(Clone)]
 pub struct DeviceAttributes {
-    pub(super) device_extensions: Vec32<ext::DeviceExtensionObj>,
     pub(super) command_workers: u32,
     pub(super) frame_timeout: Duration,
-    pub(super) required_features: BaseDeviceFeatures,
+    pub(super) features: Vec32<DeviceFeature>,
+    pub(super) device_extensions: Vec32<ext::device::DeviceExtensionObj>,
 }
 
 impl DeviceAttributes {
@@ -28,9 +27,9 @@ impl DeviceAttributes {
     /// Adds a [`device extension`][1].
     ///
     /// [1]: ext::DeviceExtension
-    #[inline(always)]
+    #[inline]
     pub fn with_device_extension<Ext>(mut self, extension: Ext) -> Self
-        where Ext: ext::DeviceExtension,
+        where Ext: ext::device::DeviceExtension,
     {
         self.device_extensions.push(extension.boxed().into());
         self
@@ -39,7 +38,7 @@ impl DeviceAttributes {
     /// Sets the number of command pools used by the queue scheduler.
     ///
     /// The default is 4.
-    #[inline(always)]
+    #[inline]
     pub fn with_command_workers(mut self, n: NonZeroU32) -> Self {
         self.command_workers = n.get();
         self
@@ -48,15 +47,17 @@ impl DeviceAttributes {
     /// Sets the timeout used when waiting for work to finish per frame.
     ///
     /// The default is 2 seconds.
-    #[inline(always)]
+    #[inline]
     pub fn with_frame_timeout(mut self, timeout: Duration) -> Self {
         self.frame_timeout = timeout;
         self
     }
 
-    #[inline(always)]
-    pub fn with_required_device_features(mut self, features: BaseDeviceFeatures) -> Self {
-        self.required_features = features;
+    #[inline]
+    pub fn with_features<I>(mut self, features: I) -> Self
+        where I: IntoIterator<Item = DeviceFeature>
+    {
+        self.features.extend(features);
         self
     }
 }
@@ -74,9 +75,9 @@ impl DeviceAttributes {
 pub fn default_device_attributes() -> DeviceAttributes
 {
     DeviceAttributes {
-        device_extensions: vec32![],
         command_workers: 8,
         frame_timeout: Duration::from_secs(2),
-        required_features: BaseDeviceFeatures::default(),
+        features: core_features(),
+        device_extensions: vec32![],
     }
 }

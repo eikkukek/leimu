@@ -7,6 +7,7 @@ use std::env;
 use std::sync::{Arc, atomic::{self, AtomicU64}};
 use core::f32::consts::{PI, TAU, FRAC_PI_3};
 
+use leimu::gpu::DynamicState;
 use leimu::{
     EventError, EventResult,
     core::*,
@@ -615,7 +616,8 @@ const uint MAX_PRIMITIVES = {max_local_primitives};
                                         .max(1.0)
                                     )).compare_op(gpu::CompareOp::LESS)
                                     .write_enable(true)
-                                ).with_front_face(gpu::FrontFace::CLOCK_WISE),
+                                ).with_front_face(gpu::FrontFace::CLOCK_WISE)
+                                .with_dynamic_states([DynamicState::POL]),
                             ]);
                             let _ = batch.build()?;
                             EventResult::Ok(id)

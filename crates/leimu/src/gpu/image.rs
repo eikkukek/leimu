@@ -38,8 +38,19 @@ enum MemorySource {
     Swapchain,
 }
 
-pub struct ImageMeta {
+/// Structure containing everything relevant to a [`VkImage`][1].
+///
+/// You should generally **not** try to access this structure directly, but instead use it through
+/// [`ids`][ImageId] passed to [`commands`][2] and [`Gpu`].
+///
+/// To create a new [`Image`], use the [`create_resources`][3] method of [`Gpu`].
+///
+/// [1]: https://docs.vulkan.org/refpages/latest/refpages/source/VkImage.html
+/// [2]: Gpu::schedule_commands
+/// [3]: Gpu::create_resources
+pub struct Image {
     device: Device,
+    id: ImageIndex,
     handle: vk::Image,
     image_views: Vec32<ImageView>,
     properties: ImageProperties,
@@ -47,85 +58,193 @@ pub struct ImageMeta {
     memory: MemorySource,
 }
 
-impl ResourceMeta for ImageMeta {
+impl ResourceMeta for Image {
 
     const NAME: &str = "image";
 }
 
-unsafe impl Send for ImageMeta {}
-unsafe impl Sync for ImageMeta {}
+unsafe impl Send for Image {}
+unsafe impl Sync for Image {}
 
-impl ImageMeta {
+impl Image {
 
     fn new(
         device: Device,
         create_info: &ImageCreateInfo<'_>,
+        id: ImageIndex,
         bind_memory_info: &mut vk::BindImageMemoryInfo<'static>,
     ) -> Result<Self>
     {
-        let mut image_type = vk::ImageType::TYPE_2D;
-        if create_info.dimensions.depth > 1 {
-            if create_info.array_layers != 1 {
-                return Err(Error::just_context(
-                    "image layers must be 1 if depth is greater than 1"
-                ))
-            }
-            image_type = vk::ImageType::TYPE_3D;
+        if create_info.dimensions.is_zero() {
+            return Err(Error::just_context(format!(
+                "image dimensions {} are zero", create_info.dimensions
+            )))
         }
+        let ty;
+        let vk_ty;
+        match create_info.ty {
+            ImageType::Infer => {
+                if create_info.dimensions.depth > 1 {
+                    ty = ImageType::Type3d;
+                    vk_ty = vk::ImageType::TYPE_3D;
+                } else if create_info.dimensions.height > 1 {
+                    ty = ImageType::Type2d;
+                    vk_ty = vk::ImageType::TYPE_2D;
+                } else {
+                    ty = ImageType::Type1d;
+                    vk_ty = vk::ImageType::TYPE_1D;
+                }
+            },
+            ImageType::Type1d => {
+                if create_info.dimensions.height > 1 {
+                    return Err(Error::just_context(format!(
+                        "1d image height {} is greater than 1",
+                        create_info.dimensions.height,
+                    )))
+                }
+                if create_info.dimensions.depth > 1 {
+                    return Err(Error::just_context(format!(
+                        "1d image depth {} is greater than 1",
+                        create_info.dimensions.depth,
+                    )))
+                }
+                ty = ImageType::Type1d;
+                vk_ty = vk::ImageType::TYPE_1D;
+            },
+            ImageType::Type2d => {
+                if create_info.dimensions.depth > 1 {
+                    return Err(Error::just_context(format!(
+                        "2d image depth {} is greater than 1",
+                        create_info.dimensions.depth,
+                    )))
+                }
+                ty = ImageType::Type2d;
+                vk_ty = vk::ImageType::TYPE_2D;
+            },
+            ImageType::Type3d => {
+                if create_info.array_layers > 1 {
+                    return Err(Error::just_context(format!(
+                        "3d image array layers {} is greater than 1",
+                        create_info.array_layers,
+                    )))
+                }
+                ty = ImageType::Type3d;
+                vk_ty = vk::ImageType::TYPE_3D;
+            },
+        };
         if create_info.format == Format::Undefined {
             return Err(Error::just_context(
                 "image format must be defined"
             ))
-        }
-        let mut flags = Default::default();
-        if create_info.mutable_format {
-            flags |= vk::ImageCreateFlags::MUTABLE_FORMAT;
-        }
-        if create_info.cube_map {
-            flags |= vk::ImageCreateFlags::CUBE_COMPATIBLE;
-            if create_info.dimensions.width != create_info.dimensions.height ||
-                create_info.dimensions.depth != 1
-            {
-                return Err(Error::just_context(format!(
-                    "width ({}) and height ({}) of a cube map compatible image must be equal and depth ({}) must be 1",
-                    create_info.dimensions.width, create_info.dimensions.height, create_info.dimensions.depth,
-                )))
-            }
-        }
-        if create_info.dimensions.is_zero() {
-            return Err(Error::just_context(format!(
-                "image dimensions {} must not be zero",
-                create_info.dimensions,
-            )))
         }
         if create_info.array_layers == 0 {
             return Err(Error::just_context(
                 "image layers must be greater than 0",
             ))
         }
-        if create_info.cube_map && create_info.array_layers < 6 {
-            return Err(Error::just_context(format!(
-                "layer count {} of a cube map/array image must be at least 6",
-                create_info.array_layers,
-            )))
-        }
         if create_info.mip_levels == 0 {
             return Err(Error::just_context(
                 "mip levels must be greater than zero",
             ))
         }
+        if create_info.samples.count_ones() != 1 {
+            return Err(Error::just_context(format!(
+                "invalid image sample count {}, only one sample count bit may be specified",
+                create_info.samples,
+            )))
+        }
+        if create_info.usage.is_empty() {
+            return Err(Error::just_context(
+                "image usage is empty"
+            ))
+        }
+        if create_info.samples != MsaaSamples::X1
+        {
+            if !matches!(ty, ImageType::Type2d) {
+                return Err(Error::just_context(format!(
+                    "image type is {ty}, but sample count {} is not equal to X1",
+                    create_info.samples,
+                )))
+            }
+            if create_info.create_flags.contains(ImageCreateFlags::CUBE_COMPATIBLE) {
+                return Err(Error::just_context(format!(
+                    "create flags contains CUBE_COMPATIBLE, but sample count {} is not equal to X1",
+                    create_info.samples,
+                )))
+            }
+            if create_info.mip_levels != 1 {
+                return Err(Error::just_context(format!(
+                    "mip levels are greater than 1, but sample count {} is not equal to X1",
+                    create_info.samples,
+                )))
+            }
+        }
+        if create_info.create_flags.contains(ImageCreateFlags::CUBE_COMPATIBLE) {
+            if !matches!(ty, ImageType::Type2d) {
+                return Err(Error::just_context(format!(
+                    "create flags contains CUBE_COMPATIBLE, but image type {ty} is not 2d",
+                )))
+            }
+            if create_info.array_layers < 6 {
+                return Err(Error::just_context(format!(
+                    "create flags contains CUBE_COMPATIBLE, but image array layers {} is less than 6",
+                    create_info.array_layers,
+                )))
+            }
+            if create_info.dimensions.width != create_info.dimensions.height {
+                return Err(Error::just_context(format!(
+                    "create flags contains CUBE_COMPATIBLE, but image width {} and height {} are not equal",
+                    create_info.dimensions.width, create_info.dimensions.height,
+                )))
+            }
+        }
         let mut image_format_properties = vk::ImageFormatProperties2::default();
+        let mut stencil_usage = if let Some(stencil_usage) = create_info.stencil_usage {
+            if stencil_usage.is_empty() {
+                return Err(Error::just_context(format!(
+                    "stencil usage is empty"
+                )))
+            }
+            if create_info.usage.contains(ImageUsages::DEPTH_STENCIL_ATTACHMENT) &&
+                !stencil_usage.contains(ImageUsages::DEPTH_STENCIL_ATTACHMENT)
+            {
+                return Err(Error::just_context(format!(
+                    "depth usage {} contains {} usage, but stencil usage {} doesn't",
+                    create_info.usage,
+                    ImageUsages::DEPTH_STENCIL_ATTACHMENT,
+                    stencil_usage,
+                )))
+            }
+            if !create_info.usage.contains(ImageUsages::DEPTH_STENCIL_ATTACHMENT) &&
+                stencil_usage.contains(ImageUsages::DEPTH_STENCIL_ATTACHMENT)
+            {
+                return Err(Error::just_context(format!(
+                    "stencil usage {} contains {} usage, but depth usage {} doesn't",
+                    stencil_usage,
+                    ImageUsages::DEPTH_STENCIL_ATTACHMENT,
+                    create_info.usage,
+                )))
+            }
+            Some(vk::ImageStencilUsageCreateInfo
+                ::default()
+                .stencil_usage(stencil_usage.into())
+            )
+        } else { None };
         unsafe {
+            let mut format_info = vk::PhysicalDeviceImageFormatInfo2 {
+                format: create_info.format.into(),
+                ty: vk_ty,
+                tiling: vk::ImageTiling::OPTIMAL,
+                usage: create_info.usage.into(),
+                flags: create_info.create_flags.into(),
+                ..Default::default()
+            };
+            if let Some(usage) = &mut stencil_usage {
+                format_info = format_info.push_next(usage);
+            }
             device.instance().get_physical_device_image_format_properties2(
                 device.physical_device().handle(),
-                &vk::PhysicalDeviceImageFormatInfo2 {
-                    format: create_info.format.into(),
-                    ty: image_type,
-                    tiling: vk::ImageTiling::OPTIMAL,
-                    usage: create_info.usage.into(),
-                    flags,
-                    ..Default::default()
-                },
+                &format_info,
                 &mut image_format_properties,
             ).context("failed to get image format properties")?;
         }
@@ -135,7 +254,11 @@ impl ImageMeta {
             ImageUsages::COLOR_ATTACHMENT |
             ImageUsages::DEPTH_STENCIL_ATTACHMENT |
             ImageUsages::INPUT_ATTACHMENT
-        ) {
+        ) ||
+            stencil_usage.is_some_and(|usage| {
+                usage.stencil_usage.contains(vk::ImageUsageFlags::INPUT_ATTACHMENT)
+            })
+        {
             let limits = device.physical_device().limits();
             max_dimensions.width = max_dimensions.width.min(limits.max_framebuffer_width());
             max_dimensions.height = max_dimensions.width.min(limits.max_framebuffer_height());
@@ -175,10 +298,10 @@ impl ImageMeta {
                 create_info.samples,
             )))
         }
-        let vk_create_info = vk::ImageCreateInfo {
+        let mut vk_create_info = vk::ImageCreateInfo {
             s_type: vk::StructureType::IMAGE_CREATE_INFO,
-            flags,
-            image_type,
+            flags: create_info.create_flags.into(),
+            image_type: vk_ty,
             format: create_info.format.into(),
             extent: create_info.dimensions.into(),
             mip_levels: create_info.mip_levels,
@@ -190,6 +313,9 @@ impl ImageMeta {
             initial_layout: vk::ImageLayout::UNDEFINED,
             ..Default::default()
         };
+        if let Some(stencil_usage) = &mut stencil_usage {
+            vk_create_info = vk_create_info.push_next(stencil_usage);
+        }
         let mut dedicated_memory_requirements = vk::MemoryDedicatedRequirements::default();
         let mut mem_requirements = vk::MemoryRequirements2
             ::default().push_next(&mut dedicated_memory_requirements);
@@ -231,12 +357,14 @@ impl ImageMeta {
         let properties = ImageProperties {
             dimensions: create_info.dimensions,
             format: create_info.format,
+            ty,
             aspect_mask: create_info.aspects,
             usage: create_info.usage,
+            stencil_usage: create_info.stencil_usage,
             samples: create_info.samples,
             array_layers: create_info.array_layers,
             mip_levels: create_info.mip_levels,
-            create_flags: flags,
+            create_flags: create_info.create_flags,
             format_resolve_modes: create_info.resolve_modes,
             format_features: FormatFeatures::from_raw(
                 format_properties3.optimal_tiling_features.as_raw()
@@ -269,6 +397,7 @@ impl ImageMeta {
         Ok(Self {
             device,
             handle,
+            id,
             image_views: Vec32::with_capacity(1),
             properties,
             states,
@@ -279,6 +408,7 @@ impl ImageMeta {
     pub(crate) unsafe fn from_swapchain_image(
         device: Device,
         handle: vk::Image,
+        id: ImageIndex,
         dimensions: Dimensions,
         format: vk::Format,
         usage: vk::ImageUsageFlags,
@@ -304,12 +434,14 @@ impl ImageMeta {
         let properties = ImageProperties {
             dimensions,
             format,
+            ty: ImageType::Type2d,
             aspect_mask: ImageAspects::COLOR,
             usage: ImageUsages::from_raw(usage.as_raw()),
+            stencil_usage: None,
             samples: MsaaSamples::X1,
             array_layers: 1,
             mip_levels: 1,
-            create_flags: vk::ImageCreateFlags::empty(),
+            create_flags: ImageCreateFlags::empty(),
             format_resolve_modes: Default::default(),
             format_features: FormatFeatures::from_raw(
                 format_properties3.optimal_tiling_features.as_raw()
@@ -340,6 +472,7 @@ impl ImageMeta {
         Ok(Self {
             device,
             handle,
+            id,
             image_views: Vec32::with_capacity(1),
             properties,
             states,
@@ -350,6 +483,11 @@ impl ImageMeta {
     #[inline]
     pub fn is_swapchain(&self) -> bool {
         matches!(self.memory, MemorySource::Swapchain)
+    }
+    
+    #[inline]
+    pub fn handle(&self) -> vk::Image {
+        self.handle
     }
 
     fn get_states_mut(
@@ -417,7 +555,7 @@ impl ImageMeta {
         id: AnyImageViewId<AnyImageId>,
         aspect: ImageAspects,
     ) -> Result<ImageSubresourceState>
-        where AnyImageId: ResourceId<ImageMeta>
+        where AnyImageId: ResourceId<Image>
     {
         let range = self.image_views
             .get(id.view_id() as usize)
@@ -454,10 +592,10 @@ impl ImageMeta {
 
     pub(crate) fn create_view(
         &mut self,
-        range: ImageRange,
+        mut create_info: ImageViewCreateInfo,
     ) -> Result<u32> {
         let component_info = 
-            if let Some(info) = range.component_info {
+            if let Some(info) = create_info.component_info {
                 info
             } else {
                 ComponentInfo {
@@ -465,37 +603,47 @@ impl ImageMeta {
                     format: self.properties.format,
                 }
             };
-        let view_type = self.properties.validate_range(&range)?;
-        let create_info = vk::ImageViewCreateInfo {
+        let view_type = self.properties.validate_view_info(&mut create_info)?;
+        let vk_info = vk::ImageViewCreateInfo {
             s_type: vk::StructureType::IMAGE_VIEW_CREATE_INFO,
             image: self.handle,
-            view_type,
+            view_type: view_type.into(),
             format: component_info.format.into(),
             components: component_info.component_mapping.into(),
-            subresource_range: range.subresource_range.into(),
+            subresource_range: create_info.subresource_range.into(),
             ..Default::default()
         };
         let handle = unsafe {
-            self.device.create_image_view(&create_info, None)
+            self.device.create_image_view(&vk_info, None)
             .context("failed to create image view")?
         }.value;
         let id = self.image_views.len();
         self.image_views.push(ImageView {
             handle,
-            subresource_range: range.subresource_range,
+            ty: view_type,
+            subresource_range: create_info.subresource_range,
             component_info,
-            is_cube_map: range.is_cube_map,
         });
         Ok(id)
     } 
-    
+   
+    /// Gets a previously [`created`][1] [`ImageView`].
+    ///
+    /// [1]: Gpu::create_image_view
     #[inline]
-    pub(crate) fn get_view<AnyImageId>(
+    pub fn get_view<AnyImageId>(
         &self,
         id: AnyImageViewId<AnyImageId>,
     ) -> Result<&ImageView>
-        where AnyImageId: ResourceId<ImageMeta>
+        where AnyImageId: ResourceId<Image>
     {
+        #[cfg(debug_assertions)]
+        if id.image_id() != self.id {
+            return Err(Error::just_context(format!(
+                "image view id {id} has a different image id {} from this image's id {}",
+                id.image_id(), self.id,
+            )))
+        }
         self.image_views
             .get(id.view_id() as usize)
             .ok_or_else(|| Error::just_context(format!(
@@ -674,12 +822,12 @@ impl ImageMeta {
     pub fn memory_barrier(
         &mut self,
         state: ImageSubresourceState,
-        subresource_range: ImageSubresourceRange,
+        mut subresource_range: ImageSubresourceRange,
         preserve_contents: bool,
         cache: &mut ImageMemoryBarrierCache,
     ) -> Result<ImageMemoryBarrierRange>
     {
-        self.properties.validate_subresource_range(&subresource_range)?;
+        self.properties.validate_subresource_range(&mut subresource_range, None)?;
         unsafe {
             Ok(self.memory_barrier_unchecked(
                 state,
@@ -707,7 +855,7 @@ impl ImageMeta {
         preserve_contents: bool,
         cache: &mut ImageMemoryBarrierCache,
     ) -> Result<ImageMemoryBarrierRange>
-        where AnyImageId: ResourceId<ImageMeta>
+        where AnyImageId: ResourceId<Image>
     {
         let view = self.image_views
             .get(view_id.view_id() as usize)
@@ -725,7 +873,7 @@ impl ImageMeta {
     }
 }
 
-impl Drop for ImageMeta {
+impl Drop for Image {
 
     fn drop(&mut self) {
         unsafe {
@@ -746,7 +894,7 @@ impl Drop for ImageMeta {
     }
 }
 
-pub(crate) type ImageIndex = SlotIndex<ImageMeta>;
+pub(crate) type ImageIndex = SlotIndex<Image>;
 
 mod image_id_base {
 
@@ -754,14 +902,14 @@ mod image_id_base {
 
     #[must_use]
     #[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
-    pub struct Id<Marker>(SlotIndex<ImageMeta>, PhantomData<Marker>)
+    pub struct Id<Marker>(SlotIndex<Image>, PhantomData<Marker>)
         where Marker:  Copy;
 
     impl<Marker> Id<Marker>
         where Marker: Copy
     {
 
-        pub(crate) fn new(slot_index: SlotIndex<ImageMeta>) -> Self {
+        pub(crate) fn new(slot_index: SlotIndex<Image>) -> Self {
             Self(slot_index, PhantomData)
         }
     }
@@ -773,12 +921,12 @@ mod image_id_base {
         }
     }
 
-    impl<Marker> ResourceId<ImageMeta> for Id<Marker>
+    impl<Marker> ResourceId<Image> for Id<Marker>
         where Marker: Copy
     {
 
         #[inline]
-        fn slot_index(self) -> SlotIndex<ImageMeta> {
+        fn slot_index(self) -> SlotIndex<Image> {
             self.0
         }
     }

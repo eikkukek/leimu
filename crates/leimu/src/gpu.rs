@@ -2,7 +2,9 @@
 //!
 //! See [`Instance`], [`Device`] and [`Gpu`] to get started.
 
-pub mod ext;
+//pub mod ext;
+pub mod features;
+mod const_name;
 mod memory_binder;
 mod device;
 
@@ -65,6 +67,8 @@ pub(crate) mod prelude {
     use super::*;
 
     pub use {
+        const_name::ConstName,
+        features::prelude::*,
         device::*,
         instance::*,
         super::Gpu,
@@ -263,8 +267,8 @@ struct GpuInner {
     pipeline_batches: SwapLock<SlotMap<OnceLock<PipelineBatch>>>,
     descriptor_pools: SwapLock<SlotMap<DescriptorPool>>,
     surfaces: RwLock<SlotMap<Surface>>,
-    buffers: RwLock<SlotMap<BufferMeta>>,
-    images: RwLock<SlotMap<ImageMeta>>,
+    buffers: RwLock<SlotMap<Buffer>>,
+    images: RwLock<SlotMap<Image>>,
     timeline_semaphores: RwLock<SlotMap<vk::Semaphore>>,
     draw_commands: RwLock<SlotMap<DrawCommandResource>>,
     mt_ctx: Arc<MtContext>,
@@ -372,23 +376,59 @@ impl Gpu {
         self.inner.device.physical_device().limits()
     }
 
-    /// Returns [`base device features`][1] enabled on the [`Device`] used to create this [`Gpu`].
+    /// Returns whether a [`feature`][1] with `name` is enabled.
     ///
-    /// [1]: BaseDeviceFeatures
+    /// [1]: DeviceAttributes::with_features
     #[inline]
-    pub fn enabled_base_features(&self) -> &BaseDeviceFeatures {
-        self.inner.device.base_device_features()
+    pub fn is_feature_enabled(&self, name: ConstName) -> bool {
+        self.inner.device.is_feature_enabled(name)
     }
 
-    /// Gets an [`extension`][ext] device.
+    /// Gets a device associated with an [`extension`][ext].
+    ///
+    /// If the extension is not enabled, this returns [`None`].
+    ///
+    /// # Example
+    /// ``` rust
+    /// use leimu::gpu;
+    /// use leimu::gpu::ext;
+    ///
+    /// let gpu: gpu::Gpu = ...;
+    /// let device = gpu
+    ///     .get_extension_device<ext::mesh_shader::Device>()
+    ///     .unwrap();
+    /// // use device
+    /// unsafe {
+    ///     device.cmd_draw_mesh_tasks(
+    ///         command_buffer,
+    ///         64, 1, 1,
+    ///     );
+    /// }
+    /// ```
     #[inline]
-    pub fn get_extension_device<T: ext::ExtensionDevice>(&self) -> Option<&T> {
+    pub fn get_extension_device<T: ext::device::ExtensionDevice>(&self) -> Option<&T> {
         self.inner.device.get_extension_device()
     }
 
-    /// Gets an [`extension`][ext] attribute.
+    /// Gets a device attribute added by an [`extension`][ext].
+    ///
+    /// This could point to a set of features or properties associated with an extension.
+    ///
+    /// # Example
+    /// ``` rust
+    /// use leimu::gpu;
+    /// use leimu::gpu::ext;
+    ///
+    /// let gpu: gpu::Gpu = ...;
+    /// let properties = gpu
+    ///     .get_device_attribute(ext::push_descriptor::PROPERTIES)
+    ///     .unwrap();
+    /// println!("max push descriptors: {}", properties.max_push_descriptors);
+    /// ```
     #[inline]
-    pub fn get_device_attribute(&self, name: ext::ConstName) -> &ext::DeviceAttribute {
+    pub fn get_device_attribute<T>(&self, name: ext::prelude::AttributeName<T>) -> Option<&T>
+        where T: Send + Sync + 'static
+    {
         self.inner.device.get_device_attribute(name)
     }
 
@@ -444,11 +484,20 @@ impl Gpu {
     } 
     
     /// Gets [`ImageFormatProperties`] for the given parameters.
+    ///
+    /// # Parameters
+    /// - `format`: The [`Format`] to get the properties of.
+    /// - `usage`: Specifies what images [`created`][1] with this format will be [`used for`][2].
+    /// - `ty`: Specifies the [`type`][3] of images [`created`][1] with this format.
+    ///
+    /// [1]: Self::create_resources
+    /// [2]: ImageUsages
+    /// [3]: ImageType
     pub fn get_image_format_properties(
         &self,
         format: Format,
         usage: ImageUsages,
-        is_3d: bool,
+        ty: ImageType,
         has_mutable_format: bool,
         is_cube_map_compatible: bool,
     ) -> Result<ImageFormatProperties>
@@ -463,11 +512,7 @@ impl Gpu {
         }
         let format_info = vk::PhysicalDeviceImageFormatInfo2 {
             format: vk_format,
-            ty: if is_3d {
-                    vk::ImageType::TYPE_3D
-                } else {
-                    vk::ImageType::TYPE_2D
-                },
+            ty: ty.into(),
             tiling: vk::ImageTiling::OPTIMAL,
             usage: usage.into(),
             flags,
@@ -1296,12 +1341,13 @@ impl Gpu {
         }
         for (i, create_info) in image_create_infos.enumerate() {
             let mut bind_info = Default::default();
-            let image_meta = create_info.build(self.device().clone(), &mut bind_info)
-                .context_with(|| format!("failed to create image at index {i}"))?;
-            image_bind_infos.push(bind_info);
             let id = ImageId::new(
-                unsafe { &mut *images.get() }.insert(image_meta)
+                unsafe { &mut *images.get() }.insert_with_index(|id| {
+                    create_info.build(self.device().clone(), id, &mut bind_info)
+                        .context_with(|| format!("failed to create image at index {i}"))?
+                })
             );
+            image_bind_infos.push(bind_info);
             *create_info.out = id;
             guard.1.push(id);
         }
@@ -1320,14 +1366,14 @@ impl Gpu {
         Ok(())
     }
 
-    pub(crate) fn write_buffers<Id>(&self) -> ResourceWriteGuard<'_, BufferMeta, Id>
-        where Id: ResourceId<BufferMeta>
+    pub(crate) fn write_buffers<Id>(&self) -> ResourceWriteGuard<'_, Buffer, Id>
+        where Id: ResourceId<Buffer>
     {
         ResourceWriteGuard::new(self.inner.buffers.write())
     }
 
-    pub(crate) fn write_images<Id>(&self) -> ResourceWriteGuard<'_, ImageMeta, Id>
-        where Id: ResourceId<ImageMeta>
+    pub(crate) fn write_images<Id>(&self) -> ResourceWriteGuard<'_, Image, Id>
+        where Id: ResourceId<Image>
     {
         ResourceWriteGuard::new(self.inner.images.write())
     }
@@ -1390,6 +1436,30 @@ impl Gpu {
                 "invalid buffer id {id}"
             ))?.memory_mut().map_memory()
             .context("failed to map memory")
+    }
+
+    #[inline]
+    pub fn get_buffer_device_address(
+        &self,
+        id: BufferId
+    ) -> Result<DeviceAddress> {
+        if !self.is_feature_enabled(vulkan_12::buffer_device_address::NAME) {
+            return Err(Error::just_context(format!(
+                "the buffer_device_address feature is not enabled"
+            )))
+        }
+        let handle = self.inner.buffers
+            .read()
+            .get(id.0)
+            .context_with(|| format!(
+                "invalid buffer id {id}"
+            ))?.handle();
+        unsafe {
+            Ok(self.inner.device.get_buffer_device_address(&vk::BufferDeviceAddressInfo
+                ::default()
+                .buffer(handle)
+            ))
+        }
     }
 
     pub fn flush_mapped_memory_ranges(
@@ -1511,7 +1581,7 @@ impl Gpu {
     pub fn create_image_view(
         &self,
         image_id: ImageId,
-        range: ImageRange,
+        create_info: ImageViewCreateInfo,
     ) -> Result<ImageViewId> {
         self.inner.images
             .write()
@@ -1519,7 +1589,7 @@ impl Gpu {
             .context_with(|| format!(
                 "invalid image id {image_id}"
             ))?
-            .create_view(range)
+            .create_view(create_info)
             .map(|idx| ImageViewId::new(image_id, idx))
     }
     
@@ -1534,17 +1604,17 @@ impl Gpu {
     }
 
     #[inline]
-    pub(crate) fn read_buffers<Id: ResourceId<BufferMeta>>(
+    pub(crate) fn read_buffers<Id: ResourceId<Buffer>>(
         &self
-    ) -> ResourceReadGuard<'_, BufferMeta, Id>
+    ) -> ResourceReadGuard<'_, Buffer, Id>
     {
         ResourceGuard::new(self.inner.buffers.read())
     } 
 
     #[inline]
-    pub(crate) fn read_images<Id: ResourceId<ImageMeta>>(
+    pub(crate) fn read_images<Id: ResourceId<Image>>(
         &self
-    ) -> ResourceReadGuard<'_, ImageMeta, Id>
+    ) -> ResourceReadGuard<'_, Image, Id>
     {
         ResourceGuard::new(self.inner.images.read())
     } 

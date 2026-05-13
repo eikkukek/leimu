@@ -3,37 +3,52 @@
 use {
     tuhka::{
         vk,
-        ext,
+        ext::inline_uniform_block,
     },
-    super::*,
+    super::{*, device::*},
 };
 
-/// Attribute names.
-pub struct Attributes;
-
-impl Attributes {
-    /// Attribute type `bool`.
-    pub const IS_ENABLED: ConstName = ConstName::new("inline_uniform_block");
-    /// Attribute type `u32`.
-    pub const MAX_INLINE_UNIFORM_BLOCK_SIZE: ConstName
-        = ConstName::new("max_inline_uniform_block_size");
-    /// Attribute type `u32`.
-    pub const MAX_PER_STAGE_DESCRIPTOR_INLINE_UNIFORM_BLOCKS: ConstName
-        = ConstName::new("max_per_stage_descriptor_inline_uniform_blocks");
-    /// Attribute type `u32`.
-    pub const MAX_DESCRIPTOR_SET_INLINE_UNIFORM_BLOCKS: ConstName
-        = ConstName::new("max_descriptor_set_inline_uniform_blocks");
+/// Specifies properties supported by the [`device`][1].
+///
+/// [1]: PhysicalDevice
+#[derive(Clone, Copy)]
+pub struct Properties {
+    /// Specifies the maximum size in bytes of an [`inline uniform block`][1] binding.
+    ///
+    /// [1]: ShaderSetAttributes::with_inline_uniform_block
+    pub max_inline_uniform_block_size: u32,
+    /// Specifies the maximum number of inline uniform block bindings that can be accessible to a
+    /// single shader stage in a [`shader set`][1].
+    ///
+    /// [1]: Gpu::create_shader_set
+    pub max_per_stage_descriptor_inline_uniform_blocks: u32,
+    /// Specifies the maximum number of inline uniform block bindings in a [`shader set`][1].
+    ///
+    /// [1]: Gpu::create_shader_set
+    pub max_descriptor_set_inline_uniform_blocks: u32,
 }
 
-/// The extension type.
+/// The name of the extension
+pub const NAME: ConstName = ConstName::new(inline_uniform_block::NAME.to_str().unwrap());
+
+/// [`Properties`] [`device attribute`][1] name.
+pub const PROPERTIES: AttributeName<Properties> = AttributeName::new("inline_uniform_block");
+
+/// Creates the [`extension type`][1].
+///
+/// [1]: DeviceAttributes::with_device_extension
+pub const fn extension() -> impl DeviceExtension {
+    Extension
+}
+
 #[derive(Clone, Copy)]
-pub struct Extension;
+struct Extension;
 
 unsafe impl DeviceExtension for Extension {
 
     fn get_info(&self, _attributes: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
-            name: ext::inline_uniform_block::NAME,
+            name: inline_uniform_block::NAME,
             deprecation_version: API_VERSION_1_3,
             precondition: Precondition::new(|ctx| {
                 let mut features = vk::PhysicalDeviceInlineUniformBlockFeatures::default();
@@ -48,29 +63,28 @@ unsafe impl DeviceExtension for Extension {
     fn register(
         &self,
         ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<ExtendsDeviceCreateInfoObj> {
+    ) -> RegisteredExtension {
         let mut properties = vk::PhysicalDeviceInlineUniformBlockProperties::default();
         ctx.get_properties(&mut properties);
-        ctx.register_attribute(DeviceAttribute::new_u32(
-            Attributes::MAX_INLINE_UNIFORM_BLOCK_SIZE,
-            properties.max_inline_uniform_block_size,
+        ctx.register_attribute(Attribute::new(
+            PROPERTIES,
+            Properties {
+                max_inline_uniform_block_size:
+                    properties.max_inline_uniform_block_size,
+                max_per_stage_descriptor_inline_uniform_blocks:
+                    properties.max_per_stage_descriptor_inline_uniform_blocks,
+                max_descriptor_set_inline_uniform_blocks:
+                    properties.max_descriptor_set_inline_uniform_blocks,
+            }
         ));
-        ctx.register_attribute(DeviceAttribute::new_u32(
-            Attributes::MAX_PER_STAGE_DESCRIPTOR_INLINE_UNIFORM_BLOCKS,
-            properties.max_per_stage_descriptor_inline_uniform_blocks,
-        ));
-        ctx.register_attribute(DeviceAttribute::new_u32(
-            Attributes::MAX_DESCRIPTOR_SET_INLINE_UNIFORM_BLOCKS,
-            properties.max_descriptor_set_inline_uniform_blocks,
-        ));
-        ctx.register_attribute(DeviceAttribute::new_bool(
-            Attributes::IS_ENABLED, true,
-        ));
-        Some(ExtendsDeviceCreateInfoObj::new(
-            vk::PhysicalDeviceInlineUniformBlockFeatures
-                ::default()
-                .inline_uniform_block(true)
-        ))
+        registered_extension(
+            NAME,
+            Some(ExtendsDeviceCreateInfoObj::new(
+                vk::PhysicalDeviceInlineUniformBlockFeatures
+                    ::default()
+                    .inline_uniform_block(true)
+            ))
+        )
     }
 
     fn boxed(&self) -> Box<dyn DeviceExtension> {

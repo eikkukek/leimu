@@ -6,20 +6,7 @@ use tuhka::{
 };
 use leimu_proc::BuildStructure;
 
-use super::*;
-
-pub struct Attributes;
-
-impl Attributes {
-    /// Attribute type [`bool`][1].
-    ///
-    /// [1]: DeviceAttribute::bool
-    pub const IS_ENABLED: ConstName = ConstName::new("dynamic_indexing");
-    /// Attribute type [`structure`][1], where T = [`Features`].
-    ///
-    /// [1]: DeviceAttribute::structure
-    pub const FEATURES: ConstName = ConstName::new("dynamic_indexing_features");
-}
+use super::{*, device::*};
 
 #[derive(Default, Clone, Copy, BuildStructure)]
 pub struct Features {
@@ -45,9 +32,29 @@ pub struct Features {
     pub runtime_descriptor_array: bool,
 }
 
+
+/// The name of the extension.
+pub const NAME: ConstName = ConstName::new(descriptor_indexing::NAME.to_str().unwrap());
+
+/// [`Features`] [`device attribute`][1] name.
+///
+/// [1]: Gpu::get_device_attribute
+pub const FEATURES: AttributeName<Features> = AttributeName::new("dynamic_indexing features");
+
+/// Creates the [`extension type`][1].
+///
+/// [1]: DeviceAttributes::with_device_extension
+pub const fn extension(
+    required_features: Features
+) -> impl DeviceExtension {
+    Extension {
+        required_features
+    }
+}
+
 #[derive(Clone, Copy)]
-pub struct Extension {
-    pub required_features: Features,
+struct Extension {
+    required_features: Features,
 }
 
 unsafe impl DeviceExtension for Extension {
@@ -100,18 +107,14 @@ unsafe impl DeviceExtension for Extension {
     fn register(
         &self,
         ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<ExtendsDeviceCreateInfoObj> {
+    ) -> RegisteredExtension {
         macro_rules! set {
             ($features:ident, $(pub $field:ident: bool,)+) => {$(
                 $features = $features.$field(self.required_features.$field);
             )+};
         }
-        ctx.register_attribute(DeviceAttribute::new_bool(
-            Attributes::IS_ENABLED,
-            true,
-        ));
-        ctx.register_attribute(DeviceAttribute::new_structure(
-            Attributes::FEATURES,
+        ctx.register_attribute(Attribute::new(
+            FEATURES,
             self.required_features
         ));
         let mut features = vk::PhysicalDeviceDescriptorIndexingFeatures::default();
@@ -138,7 +141,11 @@ unsafe impl DeviceExtension for Extension {
             pub descriptor_binding_variable_descriptor_count: bool,
             pub runtime_descriptor_array: bool,
         };
-        Some(ExtendsDeviceCreateInfoObj::new(features))
+        registered_extension(
+            NAME,
+            Some(ExtendsDeviceCreateInfoObj::new(features))
+        )
+        
     }
 
     fn boxed(&self) -> Box<dyn DeviceExtension> {

@@ -5,7 +5,7 @@ use core::{
 
 use tuhka::vk;
 
-use crate::{bitflags, c_enum};
+use crate::{bitflags, macros::vk_enum};
 
 use crate::gpu::prelude::*;
 
@@ -67,7 +67,8 @@ bitflags! {
         /// [1]: ext::descriptor_heap
         DESCRIPTOR_HEAP_EXT = vk::BufferUsageFlags::DESCRIPTOR_HEAP_EXT.as_raw(),
     }
-    /// Specifies what an [`Image`] can be used for.
+
+    /// Specifies what an [`Image`] **can** be used for.
     ///
     /// Default value is [`ImageUsages::empty()`].
     /// # Vulkan docs
@@ -88,6 +89,42 @@ bitflags! {
         DEPTH_STENCIL_ATTACHMENT = vk::ImageUsageFlags::DEPTH_STENCIL_ATTACHMENT.as_raw(),
         /// Specifies that the image **can** be used as an input attachment in rendering.
         INPUT_ATTACHMENT = vk::ImageUsageFlags::INPUT_ATTACHMENT.as_raw(),
+    }
+    
+    /// Specifies additional flags used when [`creating`][1] an image.
+    ///
+    /// [1]: Gpu::create_resources
+    #[default = Self::empty()]
+    pub struct ImageCreateFlags: Flags32 {
+        /// Specifies that the image **can** be used to [`create`][1] an image view with a
+        /// different format from the image.
+        ///
+        /// [1]: Gpu::create_image_view
+        MUTABLE_FORMAT = vk::ImageCreateFlags::MUTABLE_FORMAT.as_raw(),
+        /// Specifies that the image **can** be used to [`create`][1] an image view of 
+        ///
+        /// # Valid usage
+        /// - The [`image's type`][2] **must** be [`Type2d`][3].
+        /// - The [`width and height`][4] of the image **must** be equal and depth **must** 
+        ///   implicitly be 1.
+        /// - The [`array layers`][5] of the image **must** be at least 6.
+        ///
+        /// [1]: Gpu::create_image_view
+        /// [2]: ImageCreateInfo::with_type
+        /// [3]: ImageType::Type2d
+        /// [4]: ImageCreateInfo::with_dimensions
+        /// [5]: ImageCreateInfo::with_array_layers
+        CUBE_COMPATIBLE = vk::ImageCreateFlags::CUBE_COMPATIBLE.as_raw(),
+        /// Specifies that image views of type [`Type2dArray`][2] **can** be created with an
+        /// image of [`Type3d`][3].
+        ///
+        /// # Valid usage
+        /// - The [`image's type`][4] **must** be [`Type3d`][3].
+        ///
+        /// [2]: ImageViewType::Type2dArray
+        /// [3]: ImageViewType::Type3d
+        /// [4]: ImageCreateInfo::with_type
+        TYPE_2D_ARRAY_COMPATIBLE = vk::ImageCreateFlags::TYPE_2D_ARRAY_COMPATIBLE.as_raw(),
     }
 
     /// Specifies which image aspect to use for e.g. [`ImageSubresourceRange`].
@@ -260,24 +297,24 @@ impl ImageAspects {
     }
 }
 
-c_enum! {
+vk_enum! {
     /// Specifies the type of a gpu.
-    pub struct PhysicalDeviceType: i32 {
+    pub enum PhysicalDeviceType: i32 {
         /// Specifies that the device doesn't match any available types.
         #[display("other")]
-        OTHER = vk::PhysicalDeviceType::OTHER.as_raw(),
+        Other = vk::PhysicalDeviceType::OTHER,
         /// Specifies an integrated gpu.
         #[display("integrated gpu")]
-        INTEGRATED_GPU = vk::PhysicalDeviceType::INTEGRATED_GPU.as_raw(),
+        IntegratedGpu = vk::PhysicalDeviceType::INTEGRATED_GPU,
         /// Specifies a discrete gpu.
         #[display("discrete gpu")]
-        DISCRETE_GPU = vk::PhysicalDeviceType::DISCRETE_GPU.as_raw(),
+        DiscreteGpu = vk::PhysicalDeviceType::DISCRETE_GPU,
         /// Specifies a virtual gpu.
         #[display("virtual gpu")]
-        VIRTUAL_GPU = vk::PhysicalDeviceType::VIRTUAL_GPU.as_raw(),
+        VirtualGpu = vk::PhysicalDeviceType::VIRTUAL_GPU,
         /// Specifies a cpu instead of a gpu.
         #[display("cpu")]
-        CPU = vk::PhysicalDeviceType::CPU.as_raw(),
+        Cpu = vk::PhysicalDeviceType::CPU,
     }
 
     /// Specifies how a component is swizzled.
@@ -285,44 +322,49 @@ c_enum! {
     /// Default value is [`ComponentSwizzle::IDENTITY`].
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkComponentSwizzle.html>
-    #[default = Self::IDENTITY]
-    pub struct ComponentSwizzle: i32 {
+    #[derive(Default)]
+    pub enum ComponentSwizzle: i32 {
         /// Specifies that the component is set to the identity swizzle.
         #[display("identity")]
-        IDENTITY = vk::ComponentSwizzle::IDENTITY.as_raw(),
+        #[default]
+        Identity = vk::ComponentSwizzle::IDENTITY,
         /// Specifies that the component is set to zero.
         #[display("zero")]
-        ZERO = vk::ComponentSwizzle::ZERO.as_raw(),
+        Zero = vk::ComponentSwizzle::ZERO,
         /// Specifies that the component is set to 1 or 1.0, depending on whether the format of the
         /// image view is an integer or floating-point format.
         #[display("one")]
-        ONE = vk::ComponentSwizzle::ONE.as_raw(),
+        One = vk::ComponentSwizzle::ONE,
         /// Specifies that the component is set to the value of the R component.
         #[display("r")]
-        R = vk::ComponentSwizzle::R.as_raw(),
+        R = vk::ComponentSwizzle::R,
         /// Specifies that the component is set to the value of the G component.
         #[display("g")]
-        G = vk::ComponentSwizzle::G.as_raw(),
+        G = vk::ComponentSwizzle::G,
         /// Specifies that the component is set to the value of the B component.
         #[display("b")]
-        B = vk::ComponentSwizzle::B.as_raw(),
+        B = vk::ComponentSwizzle::B,
         /// Specifies that the component is set to the value of the A component.
         #[display("a")]
-        A = vk::ComponentSwizzle::A.as_raw(),
+        A = vk::ComponentSwizzle::A,
     }
     /// Specifies filters used for texture lookups.
     ///
     /// Default value is [`Filter::NEAREST`].
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkFilter.html>
-    #[default = Self::NEAREST]
-    pub struct Filter: i32 {
+    #[derive(Default)]
+    pub enum Filter: i32 {
         /// Specifies nearest filtering.
         #[display("nearest")]
-        NEAREST = vk::Filter::NEAREST.as_raw(),
+        #[default]
+        Nearest = vk::Filter::NEAREST,
         /// Specifies linear filtering.
         #[display("linear")]
-        LINEAR = vk::Filter::LINEAR.as_raw(),
+        Linear = vk::Filter::LINEAR,
+        /// Províded by [`VK_EXT_filter_cubic`].
+        #[display("cubic ext")]
+        CubicExt = vk::Filter::CUBIC_EXT,
     }
 
     /// Specifies mipmap mode used for texture lookups.
@@ -330,14 +372,15 @@ c_enum! {
     /// Default value is [`MipmapMode::NEAREST`].
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkSamplerMipmapMode.html>
-    #[default = Self::NEAREST]
-    pub struct MipmapMode: i32 {
+    #[derive(Default)]
+    pub enum MipmapMode: i32 {
         /// Specifies nearest filtering.
         #[display("nearest")]
-        NEAREST = vk::SamplerMipmapMode::NEAREST.as_raw(),
+        #[default]
+        Nearest = vk::SamplerMipmapMode::NEAREST,
         /// Specifies linear filtering.
         #[display("linear")]
-        LINEAR = vk::SamplerMipmapMode::LINEAR.as_raw(),
+        Linear = vk::SamplerMipmapMode::LINEAR,
     }
 
     /// Specifies behaviour of sampling with texture coordinates outside an image.
@@ -346,20 +389,29 @@ c_enum! {
     ///
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkSamplerAddressMode.html>
-    #[default = Self::REPEAT]
-    pub struct SamplerAddressMode: i32 {
+    #[derive(Default)]
+    pub enum SamplerAddressMode: i32 {
         /// Specifies repeat wrap mode.
         #[display("repeat")]
-        REPEAT = vk::SamplerAddressMode::REPEAT.as_raw(),
+        #[default]
+        Repeat = vk::SamplerAddressMode::REPEAT,
         /// Specifies mirrored repeat wrap mode.
         #[display("mirrored repeat")]
-        MIRRORED_REPEAT = vk::SamplerAddressMode::MIRRORED_REPEAT.as_raw(),
+        MirroredRepeat = vk::SamplerAddressMode::MIRRORED_REPEAT,
         /// Specifies clamp to edge wrap mode.
         #[display("clamp to edge")]
-        CLAMP_TO_EDGE = vk::SamplerAddressMode::CLAMP_TO_EDGE.as_raw(),
+        ClampToEdge = vk::SamplerAddressMode::CLAMP_TO_EDGE,
         /// Specifies clamp to border wrap mode.
         #[display("clamp to border")]
-        CLAMP_TO_BORDER = vk::SamplerAddressMode::CLAMP_TO_BORDER.as_raw(),
+        ClampToBorder = vk::SamplerAddressMode::CLAMP_TO_BORDER,
+        /// Specifies mirror clamp to edge wrap mode.
+        ///
+        /// # Valid usage
+        /// - The [`sampler_mirror_clamp_to_edge`][1] device feature **must** be enabled.
+        ///
+        /// [1]: Vulkan12DeviceFeatures::sampler_mirror_clamp_to_edge
+        #[display("mirror clamp to edge")]
+        MirrorClampToEdge = vk::SamplerAddressMode::MIRROR_CLAMP_TO_EDGE,
     }
 
     /// Specifies the border color used for texture lookup.
@@ -370,38 +422,39 @@ c_enum! {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkBorderColor.html>
     ///
     /// [1]: Self::FLOAT_TRANSPARENT_BLACK
-    #[default = Self::FLOAT_TRANSPARENT_BLACK]
-    pub struct BorderColor: i32 {
+    #[derive(Default)]
+    pub enum BorderColor: i32 {
         /// Specifies a transparent, floating-point format, black color.
         #[display("float transparent black")]
-        FLOAT_TRANSPARENT_BLACK = vk::BorderColor::FLOAT_TRANSPARENT_BLACK.as_raw(),
+        #[default]
+        FloatTransparentBlack = vk::BorderColor::FLOAT_TRANSPARENT_BLACK,
         /// Specifies a transparent, integer format, black color.
         #[display("int transparent black")]
-        INT_TRANSPARENT_BLACK = vk::BorderColor::INT_TRANSPARENT_BLACK.as_raw(),
+        IntTransparentBlack = vk::BorderColor::INT_TRANSPARENT_BLACK,
         /// Specifies an opaque, floating-point format, black color.
         #[display("float opaque black")]
-        FLOAT_OPAQUE_BLACK = vk::BorderColor::FLOAT_OPAQUE_BLACK.as_raw(),
+        FloatOpaqueBlack = vk::BorderColor::FLOAT_OPAQUE_BLACK,
         /// Specifies an opaque, integer format, black color.
         #[display("int opaque black")]
-        INT_OPAQUE_BLACK = vk::BorderColor::INT_OPAQUE_BLACK.as_raw(),
+        IntOpaqueBlack = vk::BorderColor::INT_OPAQUE_BLACK,
         /// Specifies an opaque, floating-point format, white color.
         #[display("float opaque white")]
-        FLOAT_OPAQUE_WHITE = vk::BorderColor::FLOAT_OPAQUE_WHITE.as_raw(),
+        FloatOpaqueWhite = vk::BorderColor::FLOAT_OPAQUE_WHITE,
         /// Specifies an opaque, integer format, white color.
         #[display("int opaque white")]
-        INT_OPAQUE_WHITE = vk::BorderColor::INT_OPAQUE_WHITE.as_raw(),
+        IntOpaqueWhite = vk::BorderColor::INT_OPAQUE_WHITE,
         /// Specifies that a [`vk::SamplerCustomBorderColorCreateInfoEXT`] structure is included in the
         /// [`p_next chain`][1] containing the color data in floating-point format.
         ///
         /// [1]: SamplerAttributes::with_p_next
         #[display("float custom ext")]
-        FLOAT_CUSTOM_EXT = vk::BorderColor::FLOAT_CUSTOM_EXT.as_raw(),
+        FloatCustomExt = vk::BorderColor::FLOAT_CUSTOM_EXT,
         /// Specifies that a [`vk::SamplerCustomBorderColorCreateInfoEXT`] structure is included in the
         /// [`p_next chain`][1] containing the color data in integer format.
         ///
         /// [1]: SamplerAttributes::with_p_next
         #[display("float custom ext")]
-        INT_CUSTOM_EXT = vk::BorderColor::INT_CUSTOM_EXT.as_raw()
+        IntCustomExt = vk::BorderColor::INT_CUSTOM_EXT,
     }
 
     /// Specifies comparison operator for depth, stencil and sampler operations.
@@ -409,46 +462,48 @@ c_enum! {
     /// Default value is [`CompareOp::Never`].
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkCompareOp.html>
-    #[default = Self::NEVER]
-    pub struct CompareOp: i32 {
+    #[derive(Default)]
+    pub enum CompareOp: i32 {
         /// Specifies that the comparison always evaluates `false`.
         #[display("never")]
-        NEVER = vk::CompareOp::NEVER.as_raw(),
+        #[default]
+        Never = vk::CompareOp::NEVER,
         /// Specifies that the comparison evaluates *reference* &lt; *test*.
         #[display("less")]
-        LESS = vk::CompareOp::LESS.as_raw(),
+        Less = vk::CompareOp::LESS,
         /// Specifies that the comparison evaluates *reference* == *test*
         #[display("equal")]
-        EQUAL = vk::CompareOp::EQUAL.as_raw(),
+        Equal = vk::CompareOp::EQUAL,
         /// Specifies that the comparison evaluates *reference* <= *test*
         #[display("less or equal")]
-        LESS_OR_EQUAL = vk::CompareOp::LESS_OR_EQUAL.as_raw(),
+        LessOrEqual = vk::CompareOp::LESS_OR_EQUAL,
         /// Specifies that the comparison evaulates *reference* &gt; *test*
         #[display("greater")]
-        GREATER = vk::CompareOp::GREATER.as_raw(),
+        Greater = vk::CompareOp::GREATER,
         /// Specifies that the comparison evaluates *reference* != *test*
         #[display("not equal")]
-        NOT_EQUAL = vk::CompareOp::NOT_EQUAL.as_raw(),
+        NotEqual = vk::CompareOp::NOT_EQUAL,
         /// Specifies that the comparison evaluates *reference* >= *test*
         #[display("greater or equal")]
-        GREATER_OR_EQUAL = vk::CompareOp::GREATER_OR_EQUAL.as_raw(),
+        GreaterOrEqual = vk::CompareOp::GREATER_OR_EQUAL,
         /// Specifies that the comparison always evaluates `true`.
         #[display("always")]
-        ALWAYS = vk::CompareOp::ALWAYS.as_raw(),
+        Always = vk::CompareOp::ALWAYS,
     }
 
     /// Specifies the robustness of buffer accesses in a pipeline.
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineRobustnessBufferBehavior.html>
-    #[default = Self::DEVICE_DEFAULT]
-    pub struct PipelineRobustnessBufferBehavior: i32 {
+    #[derive(Default)]
+    pub enum PipelineRobustnessBufferBehavior: i32 {
         /// Specifies that out of bounds buffer accesses follow the behavior of robust buffer access
         /// features enabled for the device.
         #[display("device default")]
-        DEVICE_DEFAULT = vk::PipelineRobustnessBufferBehavior::DEVICE_DEFAULT.as_raw(),
+        #[default]
+        DeviceDefault = vk::PipelineRobustnessBufferBehavior::DEVICE_DEFAULT,
         /// Specifies that buffer accesses **must** not be out of bounds.
         #[display("disabled")]
-        DISABLED = vk::PipelineRobustnessBufferBehavior::DISABLED.as_raw(),
+        Disabled = vk::PipelineRobustnessBufferBehavior::DISABLED,
         /// Specifies that bounds checks to shader buffers are performed.
         ///
         /// Out of bounds reads will either return zero values or values from the underlying
@@ -460,7 +515,7 @@ c_enum! {
         /// Atomic read-modify-write operations will behave the same as writes outside bounds,
         /// but will return *undefined* values.
         #[display("robust buffer access")]
-        ROBUST_BUFFER_ACCESS = vk::PipelineRobustnessBufferBehavior::ROBUST_BUFFER_ACCESS.as_raw(),
+        RobustBufferAccess = vk::PipelineRobustnessBufferBehavior::ROBUST_BUFFER_ACCESS,
         /// Specifies that stricter bounds checks to shader buffers are performed.
         ///
         /// Out of bounds reads will produce zero values (with some caveats described in the docs).
@@ -470,22 +525,23 @@ c_enum! {
         /// Atomic read-modify-write operations will behave the same as writes outside bounds, but
         /// will return *undefined* values.
         #[display("robust buffer access 2")]
-        ROBUST_BUFFER_ACCESS2 = vk::PipelineRobustnessBufferBehavior::ROBUST_BUFFER_ACCESS_2.as_raw(),
+        RobustBufferAccess2 = vk::PipelineRobustnessBufferBehavior::ROBUST_BUFFER_ACCESS_2,
     }
 
     /// Specifies the robustness of image accesses in a pipeline.
     ///
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineRobustnessImageBehavior.html>
-    #[default = Self::DEVICE_DEFAULT]
-    pub struct PipelineRobustnessImageBehavior: i32 {
+    #[derive(Default)]
+    pub enum PipelineRobustnessImageBehavior: i32 {
         /// Specifies that out of bounds image accesses follow the behavior of robust image access features
         /// enabled for the device.
         #[display("device default")]
-        DEVICE_DEFAULT = vk::PipelineRobustnessImageBehavior::DEVICE_DEFAULT.as_raw(),
+        #[default]
+        DeviceDefault = vk::PipelineRobustnessImageBehavior::DEVICE_DEFAULT,
         /// Specifies that image accesses **must** not be out of bounds.
         #[display("disabled")]
-        DISABLED = vk::PipelineRobustnessImageBehavior::DISABLED.as_raw(),
+        Disabled = vk::PipelineRobustnessImageBehavior::DISABLED,
         /// Specifies that out of bounds checks to shader images are performed.
         ///
         /// Out of bounds writes and atomic read-modify-write operations will not modify any
@@ -495,7 +551,7 @@ c_enum! {
         /// return zero values with (0,0,1) or (0,0,0) values inserted for missing G, B or A
         /// components based on the format.
         #[display("robust image access")]
-        ROBUST_IMAGE_ACCESS = vk::PipelineRobustnessImageBehavior::ROBUST_IMAGE_ACCESS.as_raw(),
+        RobustImageAccess = vk::PipelineRobustnessImageBehavior::ROBUST_IMAGE_ACCESS,
         /// Specifies that out of bounds checks to shader images are performed.
         ///
         /// Out of bounds writes and atomic read-modify-write operations will not modify any
@@ -505,7 +561,7 @@ c_enum! {
         /// return zero values with (0,0,1) values inserted for missing G, B or A components based
         /// on the format.
         #[display("robust image access 2")]
-        ROBUST_IMAGE_ACCESS2 = vk::PipelineRobustnessImageBehavior::ROBUST_IMAGE_ACCESS_2.as_raw(),
+        RobustImageAccess2 = vk::PipelineRobustnessImageBehavior::ROBUST_IMAGE_ACCESS_2,
     }
 
     /// Describes what parts of a pipeline can (and must) be dynamically changed.
@@ -514,124 +570,208 @@ c_enum! {
     ///
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkDynamicState.html>
-    pub struct DynamicState: i32 {
+    pub enum DynamicState: i32 {
         /// Specifies that the `line_width` **must** be dynamically set with [`set_line_width`][1].
         ///
         /// [1]: DrawPipelineCommands::set_line_width
         #[display("line width")]
-        LINE_WIDTH = vk::DynamicState::LINE_WIDTH.as_raw(),
+        LineWidth = vk::DynamicState::LINE_WIDTH,
         /// Specifies that `depth_bias_constant_factor`, `depth_bias_clamp` and
         /// `depth_bias_slope_factor` **must** be dynamically set with [`set_depth_bias`][1].
         ///
         /// [1]: DrawPipelineCommands::set_depth_bias
         #[display("depth bias")]
-        DEPTH_BIAS = vk::DynamicState::DEPTH_BIAS.as_raw(),
+        DepthBias = vk::DynamicState::DEPTH_BIAS,
         /// Specifies that `blend_constants` **must** be dynamically set with
         /// [`set_blend_constants`][1].
         ///
         /// [1]: DrawPipelineCommands::set_blend_constants
         #[display("blend constants")]
-        BLEND_CONSTANTS = vk::DynamicState::BLEND_CONSTANTS.as_raw(),
+        BlendConstants = vk::DynamicState::BLEND_CONSTANTS,
         /// Specifies that `min_depth_bounds` and `max_depth_bounds` **must** be dynamically set
         /// with [`set_depth_bounds`][1].
         ///
         /// [1]: DrawPipelineCommands::set_depth_bounds
         #[display("depth bounds")]
-        DEPTH_BOUNDS = vk::DynamicState::DEPTH_BOUNDS.as_raw(),
+        DepthBounds = vk::DynamicState::DEPTH_BOUNDS,
         /// Specifies stencil `compare_mask` **must** be dynamically set with
         /// [`set_stencil_compare_mask`][1] for both front and back [`StencilFaces`].
         ///
         /// [1]: DrawPipelineCommands::set_stencil_compare_mask
         #[display("stencil compare mask")]
-        STENCIL_COMPARE_MASK = vk::DynamicState::STENCIL_COMPARE_MASK.as_raw(),
+        StencilCompareMask = vk::DynamicState::STENCIL_COMPARE_MASK,
         /// Specifies that stencil `write_mask` **must** be dynamically set with
         /// [`set_stencil_write_mask`][1] for both front and back [`StencilFaces`].
         ///
         /// [1]: DrawPipelineCommands::set_stencil_write_mask
         #[display("stencil write mask")]
-        STENCIL_WRITE_MASK = vk::DynamicState::STENCIL_WRITE_MASK.as_raw(),
+        StencilWriteMask = vk::DynamicState::STENCIL_WRITE_MASK,
         /// Specifies that stencil `reference` **must** be dynamically set with
         /// [`set_stencil_reference`][1] for both front and back [`StencilFaces`].
         ///
         /// [1]: DrawPipelineCommands::set_stencil_reference
         #[display("stencil reference")]
-        STENCIL_REFERENCE = vk::DynamicState::STENCIL_REFERENCE.as_raw(),
+        StencilReference = vk::DynamicState::STENCIL_REFERENCE,
         /// Specifies that `cull_mode` **must** be dynamically set with [`set_cull_mode`][1].
         ///
         /// [1]: DrawPipelineCommands::set_cull_mode
         #[display("cull mode")]
-        CULL_MODE = vk::DynamicState::CULL_MODE.as_raw(),
+        CullMode = vk::DynamicState::CULL_MODE,
         /// Specifies that `front_face` **must** be dynamically set with [`set_front_face`][1].
         ///
         /// [1]: DrawPipelineCommands::set_front_face
         #[display("front face")]
-        FRONT_FACE = vk::DynamicState::FRONT_FACE.as_raw(),
+        FrontFace = vk::DynamicState::FRONT_FACE,
         /// Specifies that primitive `topology` **must** be dynamically set with
         /// [`set_primitive_topology`][1].
         ///
         /// [1]: DrawPipelineCommands::set_primitive_topology
         #[display("primitive topology")]
-        PRIMITIVE_TOPOLOGY = vk::DynamicState::PRIMITIVE_TOPOLOGY.as_raw(),
+        PrimitiveTopology = vk::DynamicState::PRIMITIVE_TOPOLOGY,
         /// Specifies that vertex input stride **must** be specified when 
         /// [`binding vertex buffers`][1].
         ///
         /// [1]: DrawPipelineCommands::begin_drawing
         #[display("vertex input binding stride")]
-        VERTEX_INPUT_BINDING_STRIDE = vk::DynamicState::VERTEX_INPUT_BINDING_STRIDE.as_raw(),
+        VertexInputBindingStride = vk::DynamicState::VERTEX_INPUT_BINDING_STRIDE,
         /// Specifies that `depth_test_enable` **must** be dynamically set with
         /// [`set_depth_test_enable`][1].
         ///
         /// [1]: DrawPipelineCommands::set_depth_test_enable
         #[display("depth test enable")]
-        DEPTH_TEST_ENABLE =  vk::DynamicState::DEPTH_TEST_ENABLE.as_raw(),
+        DepthTestEnable =  vk::DynamicState::DEPTH_TEST_ENABLE,
         /// Specifies that `depth_write_enable` **must** be dynamically set with
         /// [`set_depth_write_enable`][1].
         ///
         /// [1]: DrawPipelineCommands::set_depth_write_enable
         #[display("depth write enable")]
-        DEPTH_WRITE_ENABLE = vk::DynamicState::DEPTH_WRITE_ENABLE.as_raw(),
+        DepthWriteEnable = vk::DynamicState::DEPTH_WRITE_ENABLE,
         /// Specifies that `depth_compare_op` **must** be dynamically set with
         /// [`set_depth_compare_op`][1].
         ///
         /// [1]: DrawPipelineCommands::set_depth_compare_op
         #[display("depth compare op")]
-        DEPTH_COMPARE_OP = vk::DynamicState::DEPTH_COMPARE_OP.as_raw(),
+        DepthCompareOp = vk::DynamicState::DEPTH_COMPARE_OP,
         /// Specifies that `depth_bounds_test_enable` **must** be dynamically set with
         /// [`set_depth_bounds_test_enable`][1].
         ///
         /// [1]: DrawPipelineCommands::set_depth_bounds_test_enable
         #[display("depth bounds test enable")]
-        DEPTH_BOUNDS_TEST_ENABLE = vk::DynamicState::DEPTH_BOUNDS_TEST_ENABLE.as_raw(),
+        DepthBoundsTestEnable = vk::DynamicState::DEPTH_BOUNDS_TEST_ENABLE,
         /// Specifies that `stencil_test_enable` **must** be dynamically set with
         /// [`set_stencil_test_enable`][1].
         ///
         /// [1]: DrawPipelineCommands::set_stencil_test_enable
         #[display("stencil test enable")]
-        STENCIL_TEST_ENABLE = vk::DynamicState::STENCIL_TEST_ENABLE.as_raw(),
+        StencilTestEnable = vk::DynamicState::STENCIL_TEST_ENABLE,
         /// Specifies that `fail_op`, `pass_op`, `depth_fail_op` and `compare_op` **must** be
         /// dynamically set with [`set_stencil_op`][1] for both front and back [`StencilFaces`].
         ///
         /// [1]: DrawPipelineCommands::set_stencil_op
         #[display("stencil op")]
-        STENCIL_OP = vk::DynamicState::STENCIL_OP.as_raw(),
+        StencilOp = vk::DynamicState::STENCIL_OP,
         /// Specifies that `rasterizer_discard_enable` **must** be dynamically set with
         /// [`set_rasterizer_discard_enable`][1].
         ///
+        /// # Valid usage
+        /// - The [`extended_dynamic_state2`][2] extension **must** be enabled with the
+        ///   [`extended_dynamic_state2`][3] feature enabled.
+        ///
         /// [1]: DrawPipelineCommands::set_rasterizer_discard_enable
+        /// [2]: ext::extended_dynamic_state2
+        /// [3]: ext::extended_dynamic_state2::Features::extended_dynamic_state2
         #[display("rasterizer discard enable")]
-        RASTERIZER_DISCARD_ENABLE = vk::DynamicState::RASTERIZER_DISCARD_ENABLE.as_raw(),
+        RasterizerDiscardEnable = vk::DynamicState::RASTERIZER_DISCARD_ENABLE,
         /// Specifies that `depth_bias_enable` **must** be dynamically set with
         /// [`set_depth_bias_enable`][1].
         ///
+        /// # Valid usage
+        /// - The [`extended_dynamic_state2`][2] extension **must** be enabled with the
+        ///   [`extended_dynamic_state2`][3] feature enabled.
+        ///
         /// [1]: DrawPipelineCommands::set_depth_bias_enable
+        /// [2]: ext::extended_dynamic_state2
+        /// [3]: ext::extended_dynamic_state2::Features::extended_dynamic_state2
         #[display("depth bias enable")]
-        DEPTH_BIAS_ENABLE = vk::DynamicState::DEPTH_BIAS_ENABLE.as_raw(),
+        DepthBiasEnable = vk::DynamicState::DEPTH_BIAS_ENABLE,
         /// Specifies that `primitive_restart_enable` **must** be dynamically set with
         /// [`set_primitive_restart_enable`][1].
         ///
+        /// # Valid usage
+        /// - The [`extended_dynamic_state2`][2] extension **must** be enabled with the
+        ///   [`extended_dynamic_state2`][3] feature enabled.
+        ///
         /// [1]: DrawPipelineCommands::set_primitive_restart_enable
+        /// [2]: ext::extended_dynamic_state2
+        /// [3]: ext::extended_dynamic_state2::Features::extended_dynamic_state2
         #[display("primitive restart enable")]
-        PRIMITIVE_RESTART_ENABLE = vk::DynamicState::PRIMITIVE_RESTART_ENABLE.as_raw(),
+        PrimitiveRestartEnable = vk::DynamicState::PRIMITIVE_RESTART_ENABLE,
+        /// Provided by Vulkan 1.4.
+        #[display("line stipple")]
+        LineStipple = vk::DynamicState::LINE_STIPPLE,
+        /// Provided by VK_NV_clip_space_w_scaling:
+        #[display("viewport w scaling nv")]
+        ViewportWScalingNv = vk::DynamicState::VIEWPORT_W_SCALING_NV,
+        /// Provided by VK_EXT_discard_rectangles.
+        #[display("discard rectangle ext")]
+        DiscardRectangleExt = vk::DynamicState::DISCARD_RECTANGLE_EXT,
+        /// Provided by VK_EXT_discard_rectangles.
+        #[display("discard rectangle enable ext")]
+        DiscardRectangleEnableExt = vk::DynamicState::DISCARD_RECTANGLE_ENABLE_EXT,
+        /// Provided by VK_EXT_discard_rectangles.
+        #[display("discard rectangle mode ext")]
+        DiscardRectangleModeExt = vk::DynamicState::DISCARD_RECTANGLE_MODE_EXT,
+        /// Provided by VK_EXT_sample_locations.
+        #[display("sample locations ext")]
+        SampleLocationsExt = vk::DynamicState::SAMPLE_LOCATIONS_EXT,
+        /// Provided by VK_KHR_ray_tracing_pipeline.
+        #[display("ray tracing pipeline stack size khr")]
+        RayTracingPipelineStackSizeKhr = vk::DynamicState::RAY_TRACING_PIPELINE_STACK_SIZE_KHR,
+        /// Provided by VK_NV_shading_rate_image.
+        #[display("viewport shading rate palette nv")]
+        ViewportShadingRatePaletteNv = vk::DynamicState::VIEWPORT_SHADING_RATE_PALETTE_NV,
+        /// Provided by VK_NV_shading_rate_image.
+        #[display("viewport coarse sample order nv")]
+        ViewportCoarseSampleOrderNv = vk::DynamicState::VIEWPORT_COARSE_SAMPLE_ORDER_NV,
+        /// Provided by VK_NV_scissor_exclusive.
+        #[display("exclusive scissor nv")]
+        ExclusiveScissorEnableNv = vk::DynamicState::EXCLUSIVE_SCISSOR_ENABLE_NV,
+        /// Provided by VK_NV_scissor_exclusive.
+        #[display("exclusive scissor nv")]
+        ExclusiveScissorNv = vk::DynamicState::EXCLUSIVE_SCISSOR_NV,
+        /// Provided by VK_KHR_fragment_shading_rate
+        #[display("fragment shading rate khr")]
+        FragmentShadingRateKhr = vk::DynamicState::FRAGMENT_SHADING_RATE_KHR,
+        /// Provided VK_EXT_vertex_input_dynamic_state
+        #[display("vertex input ext")]
+        VertexInputExt = vk::DynamicState::VERTEX_INPUT_EXT,
+        /// Specifies that `patch_control_points` **must** be dynamically set with
+        #[display("patch control points ext")]
+        PatchControlPointsExt = vk::DynamicState::PATCH_CONTROL_POINTS_EXT,
+        /// Provided by [`VK_EXT_extended_dynamic_state2`][ext::extended_dynamic_state2].
+        #[display("logic op ext")]
+        LogicOpExt = vk::DynamicState::LOGIC_OP_EXT,
+        /// Provided by VK_EXT_color_write_enable.
+        #[display("color write enable ext")]
+        ColorWriteEnableExt = vk::DynamicState::COLOR_WRITE_ENABLE_EXT,
+        /// Specifies that `depth_clamp_enable` **must** be dynamically set with
+        /// [`set_depth_clamp_enable_ext`][1].
+        ///
+        /// [1]: DrawPipelineCommands::set_depth_clamp_enable_ext
+        #[display("depth clamp enable ext")]
+        DepthClampEnableExt = vk::DynamicState::DEPTH_CLAMP_ENABLE_EXT,
+        /// Specifies that `polygon_mode` **must** be dynamically set with
+        /// [`set_polygon_mode_ext`][1].
+        ///
+        /// [1]: DrawPipelineCommands::set_polygon_mode_ext
+        #[display("polygon mode ext")]
+        PolygonModeExt = vk::DynamicState::POLYGON_MODE_EXT,
+        /// Specifies that `alpha_to_coverage_enable` **must** be dynamically set with
+        /// [`set_alpha_to_coverage_enable_ext`][1].
+        ///
+        /// [1]: DrawPipelineCommands::set_alpha_to_coverage_enable_ext
+        #[display("alpha to coverage enable")]
+        AlphaToCoverageEnableExt = vk::DynamicState::ALPHA_TO_COVERAGE_ENABLE_EXT,
     }
 
     /// Specifies polygon front-facing orientation.
@@ -642,14 +782,15 @@ c_enum! {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkFrontFace.html>
     ///
     /// [1]: Self::COUNTER_CLOCKWISE
-    #[default = Self::COUNTER_CLOCKWISE]
-    pub struct FrontFace: i32 {
+    #[derive(Default)]
+    pub enum FrontFace: i32 {
         /// Specifies that triangles with positive area are considered front-facing.
         #[display("counter clockwise")]
-        COUNTER_CLOCKWISE = vk::FrontFace::COUNTER_CLOCKWISE.as_raw(),
+        #[default]
+        CounterClockwise = vk::FrontFace::COUNTER_CLOCKWISE,
         /// Specifies that triangles with negative area are considered front-facing.
         #[display("clockwise")]
-        CLOCK_WISE = vk::FrontFace::CLOCKWISE.as_raw(),
+        ClockWise = vk::FrontFace::CLOCKWISE,
     }
 
     /// Specifies primitive topology.
@@ -660,43 +801,44 @@ c_enum! {
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkPrimitiveTopology.html>
     ///
     /// [1]: Self::TRIANGLE_LIST
-    #[default = Self::TRIANGLE_LIST]
-    pub struct PrimitiveTopology: i32 {
+    #[derive(Default)]
+    pub enum PrimitiveTopology: i32 {
         /// Specifies a series of separate point primities.
         #[display("point list")]
-        POINT_LIST = vk::PrimitiveTopology::POINT_LIST.as_raw(),
+        PointList = vk::PrimitiveTopology::POINT_LIST,
         /// Specifies a series of separate line primities.
         #[display("line list")]
-        LINE_LIST = vk::PrimitiveTopology::LINE_LIST.as_raw(),
+        LineList = vk::PrimitiveTopology::LINE_LIST,
         /// Specifies a series of connected line primities.
         #[display("line strip")]
-        LINE_STRIP = vk::PrimitiveTopology::LINE_STRIP.as_raw(),
+        LineStrip = vk::PrimitiveTopology::LINE_STRIP,
         /// Specifies a series of separate triangle primities.
         #[display("triangle list")]
-        TRIANGLE_LIST = vk::PrimitiveTopology::TRIANGLE_LIST.as_raw(),
+        #[default]
+        TriangleList = vk::PrimitiveTopology::TRIANGLE_LIST,
         /// Specifies a series of connected triangle primities.
         #[display("triangle strip")]
-        TRIANGLE_STRIP = vk::PrimitiveTopology::TRIANGLE_STRIP.as_raw(),
+        TriangleStrip = vk::PrimitiveTopology::TRIANGLE_STRIP,
         /// Specifies a series of connected triangle primitives with all triangles sharing a common
         /// vertex.
         #[display("triangle fan")]
-        TRIANGLE_FAN = vk::PrimitiveTopology::TRIANGLE_FAN.as_raw(),
+        TriangleFan = vk::PrimitiveTopology::TRIANGLE_FAN,
         /// Specifies a series of separate line primitives with adjacency.
         #[display("line list with adjacency")]
-        LINE_LIST_WITH_ADJACENCY = vk::PrimitiveTopology::LINE_LIST_WITH_ADJACENCY.as_raw(),
+        LineListWithAdjacency = vk::PrimitiveTopology::LINE_LIST_WITH_ADJACENCY,
         /// Specifies a series of connected line primitives with adjacency, with consecutive
         /// primitives sharing three vertices.
         #[display("line strip with adjacency")]
-        LINE_STRIP_WITH_ADJACENCY = vk::PrimitiveTopology::LINE_STRIP_WITH_ADJACENCY.as_raw(),
+        LineStripWithAdjacency = vk::PrimitiveTopology::LINE_STRIP_WITH_ADJACENCY,
         /// Specifies a series of separate triangle primitives with adjacency.
         #[display("triangle list with adjacency")]
-        TRIANGLE_LIST_WITH_ADJACENCY = vk::PrimitiveTopology::TRIANGLE_LIST_WITH_ADJACENCY.as_raw(),
+        TriangleListWithAdjacency = vk::PrimitiveTopology::TRIANGLE_LIST_WITH_ADJACENCY,
         /// Specifies connected triangle primitives with adjacency, with consecutive triangles sharing an edge.
         #[display("triangle strip with adjacency")]
-        TRIANGLE_STRIP_WITH_ADJACENCY = vk::PrimitiveTopology::TRIANGLE_STRIP_WITH_ADJACENCY.as_raw(),
+        TriangleStripWithAdjacency = vk::PrimitiveTopology::TRIANGLE_STRIP_WITH_ADJACENCY,
         /// Specifies separate patch primitives.
         #[display("patch list")]
-        PATCH_LIST = vk::PrimitiveTopology::PATCH_LIST.as_raw(),
+        PatchList = vk::PrimitiveTopology::PATCH_LIST,
     }
 
 
@@ -704,32 +846,32 @@ c_enum! {
     ///
     /// # Vulkan docs
     /// <https://docs.vulkan.org/refpages/latest/refpages/source/VkStencilOp.html>
-    pub struct StencilOp: i32 {
+    pub enum StencilOp: i32 {
         /// Keeps the current value.
         #[display("keep")]
-        KEEP = vk::StencilOp::KEEP.as_raw(),
+        Keep = vk::StencilOp::KEEP,
         /// Sets the value to 0.
         #[display("zero")]
-        ZERO = vk::StencilOp::ZERO.as_raw(),
+        Zero = vk::StencilOp::ZERO,
         /// Sets the value to the reference.
         #[display("replace")]
-        REPLACE = vk::StencilOp::REPLACE.as_raw(),
+        Replace = vk::StencilOp::REPLACE,
         /// Increments the current value, saturating at the maximum representable unsigned value.
         #[display("saturating increment")]
-        SATURATING_INCREMENT = vk::StencilOp::INCREMENT_AND_CLAMP.as_raw(),
+        SaturatingIncrement = vk::StencilOp::INCREMENT_AND_CLAMP,
         /// Increments the current value, saturating at 0.
         #[display("saturating decrement")]
-        SATURATING_DECREMENT = vk::StencilOp::DECREMENT_AND_CLAMP.as_raw(),
+        SaturatingDecrement = vk::StencilOp::DECREMENT_AND_CLAMP,
         /// Bitwise-inverts the current value.
         #[display("invert")]
-        INVERT = vk::StencilOp::INVERT.as_raw(),
+        Invert = vk::StencilOp::INVERT,
         /// Increments the current value, wrapping around at the maximum representable unsigned
         /// value.
         #[display("wrapping increment")]
-        WRAPPING_INCREMENT = vk::StencilOp::INCREMENT_AND_WRAP.as_raw(),
+        WrappingIncrement = vk::StencilOp::INCREMENT_AND_WRAP,
         /// Decrements the current value, wrapping around at 0.
         #[display("wrapping decrement")]
-        WRAPPING_DECREMENT = vk::StencilOp::DECREMENT_AND_WRAP.as_raw(),
+        WrappingDecrement = vk::StencilOp::DECREMENT_AND_WRAP,
     }
 
     /// Specifies polygon rasterization mode.
@@ -737,175 +879,179 @@ c_enum! {
     /// The default value is ['fill`][1].
     ///
     /// [1]: Self::FILL
-    #[default = Self::FILL]
-    pub struct PolygonMode: i32 {
+    #[derive(Default)]
+    pub enum PolygonMode: i32 {
         /// Specifies fill mode.
         #[display("fill")]
-        FILL = vk::PolygonMode::FILL.as_raw(),
+        #[default]
+        Fill = vk::PolygonMode::FILL,
         /// Specifies that polygon edges are drawn as line segments.
         #[display("line")]
-        LINE = vk::PolygonMode::LINE.as_raw(),
+        Line = vk::PolygonMode::LINE,
         /// Specifies that polygon vertices are drawn as points.
         #[display("point")]
-        POINT = vk::PolygonMode::POINT.as_raw(),
+        Point = vk::PolygonMode::POINT,
+        /// Provided by VK_NV_fill_rectangle.
+        #[display("fille rectangel nv")]
+        FillRectangleNv = vk::PolygonMode::FILL_RECTANGLE_NV,
     }
 
     /// Specifies framebuffer blending factors.
-    pub struct BlendFactor: i32 {
+    pub enum BlendFactor: i32 {
         /// RGB: (0, 0, 0)
         /// A: 0
         #[display("zero")]
-        ZERO = vk::BlendFactor::ZERO.as_raw(),
+        Zero = vk::BlendFactor::ZERO,
         /// RGB: (1, 1, 1)
         /// A: 1
         #[display("one")]
-        ONE = vk::BlendFactor::ONE.as_raw(),
+        One = vk::BlendFactor::ONE,
         /// RGB: (R0, G0, B0)
         /// A: A0
         #[display("source color")]
-        SRC_COLOR = vk::BlendFactor::SRC_COLOR.as_raw(),
+        SrcColor = vk::BlendFactor::SRC_COLOR,
         /// RGB: (1 - R0, 1 - G0, 1 - B0)
         /// A: 1 - A0
         #[display("one minus source color")]
-        ONE_MINUS_SRC_COLOR = vk::BlendFactor::ONE_MINUS_SRC_COLOR.as_raw(),
+        OneMinusSrcColor = vk::BlendFactor::ONE_MINUS_SRC_COLOR,
         /// RGB: (R1, G1, B1)
         /// A: A1
         #[display("destination color")]
-        DST_COLOR = vk::BlendFactor::DST_COLOR.as_raw(),
+        DstColor = vk::BlendFactor::DST_COLOR,
         /// RGB: (1 - R1, 1 - R1, 1 - R1)
         /// A: 1 - A1
         #[display("one minus destination color")]
-        ONE_MINUS_DST_COLOR = vk::BlendFactor::ONE_MINUS_DST_COLOR.as_raw(),
+        OneMinusDstColor = vk::BlendFactor::ONE_MINUS_DST_COLOR,
         /// RGB: (A0, A0, A0)
         /// A: A0
         #[display("source alpha")]
-        SRC_ALPHA = vk::BlendFactor::SRC_ALPHA.as_raw(),
+        SrcAlpha = vk::BlendFactor::SRC_ALPHA,
         /// RGB: (1 - A0, 1 - A0, 1 - A0)
         /// A: 1 - A0
         #[display("one minus source alpha")]
-        ONE_MINUS_SRC_ALPHA = vk::BlendFactor::ONE_MINUS_SRC_ALPHA.as_raw(),
+        OneMinusSrcAlpha = vk::BlendFactor::ONE_MINUS_SRC_ALPHA,
         /// RGB: (A1, A1, A1)
         /// A: A1
         #[display("destination alpha")]
-        DST_ALPHA = vk::BlendFactor::DST_ALPHA.as_raw(),
+        DstAlpha = vk::BlendFactor::DST_ALPHA,
         /// RGB: (1 - A1, 1 - A1, 1 - A1)
         /// A: 1 - A1
         #[display("one minus destination alpha")]
-        ONE_MINUS_DST_ALPHA = vk::BlendFactor::ONE_MINUS_DST_ALPHA.as_raw(),
+        OneMinusDstAlpha = vk::BlendFactor::ONE_MINUS_DST_ALPHA,
         /// RGB: (Rc, Gc, Bc)
         /// A: Ac
         #[display("const color")]
-        CONST_COLOR = vk::BlendFactor::CONSTANT_COLOR.as_raw(),
+        ConstColor = vk::BlendFactor::CONSTANT_COLOR,
         /// RGB: (1 - Rc, 1 - Gc, 1 - Bc)
         /// A: 1 - Ac
         #[display("one minus const color")]
-        ONE_MINUS_CONST_COLOR = vk::BlendFactor::ONE_MINUS_CONSTANT_COLOR.as_raw(),
+        OneMinusConstColor = vk::BlendFactor::ONE_MINUS_CONSTANT_COLOR,
         /// RGB: (Ac, Ac, A )
         /// A: Ac
         #[display("const alpha")]
-        CONST_ALPHA = vk::BlendFactor::CONSTANT_ALPHA.as_raw(),
+        ConstAlpha = vk::BlendFactor::CONSTANT_ALPHA,
         /// RGB: (1 - Ac, 1 - Ac, 1 - Ac)
         /// A: 1 - Ac
         #[display("one minus const alpha")]
-        ONE_MINUS_CONST_ALPHA = vk::BlendFactor::ONE_MINUS_CONSTANT_ALPHA.as_raw(),
+        OneMinusConstAlpha = vk::BlendFactor::ONE_MINUS_CONSTANT_ALPHA,
         /// RGB: (f,f,f); f = min(A0,1-A1)
         /// A: 1
         #[display("src alpha saturate")]
-        SRC_ALPHA_SATURATE = vk::BlendFactor::SRC_ALPHA_SATURATE.as_raw(),
+        SrcAlphaSaturate = vk::BlendFactor::SRC_ALPHA_SATURATE,
         /// RGB: (R01, G01, B01)
         /// A: A01
         #[display("src1 color")]
-        SRC1_COLOR = vk::BlendFactor::SRC1_COLOR.as_raw(),
+        Src1Color = vk::BlendFactor::SRC1_COLOR,
         /// RGB: (1 - R01, 1 - G01, 1 - B01)
         /// A: 1 - A01
         #[display("one minus src1 color")]
-        ONE_MINUS_SRC1_COLOR = vk::BlendFactor::ONE_MINUS_SRC1_COLOR.as_raw(),
+        OneMinusSrc1Color = vk::BlendFactor::ONE_MINUS_SRC1_COLOR,
         /// RGB: (A01, A01, A01)
         /// A: A01
         #[display("src1 alpha")]
-        SRC1_ALPHA = vk::BlendFactor::SRC1_ALPHA.as_raw(),
+        Src1Alpha = vk::BlendFactor::SRC1_ALPHA,
         /// RGB: (1 - A01, 1 - A01, 1 - A01)
         /// A: 1- A01
         #[display("oe minus src1 alpha")]
-        ONE_MINUS_SRC1_ALPHA = vk::BlendFactor::ONE_MINUS_SRC1_ALPHA.as_raw(),
+        OneMinusSrc1Alpha = vk::BlendFactor::ONE_MINUS_SRC1_ALPHA,
     }
 
     /// Specifies framebuffer blending operations
-    pub struct BlendOp : i32 {
+    pub enum BlendOp : i32 {
         /// See the [`Vulkan docs`][1].
         ///
         /// [1]: https://docs.vulkan.org/refpages/latest/refpages/source/VkBlendOp.html
         #[display("add")]
-        ADD = vk::BlendOp::ADD.as_raw(),
+        Add = vk::BlendOp::ADD,
         /// See the [`Vulkan docs`][1].
         ///
         /// [1]: https://docs.vulkan.org/refpages/latest/refpages/source/VkBlendOp.html
         #[display("subtract")]
-        SUB = vk::BlendOp::SUBTRACT.as_raw(),
+        Sub = vk::BlendOp::SUBTRACT,
         /// See the [`Vulkan docs`][1].
         ///
         /// [1]: https://docs.vulkan.org/refpages/latest/refpages/source/VkBlendOp.html
         #[display("reverse subtract")]
-        REV_SUB = vk::BlendOp::REVERSE_SUBTRACT.as_raw(),
+        RevSub = vk::BlendOp::REVERSE_SUBTRACT,
         /// See the [`Vulkan docs`][1].
         ///
         /// [1]: https://docs.vulkan.org/refpages/latest/refpages/source/VkBlendOp.html
         #[display("min")]
-        MIN = vk::BlendOp::MIN.as_raw(),
+        Min = vk::BlendOp::MIN,
         /// See the [`Vulkan docs`][1].
         ///
         /// [1]: https://docs.vulkan.org/refpages/latest/refpages/source/VkBlendOp.html
         #[display("max")]
-        MAX = vk::BlendOp::MAX.as_raw(),
+        Max = vk::BlendOp::MAX,
     }
     
     /// Specifies a logical operation in a framebuffer.
-    pub struct LogicOp: i32 {
+    pub enum LogicOp: i32 {
         /// 0
         #[display("clear")]
-        CLEAR = vk::LogicOp::CLEAR.as_raw(),
+        Clear = vk::LogicOp::CLEAR,
         /// s & d
         #[display("and")]
-        AND = vk::LogicOp::AND.as_raw(),
+        And = vk::LogicOp::AND,
         /// s ^ !d
         #[display("and reverse")]
-        AND_REVERSE = vk::LogicOp::AND_REVERSE.as_raw(),
+        AndReverse = vk::LogicOp::AND_REVERSE,
         /// s
         #[display("copy")]
-        COPY = vk::LogicOp::COPY.as_raw(),
+        Copy = vk::LogicOp::COPY,
         /// !s & d
         #[display("and inverted")]
-        AND_INVERTED = vk::LogicOp::AND_INVERTED.as_raw(),
+        AndInverted = vk::LogicOp::AND_INVERTED,
         /// d
         #[display("no op")]
-        NO_OP = vk::LogicOp::NO_OP.as_raw(),
+        NoOp = vk::LogicOp::NO_OP,
         /// s ^ d
         #[display("xor")]
-        XOR = vk::LogicOp::XOR.as_raw(),
+        Xor = vk::LogicOp::XOR,
         /// s | d
         #[display("or")]
-        OR = vk::LogicOp::OR.as_raw(),
+        Or = vk::LogicOp::OR,
         /// !(s | d)
         #[display("nor")]
-        NOR = vk::LogicOp::NOR.as_raw(),
+        Nor = vk::LogicOp::NOR,
         /// !(s ^ d)
         #[display("equivalent")]
-        EQUIVALENT = vk::LogicOp::EQUIVALENT.as_raw(),
+        Equivalent = vk::LogicOp::EQUIVALENT,
         /// !d
         #[display("invert")]
-        INVERT = vk::LogicOp::INVERT.as_raw(),
+        Invert = vk::LogicOp::INVERT,
         /// s | !d
         #[display("or reverse")]
-        OR_REVERSE = vk::LogicOp::OR_REVERSE.as_raw(),
+        OrReverse = vk::LogicOp::OR_REVERSE,
         /// !d
         #[display("copy inverted")]
-        COPY_INVERTED = vk::LogicOp::COPY_INVERTED.as_raw(),
+        CopyInverted = vk::LogicOp::COPY_INVERTED,
         /// ! (s & d)
         #[display("nand")]
-        NAND = vk::LogicOp::NAND.as_raw(),
+        Nand = vk::LogicOp::NAND,
         /// All 1s
         #[display("set")]
-        SET = vk::LogicOp::SET.as_raw(),
+        Set = vk::LogicOp::SET,
     }
 }
 
@@ -919,17 +1065,49 @@ impl From<vk::PhysicalDeviceType> for PhysicalDeviceType {
     }
 }
 
+/// An enumeration of [`primitive topology classes`][PrimitiveTopology::class].
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum PrimitiveTopologyClass {
+    /// Primitives are points.
+    Point,
+    /// Primitives are lines.
+    Line,
+    /// Primitives are triangles
+    Triangle,
+    /// Primitives are patches.
+    Patch,
+}
+
 impl PrimitiveTopology {
 
     /// Returns whether this topology type can [`restart`][1].
     ///
     /// [1]: DrawPipelineCommands::set_primitive_restart_enable
-    #[inline(always)]
+    #[inline]
     pub fn can_restart(self) -> bool {
         matches!(self,
             Self::LINE_STRIP | Self::TRIANGLE_STRIP |
             Self::LINE_STRIP_WITH_ADJACENCY  | Self::TRIANGLE_STRIP_WITH_ADJACENCY
         )
+    }
+
+    /// Gets the topology class of self.
+    #[inline]
+    pub const fn class(self) -> PrimitiveTopologyClass {
+        match self {
+            Self::POINT_LIST => PrimitiveTopologyClass::Point,
+            Self::LINE_LIST |
+            Self::LINE_STRIP |
+            Self::LINE_LIST_WITH_ADJACENCY |
+            Self::LINE_STRIP_WITH_ADJACENCY => PrimitiveTopologyClass::Line,
+            Self::TRIANGLE_LIST |
+            Self::TRIANGLE_STRIP |
+            Self::TRIANGLE_FAN |
+            Self::TRIANGLE_LIST_WITH_ADJACENCY |
+            Self::TRIANGLE_STRIP_WITH_ADJACENCY => PrimitiveTopologyClass::Triangle,
+            Self::PATCH_LIST => PrimitiveTopologyClass::Patch,
+            _ => PrimitiveTopologyClass::Point,
+        }
     }
 }
 
@@ -985,6 +1163,121 @@ impl Display for IndexType {
     }
 }
 
+/// Specifies the type of an [`image`][1].
+///
+/// [1]: ImageCreateInfo
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
+pub enum ImageType {
+    /// Specifies that the type is inferred from the image's [`dimensions`][1].
+    ///
+    /// [1]: ImageCreateInfo::with_dimensions
+    #[default]
+    Infer,
+    /// Specifies a one-dimensional image.
+    ///
+    /// # Valid usage
+    /// - The [`height and depth`][1] of the image **must** both be equal to 1.
+    ///
+    /// [1]: ImageCreateInfo::with_dimensions
+    Type1d,
+    /// Specifies a two-dimensional image.
+    ///
+    /// # Valid usage
+    /// - The [`depth`][1] of the image **must** be equal to 1.
+    ///
+    /// [1]: ImageCreateInfo::with_dimensions
+    Type2d,
+    /// Specifies a three-dimensional image.
+    Type3d,
+}
+
+impl Display for ImageType {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Infer => write!(f, "infer"),
+            Self::Type1d => write!(f, "1d"),
+            Self::Type2d => write!(f, "2d"),
+            Self::Type3d => write!(f, "3d"),
+        }
+    }
+}
+
+/// Specifies the type of an [`image view`][1].
+///
+/// [1]: ImageViewCreateInfo::view_type
+#[repr(i32)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash, Debug)]
+pub enum ImageViewType {
+    /// Specifies that the type is inferred from the image's [`type`][1].
+    ///
+    /// [1]: ImageType
+    #[default]
+    Infer = i32::MIN,
+    /// Specifies a one-dimensional view.
+    Type1d = vk::ImageViewType::TYPE_1D.as_raw(),
+    /// Specifies a two-dimensional view.
+    Type2d = vk::ImageViewType::TYPE_2D.as_raw(),
+    /// Specifies a three-dimensional view.
+    Type3d = vk::ImageViewType::TYPE_3D.as_raw(),
+    /// Specifies a cube view.
+    /// 
+    /// # Valid usage
+    /// - The image **must** be [`cube compatible`][1].
+    /// - The [`array layers`][2] of the created view **must** be 6.
+    ///
+    /// [1]: ImageCreateFlags::CUBE_COMPATIBLE
+    /// [2]: ImageViewCreateInfo::subresource_range
+    Cube = vk::ImageViewType::CUBE.as_raw(),
+    /// Specifies an arrayed one-dimensional view.
+    Type1dArray = vk::ImageViewType::TYPE_1D_ARRAY.as_raw(),
+    /// Specifies an arrayed two-dimensional view.
+    Type2dArray = vk::ImageViewType::TYPE_2D_ARRAY.as_raw(),
+    /// Specifies an arrayed cube view.
+    ///
+    /// # Valid usage
+    /// - The image **must** be [`cube compatible`][1].
+    /// - The [`array layers`][2] of the created view **must** be a multiple of 6.
+    ///
+    /// [1]: ImageCreateFlags::CUBE_COMPATIBLE
+    /// [2]: ImageViewCreateInfo::subresource_range
+    CubeArray = vk::ImageViewType::CUBE_ARRAY.as_raw(),
+}
+
+impl ImageViewType {
+
+    #[inline]
+    pub const fn as_raw(self) -> i32 {
+        self as i32
+    }
+
+    /// Returns whether the view type is compatible given an [`image type`][1] and image
+    /// [`create flags`][2]
+    ///
+    /// [1]: ImageType
+    /// [2]: ImageCreateFlags
+    #[inline]
+    pub fn is_compatible(
+        self,
+        image_type: ImageType,
+        create_flags: ImageCreateFlags,
+    ) -> bool {
+        match self {
+            Self::Infer => true,
+            Self::Type1d | Self::Type1dArray
+                => matches!(image_type, ImageType::Type1d),
+            Self::Type2d => matches!(image_type, ImageType::Type2d),
+            Self::Type2dArray =>
+                matches!(image_type, ImageType::Type2d) ||
+                (create_flags.contains(ImageCreateFlags::TYPE_2D_ARRAY_COMPATIBLE) &&
+                    matches!(image_type, ImageType::Type3d)
+                ),
+            Self::Cube | Self::CubeArray => matches!(image_type, ImageType::Type2d),
+            Self::Type3d => matches!(image_type, ImageType::Type3d),
+        }
+    }
+}
+
 macro_rules! impl_convert_vk {
     ($([$name:ident, vk::$vk:ident]),+ $(,)?) => {
         $(
@@ -1025,6 +1318,7 @@ impl_convert_vk! {
     [ColorComponents, vk::ColorComponentFlags],
     [CullModes, vk::CullModeFlags],
     [LogicOp, vk::LogicOp],
+    [ImageViewType, vk::ImageViewType],
 }
 
 impl From<vk::SampleCountFlags> for MsaaSamples {

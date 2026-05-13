@@ -1,28 +1,32 @@
 //! Provided by [`VK_KHR_index_type_uint8`][1] or Vulkan 1.4.
 //!
+//! Allows the use of [`IndexType::U8`].
+//!
 //! [1]: https://docs.vulkan.org/refpages/latest/refpages/source/VK_KHR_index_type_uint8.html
 
-use super::*;
+use super::{*, device::*};
 
-use tuhka::khr;
+use tuhka::khr::index_type_uint8;
 
+/// The name of the extension.
+pub const NAME: ConstName = ConstName::new(index_type_uint8::NAME.to_str().unwrap());
 
-pub struct Attributes;
-
-impl Attributes {
-    /// Attribute type `bool`.
-    pub const IS_ENABLED: ConstName = ConstName::new("index_type_uint8");
+/// Creates the [`extension type`][1].
+///
+/// [1]: DeviceAttributes::with_device_extension
+#[inline]
+pub const fn extension() -> impl DeviceExtension {
+    Extension
 }
 
-/// The extension type.
 #[derive(Clone, Copy)]
-pub struct Extension;
+struct Extension;
 
 unsafe impl DeviceExtension for Extension {
 
     fn get_info(&self, _: &DeviceAttributes) -> Option<DeviceExtensionInfo> {
         Some(DeviceExtensionInfo {
-            name: khr::index_type_uint8::NAME,
+            name: index_type_uint8::NAME,
             deprecation_version: API_VERSION_1_4,
             precondition: Precondition::new(|ctx| {
                 let mut features = vk::PhysicalDeviceIndexTypeUint8Features::default();
@@ -37,12 +41,14 @@ unsafe impl DeviceExtension for Extension {
     fn register(
         &self,
         ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<ExtendsDeviceCreateInfoObj> {
-        ctx.register_attribute(DeviceAttribute::new_bool(Attributes::IS_ENABLED, true));
-        Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceIndexTypeUint8Features
-            ::default()
-            .index_type_uint8(true)
-        ))
+    ) -> RegisteredExtension {
+        registered_extension(
+            NAME,
+            Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceIndexTypeUint8Features
+                ::default()
+                .index_type_uint8(true)
+            ))
+        )
     }
 
     fn boxed(&self) -> Box<dyn DeviceExtension> {

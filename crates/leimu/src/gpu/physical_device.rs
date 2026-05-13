@@ -128,10 +128,10 @@ impl PhysicalDevice {
 pub(super) enum DeviceSuitability<'a> {
     Ok,
     #[display("of missing features: {0}")]
-    MissingFeatures(ext::MissingDeviceFeatureError),
+    MissingFeatures(ext::device::MissingDeviceFeatureError),
     #[display("of missing extensions: {0:?}")]
     MissingExtensions(Vec32<&'a CStr>),
-    #[display("Leimu requires at least Vulkan version 1.1 (device version was {0})")]
+    #[display("Leimu requires at least Vulkan version 1.2 (device version was {0})")]
     OldVersion(Version),
 }
 
@@ -139,7 +139,7 @@ pub(super) fn is_device_suitable<'a>(
     instance: &Instance,
     attributes: &DeviceAttributes,
     physical_device: &PhysicalDevice,
-    device_extension_infos: &[ext::DeviceExtensionInfo],
+    device_extension_infos: &[ext::device::DeviceExtensionInfo],
 ) -> Result<DeviceSuitability<'a>>
 {
     let mut vulkan12_features = None;
@@ -152,7 +152,7 @@ pub(super) fn is_device_suitable<'a>(
     if let Some(err) = attributes.required_features.find_missing_features(&features) {
         return Ok(DeviceSuitability::MissingFeatures(err))
     }
-    let context = ext::PhysicalDeviceContext::new(
+    let context = ext::device::PhysicalDeviceContext::new(
         instance,
         physical_device,
         &mut vulkan12_features,
@@ -160,7 +160,7 @@ pub(super) fn is_device_suitable<'a>(
         None,
     );
     let api_version = physical_device.api_version;
-    if api_version < vk::API_VERSION_1_1 {
+    if api_version < vk::API_VERSION_1_2 {
         return Ok(DeviceSuitability::OldVersion(api_version))
     }
     let mut check_ext = vec32![];

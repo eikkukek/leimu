@@ -163,14 +163,14 @@ impl Instance {
                 .try_enumerate_instance_version()
             else {
                 return Err(Error::just_context(
-                    "Leimu requires at least Vulkan version 1.1, enumerated version was 1.0"
+                    "Leimu requires at least Vulkan version 1.2, enumerated version was 1.0"
                 ))
             };
             version.value
         };
-        if version < vk::API_VERSION_1_1 {
+        if version < vk::API_VERSION_1_2 {
             return Err(Error::just_context(format!(
-                "Leimu requires at least Vulkan version 1.1, enumerated version was {}",
+                "Leimu requires at least Vulkan version 1.2, enumerated version was {}",
                 Version(version),
             )))
         }
@@ -251,8 +251,8 @@ pub struct SuitablePhysicalDevices {
     pub(super) instance: Instance,
     pub(super) devices: Vec32<PhysicalDevice>,
     pub(super) attributes: DeviceAttributes,
-    pub(super) device_extensions: Vec32<ext::DeviceExtensionObj>,
-    pub(super) device_extension_infos: Vec32<ext::DeviceExtensionInfo>,
+    pub(super) device_extensions: Vec32<ext::device::DeviceExtensionObj>,
+    pub(super) device_extension_infos: Vec32<ext::device::DeviceExtensionInfo>,
 }
 
 impl SuitablePhysicalDevices {

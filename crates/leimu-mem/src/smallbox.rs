@@ -7,7 +7,7 @@
 /// use std::borrow::Borrow;
 /// leimu_mem::smallbox!(
 ///     /// Supports doc comments
-///     pub MySmallBox: Borrow<str>
+///     pub struct MySmallBox: Borrow<str>
 /// );
 /// // No extra allocation
 /// let hello = MySmallBox::<8>::new("hello");
@@ -21,8 +21,8 @@
 macro_rules! smallbox {
     (
         $(#[doc = $doc:literal])*
-        $vis:vis $name:ident:
-            $first_bound:ident $(<$first_gen:ty>)? $(+ $bounds:ident $(<$gen:ty>)?)*
+        $vis:vis struct $name:ident:
+            $first_bound:ident $([($($fn_args:ty),*) $(-> $fn_ret:ty)?])? $(<$first_gen:ty>)? $(+ $bounds:ident)*
     ) => {
 
         $(#[doc = $doc])*
@@ -30,14 +30,15 @@ macro_rules! smallbox {
             data: [u8; N_BUF],
             ptr: (*const (), *const ()),
             _marker: core::marker::PhantomData<dyn
-                $first_bound $(<$first_gen>)? $(+ $bounds $(<$gen>)?)*
+                $first_bound $(($($fn_args),*) $(-> $fn_ret)?)? $(<$first_gen>)? $(+ $bounds )*
             >,
         }
 
         impl<const N_BUF: usize> $name<N_BUF> {
 
+            #[allow(unused_parens)]
             pub fn new<T>(x: T) -> Self
-                where T: $first_bound $(<$first_gen>)? $(+ $bounds $(<$gen>)?)* + 'static
+                where T: $first_bound $(($($fn_args),*) $(-> $fn_ret)?)? $(<$first_gen>)? $(+ $bounds)* + 'static
             {
                 if size_of_val(&x) <= N_BUF {
                     let mut data = [0u8; N_BUF];
@@ -49,7 +50,7 @@ macro_rules! smallbox {
                     }
                     let mut ptr = unsafe {
                         core::mem::transmute::<
-                            *mut (dyn $first_bound $(<$first_gen>)? $(+ $bounds $(<$gen>)?)*),
+                            *mut (dyn $first_bound $(($($fn_args),*) $(-> $fn_ret)?)? $(<$first_gen>)? $(+ $bounds)*),
                             (*const (), *const ())>
                         (
                             ptr
@@ -71,7 +72,7 @@ macro_rules! smallbox {
                     }
                     let ptr = unsafe {
                         core::mem::transmute::<
-                            *mut (dyn $first_bound $(<$first_gen>)? $(+ $bounds $(<$gen>)?)*),
+                            *mut (dyn $first_bound $(($($fn_args),*) $(-> $fn_ret)?)? $(<$first_gen>)? $(+ $bounds)*),
                             (*const (), *const ())>(
                             ptr
                         )
@@ -87,8 +88,9 @@ macro_rules! smallbox {
 
         impl<const N_BUF: usize> core::ops::Deref for $name<N_BUF> {
 
-            type Target = dyn $first_bound $(<$first_gen>)? $(+ $bounds $(<$gen>)?)*;
+            type Target = dyn $first_bound $(($($fn_args),*) $(-> $fn_ret)?)? $(<$first_gen>)? $(+ $bounds)*;
 
+            #[allow(unused_parens)]
             fn deref(&self) -> &Self::Target {
                 let mut ptr = self.ptr;
                 if ptr.0.is_null() {
@@ -98,7 +100,7 @@ macro_rules! smallbox {
                     unsafe {
                         core::mem::transmute::<
                             (*const (), *const ()),
-                            &(dyn $first_bound $(<$first_gen>)? $(+ $bounds $(<$gen>)?)*)
+                            &(dyn $first_bound $(($($fn_args),*) $(-> $fn_ret)?)? $(<$first_gen>)? $(+ $bounds)*)
                         >(
                             ptr
                         )
@@ -107,7 +109,7 @@ macro_rules! smallbox {
                     unsafe {
                         core::mem::transmute::<
                             (*const (), *const()),
-                            &(dyn $first_bound $(<$first_gen>)? $(+ $bounds $(<$gen>)?)*)
+                            &(dyn $first_bound $(($($fn_args),*) $(-> $fn_ret)?)? $(<$first_gen>)? $(+ $bounds)*)
                         >(
                             ptr
                         )
@@ -118,6 +120,7 @@ macro_rules! smallbox {
 
         impl<const N_BUF: usize> core::ops::DerefMut for $name<N_BUF> {
 
+            #[allow(unused_parens)]
             fn deref_mut(&mut self) -> &mut Self::Target {
                 let mut ptr = self.ptr;
                 if ptr.0.is_null() {
@@ -127,7 +130,7 @@ macro_rules! smallbox {
                     unsafe {
                         core::mem::transmute::<
                             (*const (), *const ()),
-                            &mut (dyn $first_bound $(<$first_gen>)? $(+ $bounds $(<$gen>)?)*)
+                            &mut (dyn $first_bound $(($($fn_args),*) $(-> $fn_ret)?)? $(<$first_gen>)? $(+ $bounds)*)
                         >(
                             ptr
                         )
@@ -136,7 +139,7 @@ macro_rules! smallbox {
                     unsafe {
                         core::mem::transmute::<
                             (*const (), *const()),
-                            &mut (dyn $first_bound $(<$first_gen>)? $(+ $bounds $(<$gen>)?)*)
+                            &mut (dyn $first_bound $(($($fn_args),*) $(-> $fn_ret)?)? $(<$first_gen>)? $(+ $bounds)*)
                         >(
                             ptr
                         )
@@ -147,6 +150,7 @@ macro_rules! smallbox {
 
         impl<const N_BUF: usize> Drop for $name<N_BUF> {
 
+            #[allow(unused_parens)]
             fn drop(&mut self) {
                 let mut ptr = self.ptr; 
                 if ptr.0.is_null() {
@@ -156,7 +160,7 @@ macro_rules! smallbox {
                     unsafe {
                         let ptr = core::mem::transmute::<
                             (*const (), *const ()),
-                            *mut (dyn $first_bound $(<$first_gen>)? $(+ $bounds $(<$gen>)?)*)
+                            *mut (dyn $first_bound $(($($fn_args),*) $(-> $fn_ret)?)? $(<$first_gen>)? $(+ $bounds)*)
                         >(ptr);
                         ptr.drop_in_place();
                     }
@@ -164,7 +168,7 @@ macro_rules! smallbox {
                     unsafe {
                         let ptr = core::mem::transmute::<
                             (*const (), *const ()),
-                            *mut (dyn $first_bound $(<$first_gen>)? $(+ $bounds $(<$gen>)?)*)
+                            *mut (dyn $first_bound $(($($fn_args),*) $(-> $fn_ret)?)? $(<$first_gen>)? $(+ $bounds)*)
                         >(ptr);
                         let (size, align) = {
                             let x = ptr.as_ref().unwrap_unchecked();

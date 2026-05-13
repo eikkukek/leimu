@@ -25,7 +25,17 @@ impl Flags for BufferUsages {
     const NAME: &str = "buffer usage";
 }
 
-pub struct BufferMeta {
+/// Structure containing everything relevant to a [`VkBuffer`][1].
+///
+/// You should generally **not** try to access this structure directly, but instead use it through
+/// [`ids`][BufferId] passed to [`commands`][2] and [`Gpu`].
+///
+/// To create a new [`Buffer`], use the [`create_resources`][3] method of [`Gpu`].
+///
+/// [1]: https://docs.vulkan.org/refpages/latest/refpages/source/VkBuffer.html
+/// [2]: Gpu::schedule_commands
+/// [3]: Gpu::create_resources
+pub struct Buffer {
     device: Device,
     handle: vk::Buffer,
     memory: DeviceMemoryObj,
@@ -33,12 +43,12 @@ pub struct BufferMeta {
     state: Vec32<BufferRange>,
 }
 
-impl ResourceMeta for BufferMeta {
+impl ResourceMeta for Buffer {
 
     const NAME: &str = "buffer";
 }
 
-impl BufferMeta {
+impl Buffer {
 
     fn new(
         device: Device,
@@ -301,7 +311,7 @@ impl BufferMeta {
     }
 }
 
-impl Drop for BufferMeta {
+impl Drop for Buffer {
 
     fn drop(&mut self) {
         unsafe {

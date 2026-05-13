@@ -197,56 +197,40 @@ macro_rules! bitflags {
     )+};
 }
 
-#[macro_export]
-macro_rules! c_enum {
+macro_rules! var_count {
+    () => { 0usize };
+    ($first:ident $($last:ident)*) => { 1usize + $crate::macros::var_count!($($last)*) }
+}
+pub(crate) use var_count;
+
+macro_rules! vk_enum {
     ($(
         $(#[doc = $doc:literal])*
-        $(#[default = $default:expr])?
-        $vis:vis struct $name:ident: $repr:ty {$(
+        $(#[derive($($derive:ident),+)])?
+        pub enum $name:ident: $repr:ty {$(
             $(#[doc = $var_doc:literal])*
             #[display($var_display:literal)]
-            $var:ident = $value:expr
+            $(#[$default:ident])?
+            $var:ident = vk::$vk_enum:ident::$value:ident
         ),+ $(,)?}
     )+) => {$(
         $(#[doc = $doc])*
-        #[repr(transparent)]
-        #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-        $vis struct $name($repr);
+        #[repr($repr)]
+        #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, $($($derive),+)?)]
+        pub enum $name {$(
+            $(#[doc = $var_doc])*
+            $(#[$default])?
+            $var = vk::$vk_enum::$value.as_raw()
+        ),+}
 
         impl $name {
 
-            /// Returns the the raw inner value
+            pub const VARIANT_COUNT: usize = $crate::macros::var_count!($($var)+);
+
+            /// Returns the the raw inner value.
             #[inline]
             pub const fn as_raw(self) -> $repr {
-                self.0
-            }
-
-            /// Creates [`Self`] from a raw value.
-            ///
-            /// # Safety
-            /// This *must* not result in an invalid Vulkan enum.
-            #[inline]
-            pub const unsafe fn from_raw(x: $repr) -> Self {
-                Self(x)
-            }
-
-            $(
-                $(#[doc = $var_doc])*
-                pub const $var: Self = Self($value);
-            )+
-        }
-        $(impl Default for $name {
-            #[inline]
-            fn default() -> Self {
-                $default
-            }
-        })?
-        impl ::core::fmt::Debug for $name {
-            fn fmt(
-                &self,
-                f: &mut ::core::fmt::Formatter<'_>
-            ) -> ::core::fmt::Result {
-                write!(f, "{}", self.0)
+                self as $repr
             }
         }
         impl ::core::fmt::Display for $name {
@@ -256,12 +240,12 @@ macro_rules! c_enum {
             ) -> ::core::fmt::Result {
                 match *self {
                     $(Self::$var => write!(f, $var_display),)+
-                    x => write!(f, "unknown({x})"),
                 }
             }
         }
     )+};
 }
+pub(crate) use vk_enum;
 
 macro_rules! impl_id_display {
     ($name:ident) => {

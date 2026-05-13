@@ -38,21 +38,25 @@ pub struct RenderingInfo {
     /// The default value is one.
     ///
     /// # Valid usage
-    /// - `layer_count` *must* not be zero if [`RenderingInfo::view_mask`] is zero.
+    /// - `layer_count` *must* not be zero if [`view_mask`][1] is zero.
     /// - each attachment's image view *must* contain at least `layer_count` layers if
-    ///   [`RenderingInfo::view_mask`] is zero.
+    ///   [`view_mask`][1] is zero.
+    ///
+    /// [1]: Self::view_mask
     #[default(1)]
     pub layer_count: u32,
     /// If this is not zero, this specifies a bitfield of view indices describing which views are
-    /// active during rendering.
-    ///
-    /// [`RenderingInfo::layer_count`] is ignored if this is not zero.
+    /// active during rendering and [`layer_count`][1] is ignored.
     ///
     /// The default value is zero.
     ///
     /// # Valid usage
+    /// - If the [`multiview`][2] features is not enabled, `view_mask` **must** be zero.
     /// - If `view_mask` is not zero, each attachment's image view *must* contain at least a number
     ///   of layers greater than the index of the most significant bit of `view_mask`.
+    ///
+    /// [1]: Self::layer_count
+    /// [2]: Vulkan11DeviceFeatures::multiview
     pub view_mask: u32,
     /// Specifies how many multisample anti-aliasing samples attachments have.
     ///

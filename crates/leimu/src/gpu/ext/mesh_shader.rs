@@ -1,9 +1,11 @@
 //! Provided by VK_EXT_mesh_shader.
+//!
+//! Allows the use of mesh shaders.
 
 use tuhka::ext::mesh_shader;
 use leimu_proc::BuildStructure;
 
-use super::*;
+use super::{*, device::*};
 
 /// Mesh shader properties.
 #[derive(Clone, Copy, Debug)]
@@ -50,24 +52,32 @@ pub struct Features {
     pub mesh_shader_queries: bool,
 }
 
-/// Defines attribute names.
-pub struct Attributes;
+/// The name of the extension
+pub const NAME: ConstName = ConstName::new(mesh_shader::NAME.to_str().unwrap());
 
-impl Attributes {
-    /// Attribute type [`structure`][1].of type [`Features`].
-    ///
-    /// [1]: DeviceAttribute::structure
-    pub const FEATURES: ConstName = ConstName::new("EXT_mesh_shader_features");
-    /// Attribute type [`structure`][1] of type [`Properties`].
-    ///
-    /// [1]: DeviceAttribute::structure
-    pub const PROPERTIES: ConstName = ConstName::new("EXT_mesh_shader_properties");
+/// [`Features`] [`device attribute`][1] name.
+///
+/// [1]: Gpu::get_device_attribute
+pub const FEATURES: AttributeName<Features> = AttributeName::new("EXT_mesh_shader features");
+
+/// [`Properties`] [`device attribute`][1] name.
+///
+/// [1]: Gpu::get_device_attribute
+pub const PROPERTIES: AttributeName<Properties> = AttributeName::new("EXT_mesh_shader properties");
+
+/// Creates the [`extension type`][1].
+///
+/// [1]: DeviceAttributes::with_device_extension
+pub const fn extension(
+    required_features: Features,
+) -> impl DeviceExtension {
+    Extension { required_features }
 }
 
 /// The extension type.
 #[derive(Clone, Copy)]
-pub struct Extension {
-    pub required_features: Features,
+struct Extension {
+    required_features: Features,
 }
 
 unsafe impl DeviceExtension for Extension {
@@ -101,7 +111,7 @@ unsafe impl DeviceExtension for Extension {
     fn register(
         &self,
         ctx: &mut PhysicalDeviceContext<'_>,
-    ) -> Option<ExtendsDeviceCreateInfoObj> {
+    ) -> RegisteredExtension {
         let mut properties = vk::PhysicalDeviceMeshShaderPropertiesEXT::default();
         ctx.get_properties(&mut properties);
         macro_rules! prop {
@@ -139,20 +149,23 @@ unsafe impl DeviceExtension for Extension {
             prefers_compact_vertex_output != 0,
             prefers_compact_primitive_output != 0,
         );
-        ctx.register_attribute(DeviceAttribute::new_structure(
-            Attributes::FEATURES, self.required_features
+        ctx.register_attribute(Attribute::new(
+            FEATURES, self.required_features
         ));
-        ctx.register_attribute(DeviceAttribute::new_structure(
-            Attributes::PROPERTIES, properties,
+        ctx.register_attribute(Attribute::new(
+            PROPERTIES, properties,
         ));
-        Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceMeshShaderFeaturesEXT::default()
-            .task_shader(self.required_features.task_shader)
-            .mesh_shader(self.required_features.mesh_shader)
-            .multiview_mesh_shader(self.required_features.multiview_mesh_shader)
-            .primitive_fragment_shading_rate_mesh_shader(
-                self.required_features.primitive_fragment_shading_rate_mesh_shader
-            ).mesh_shader_queries(self.required_features.mesh_shader_queries)
-        ))
+        registered_extension(
+            NAME,
+            Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceMeshShaderFeaturesEXT::default()
+                .task_shader(self.required_features.task_shader)
+                .mesh_shader(self.required_features.mesh_shader)
+                .multiview_mesh_shader(self.required_features.multiview_mesh_shader)
+                .primitive_fragment_shading_rate_mesh_shader(
+                    self.required_features.primitive_fragment_shading_rate_mesh_shader
+                ).mesh_shader_queries(self.required_features.mesh_shader_queries)
+            ))
+        )
     }
 
     fn boxed(&self) -> Box<dyn DeviceExtension> {
@@ -171,14 +184,7 @@ impl AnyExtensionDevice for Device {
 
 impl ExtensionDevice for Device {
 
-    const NAME: ConstName = ConstName::new("EXT_mesh_shader");
-
-    fn precondition<'a, F>(f: F) -> bool
-        where F: Fn(&ConstName) -> Option<&'a DeviceAttribute>
-    {
-        f(&Attributes::FEATURES)
-            .is_some_and(|attr| attr.structure::<Features>().is_some())
-    }
+    const EXT_NAME: ConstName = NAME;
 
     fn new(device: &crate::gpu::Device) -> Box<Self> {
         Box::new(Device::new(device))

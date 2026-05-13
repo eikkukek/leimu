@@ -3,7 +3,7 @@
 //! Due to missing driver support, this extension is not yet fully supported.
 
 use tuhka::ext::descriptor_heap;
-use super::*;
+use super::{*, device::*};
 
 pub use descriptor_heap::Device;
 
@@ -58,19 +58,10 @@ pub struct Properties {
     pub max_push_data_size: DeviceSize,
 }
 
-/// Defines attribute names.
-pub struct Attributes;
-
-impl Attributes {
-    /// Attribute type [`bool`][1].
-    ///
-    /// [1]: DeviceAttribute::bool
-    pub const IS_ENABLED: ConstName = ConstName::new("EXT_descriptor_heap_enabled");
-    /// Attribute type [`structure`][1] of type [`Properties`].
-    ///
-    /// [1]: DeviceAttribute::structure
-    pub const PROPERTIES: ConstName = ConstName::new("EXT_descriptor_heap_properties");
-}
+/// [`Properties`] [`device attribute`][1] name.
+///
+/// [1]: Gpu::get_device_attribute
+pub const PROPERTIES: AttributeName<Properties> = AttributeName::new("EXT_descriptor_heap_properties");
 
 impl AnyExtensionDevice for Device {
 
@@ -84,20 +75,27 @@ impl ExtensionDevice for Device {
     const NAME: ConstName = ConstName::new("EXT_descriptor_heap");
 
     fn precondition<'a, F>(f: F) -> bool
-        where F: Fn(&ConstName) -> Option<&'a DeviceAttribute>
+        where F: Fn(&ConstName) -> Option<&'a Attribute>
     {
-        f(&Attributes::IS_ENABLED)
-            .is_some_and(|attr| attr.bool().is_some_and(|b| b))
+        f(PROPERTIES.name())
+            .is_some_and(|attr|
+                attr.get::<Properties>().is_some()
+            )
     }
 
     fn new(device: &crate::gpu::Device) -> Box<Self> {
         Box::new(Device::new(device))
     }
 }
+/// Creates the [`extension type`][1].
+///
+/// [1]: DeviceAttributes::with_device_extension
+pub const fn extension() -> impl DeviceExtension {
+    Extension
+}
 
-/// The extension type.
 #[derive(Clone, Copy)]
-pub struct Extension;
+struct Extension;
 
 unsafe impl DeviceExtension for Extension {
 
@@ -137,9 +135,8 @@ unsafe impl DeviceExtension for Extension {
             buffer_descriptor_alignment: properties.buffer_descriptor_alignment,
             max_push_data_size: properties.max_push_data_size,
         };
-        ctx.register_attribute(DeviceAttribute::new_bool(Attributes::IS_ENABLED, true));
-        ctx.register_attribute(DeviceAttribute::new_structure(
-            Attributes::PROPERTIES, properties,
+        ctx.register_attribute(Attribute::new(
+            PROPERTIES, properties,
         ));
         Some(ExtendsDeviceCreateInfoObj::new(vk::PhysicalDeviceDescriptorHeapFeaturesEXT
             ::default()

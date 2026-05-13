@@ -56,6 +56,12 @@ impl Sampler {
         device: Device,
         mut attributes: SamplerAttributes,
     ) -> Result<Self> {
+        if matches!(attributes.address_mode_u, SamplerAddressMode::MirrorClampToEdge) ||
+            matches!(attributes.address_mode_v, SamplerAddressMode::MirrorClampToEdge) ||
+            matches!(attributes.address_mode_w, SamplerAddressMode::MirrorClampToEdge) &&
+            device.
+        {
+        }
         let mut info = vk::SamplerCreateInfo {
             s_type: vk::StructureType::SAMPLER_CREATE_INFO,
             mag_filter: attributes.mag_filter.into(),
@@ -68,7 +74,7 @@ impl Sampler {
             anisotropy_enable: attributes.max_anisotropy.is_some() as u32,
             max_anisotropy: attributes.max_anisotropy.unwrap_or_default(),
             compare_enable: attributes.compare_op.is_some() as u32,
-            compare_op: attributes.compare_op.unwrap_or(CompareOp::NEVER).into(),
+            compare_op: attributes.compare_op.unwrap_or(CompareOp::Never).into(),
             min_lod: attributes.min_lod,
             max_lod: attributes.max_lod,
             border_color: attributes.border_color.into(),
@@ -185,10 +191,12 @@ impl SamplerAttributes {
     /// Specifies which wrapping operation is used when the coordinates used to sample an image
     /// would be out of bounds.
     ///
-    /// The default is [`AddressMode::REPEAT`] for each coordinate.
+    /// The default is [`Repeat`][1] for each coordinate.
     ///
     /// See the Vulkan docs for details:
     /// <https://docs.vulkan.org/spec/latest/chapters/textures.html#textures-wrapping-operation>
+    ///
+    /// [1]: SamplerAddressMode::Repeat
     #[inline(always)]
     pub fn address_mode(
         mut self,

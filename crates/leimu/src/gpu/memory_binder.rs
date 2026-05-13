@@ -122,7 +122,7 @@ mod device_obj {
     use super::DeviceMemory;
 
     leimu_mem::smallbox!(
-        pub Obj: DeviceMemory
+        pub struct Obj: DeviceMemory
     );
 
     unsafe impl<const N_BUF: usize> Send for Obj<N_BUF> {}
