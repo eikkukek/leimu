@@ -9,12 +9,21 @@ pub unsafe trait Chainable {
     /// Casts self to [`BaseOutStructure`].
     fn base_in(&self) -> &BaseInStructure<'_>;
 
+    /// Casts self to [`BaseInStructure`].
     fn base_out(&mut self) -> &mut BaseOutStructure<'_> {
         unsafe {
             &mut *<*const BaseInStructure>::cast::<BaseOutStructure>(
                 self.base_in()
             ).cast_mut()
         }
+    }
+
+    /// Extracts the [`StructureType`] of this structure.
+    ///
+    /// This **must** always return the same value for the same structure.
+    #[inline]
+    fn s_type(&self) -> StructureType {
+        self.base_in().s_type
     }
 }
 

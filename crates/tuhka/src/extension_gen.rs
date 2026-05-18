@@ -189,7 +189,7 @@ pub mod khr {
             pub unsafe fn destroy_surface(
                 &self,
                 surface: SurfaceKHR,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe { (self.fp.destroy_surface_khr)(self.handle, surface, allocator.as_ptr()) }
             }
@@ -664,7 +664,7 @@ pub mod khr {
             pub unsafe fn create_swapchain(
                 &self,
                 create_info: &SwapchainCreateInfoKHR<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SwapchainKHR> {
                 unsafe {
                     let mut swapchain = ::core::mem::MaybeUninit::uninit();
@@ -685,7 +685,7 @@ pub mod khr {
             pub unsafe fn destroy_swapchain(
                 &self,
                 swapchain: SwapchainKHR,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_swapchain_khr)(self.handle, swapchain, allocator.as_ptr())
@@ -1186,7 +1186,7 @@ pub mod khr {
             pub unsafe fn get_physical_device_display_properties(
                 &self,
                 physical_device: PhysicalDevice,
-                out: &mut [DisplayPropertiesKHR],
+                out: &mut [DisplayPropertiesKHR<'_>],
             ) -> crate::VkResult<()> {
                 unsafe {
                     let mut len = out.len() as _;
@@ -1375,7 +1375,7 @@ pub mod khr {
                 physical_device: PhysicalDevice,
                 display: DisplayKHR,
                 create_info: &DisplayModeCreateInfoKHR<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<DisplayModeKHR> {
                 unsafe {
                     let mut mode = ::core::mem::MaybeUninit::uninit();
@@ -1425,7 +1425,7 @@ pub mod khr {
             pub unsafe fn create_display_plane_surface(
                 &self,
                 create_info: &DisplaySurfaceCreateInfoKHR<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -1544,7 +1544,7 @@ pub mod khr {
             pub unsafe fn create_shared_swapchains(
                 &self,
                 create_infos: &[SwapchainCreateInfoKHR<'_>],
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
                 swapchains: &mut [SwapchainKHR],
             ) -> crate::VkResult<()> {
                 unsafe {
@@ -1688,7 +1688,7 @@ pub mod khr {
             pub unsafe fn create_xlib_surface(
                 &self,
                 create_info: &XlibSurfaceCreateInfoKHR<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -1848,7 +1848,7 @@ pub mod khr {
             pub unsafe fn create_xcb_surface(
                 &self,
                 create_info: &XcbSurfaceCreateInfoKHR<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -2008,7 +2008,7 @@ pub mod khr {
             pub unsafe fn create_wayland_surface(
                 &self,
                 create_info: &WaylandSurfaceCreateInfoKHR<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -2143,7 +2143,7 @@ pub mod khr {
             pub unsafe fn create_android_surface(
                 &self,
                 create_info: &AndroidSurfaceCreateInfoKHR<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -2280,7 +2280,7 @@ pub mod khr {
             pub unsafe fn create_win32_surface(
                 &self,
                 create_info: &Win32SurfaceCreateInfoKHR<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -2752,7 +2752,7 @@ pub mod khr {
             pub unsafe fn create_video_session(
                 &self,
                 create_info: &VideoSessionCreateInfoKHR<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<VideoSessionKHR> {
                 unsafe {
                     let mut video_session = ::core::mem::MaybeUninit::uninit();
@@ -2773,7 +2773,7 @@ pub mod khr {
             pub unsafe fn destroy_video_session(
                 &self,
                 video_session: VideoSessionKHR,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_video_session_khr)(
@@ -2885,7 +2885,7 @@ pub mod khr {
             pub unsafe fn create_video_session_parameters(
                 &self,
                 create_info: &VideoSessionParametersCreateInfoKHR<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<VideoSessionParametersKHR> {
                 unsafe {
                     let mut video_session_parameters = ::core::mem::MaybeUninit::uninit();
@@ -2933,7 +2933,7 @@ pub mod khr {
             pub unsafe fn destroy_video_session_parameters(
                 &self,
                 video_session_parameters: VideoSessionParametersKHR,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_video_session_parameters_khr)(
@@ -4812,7 +4812,7 @@ pub mod khr {
             pub unsafe fn create_descriptor_update_template(
                 &self,
                 create_info: &DescriptorUpdateTemplateCreateInfo<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<DescriptorUpdateTemplate> {
                 unsafe {
                     let mut descriptor_update_template = ::core::mem::MaybeUninit::uninit();
@@ -4836,7 +4836,7 @@ pub mod khr {
             pub unsafe fn destroy_descriptor_update_template(
                 &self,
                 descriptor_update_template: DescriptorUpdateTemplate,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_descriptor_update_template)(
@@ -5047,7 +5047,7 @@ pub mod khr {
             pub unsafe fn create_render_pass2(
                 &self,
                 create_info: &RenderPassCreateInfo2<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<RenderPass> {
                 unsafe {
                     let mut render_pass = ::core::mem::MaybeUninit::uninit();
@@ -7064,7 +7064,7 @@ pub mod khr {
             pub unsafe fn create_acceleration_structure(
                 &self,
                 create_info: &AccelerationStructureCreateInfoKHR<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<AccelerationStructureKHR> {
                 unsafe {
                     let mut acceleration_structure = ::core::mem::MaybeUninit::uninit();
@@ -7085,7 +7085,7 @@ pub mod khr {
             pub unsafe fn destroy_acceleration_structure(
                 &self,
                 acceleration_structure: AccelerationStructureKHR,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_acceleration_structure_khr)(
@@ -7745,7 +7745,7 @@ pub mod khr {
                 deferred_operation: DeferredOperationKHR,
                 pipeline_cache: PipelineCache,
                 create_infos: &[RayTracingPipelineCreateInfoKHR<'_>],
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
                 pipelines: &mut [Pipeline],
             ) -> crate::VkResult<()> {
                 unsafe {
@@ -8025,7 +8025,7 @@ pub mod khr {
             pub unsafe fn create_sampler_ycbcr_conversion(
                 &self,
                 create_info: &SamplerYcbcrConversionCreateInfo<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SamplerYcbcrConversion> {
                 unsafe {
                     let mut ycbcr_conversion = ::core::mem::MaybeUninit::uninit();
@@ -8046,7 +8046,7 @@ pub mod khr {
             pub unsafe fn destroy_sampler_ycbcr_conversion(
                 &self,
                 ycbcr_conversion: SamplerYcbcrConversion,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_sampler_ycbcr_conversion)(
@@ -9612,7 +9612,7 @@ pub mod khr {
             #[doc = "[0]: Result::SUCCESS"]
             pub unsafe fn create_deferred_operation(
                 &self,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<DeferredOperationKHR> {
                 unsafe {
                     let mut deferred_operation = ::core::mem::MaybeUninit::uninit();
@@ -9632,7 +9632,7 @@ pub mod khr {
             pub unsafe fn destroy_deferred_operation(
                 &self,
                 operation: DeferredOperationKHR,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_deferred_operation_khr)(
@@ -11818,7 +11818,7 @@ pub mod khr {
             pub unsafe fn create_acceleration_structure2(
                 &self,
                 create_info: &AccelerationStructureCreateInfo2KHR<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<AccelerationStructureKHR> {
                 unsafe {
                     let mut acceleration_structure = ::core::mem::MaybeUninit::uninit();
@@ -13016,7 +13016,7 @@ pub mod khr {
             pub unsafe fn create_pipeline_binaries(
                 &self,
                 create_info: &PipelineBinaryCreateInfoKHR<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
                 binaries: &mut PipelineBinaryHandlesInfoKHR<'_>,
             ) -> crate::VkResult<()> {
                 unsafe {
@@ -13041,7 +13041,7 @@ pub mod khr {
             pub unsafe fn destroy_pipeline_binary(
                 &self,
                 pipeline_binary: PipelineBinaryKHR,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_pipeline_binary_khr)(
@@ -13146,7 +13146,7 @@ pub mod khr {
             pub unsafe fn release_captured_pipeline_data(
                 &self,
                 info: &ReleaseCapturedPipelineDataInfoKHR<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<()> {
                 unsafe {
                     (self.fp.release_captured_pipeline_data_khr)(
@@ -14554,6 +14554,12 @@ pub mod khr {
         pub const SPEC_VERSION: u32 = 1u32;
         pub const NAME: &ffi::CStr = c"VK_KHR_present_mode_fifo_latest_ready";
     }
+    pub mod opacity_micromap {
+        //! VK_KHR_opacity_micromap device extension.
+        use super::*;
+        pub const SPEC_VERSION: u32 = 1u32;
+        pub const NAME: &ffi::CStr = c"VK_KHR_opacity_micromap";
+    }
     pub mod maintenance10 {
         //! VK_KHR_maintenance10 device extension.
         use super::*;
@@ -14656,6 +14662,12 @@ pub mod khr {
                 &self._ext
             }
         }
+    }
+    pub mod maintenance11 {
+        //! VK_KHR_maintenance11 device extension.
+        use super::*;
+        pub const KHR_MAINTENANCE_11_SPEC_VERSION: u32 = 1u32;
+        pub const KHR_MAINTENANCE_11_NAME: &ffi::CStr = c"VK_KHR_maintenance11";
     }
 }
 pub mod ext {
@@ -14785,7 +14797,7 @@ pub mod ext {
             pub unsafe fn create_debug_report_callback(
                 &self,
                 create_info: &DebugReportCallbackCreateInfoEXT<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<DebugReportCallbackEXT> {
                 unsafe {
                     let mut callback = ::core::mem::MaybeUninit::uninit();
@@ -14806,7 +14818,7 @@ pub mod ext {
             pub unsafe fn destroy_debug_report_callback(
                 &self,
                 callback: DebugReportCallbackEXT,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_debug_report_callback_ext)(
@@ -16203,7 +16215,7 @@ pub mod ext {
             pub unsafe fn register_device_event(
                 &self,
                 device_event_info: &DeviceEventInfoEXT<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<Fence> {
                 unsafe {
                     let mut fence = ::core::mem::MaybeUninit::uninit();
@@ -16230,7 +16242,7 @@ pub mod ext {
                 &self,
                 display: DisplayKHR,
                 display_event_info: &DisplayEventInfoEXT<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<Fence> {
                 unsafe {
                     let mut fence = ::core::mem::MaybeUninit::uninit();
@@ -17017,7 +17029,7 @@ pub mod ext {
             pub unsafe fn create_debug_utils_messenger(
                 &self,
                 create_info: &DebugUtilsMessengerCreateInfoEXT<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<DebugUtilsMessengerEXT> {
                 unsafe {
                     let mut messenger = ::core::mem::MaybeUninit::uninit();
@@ -17038,7 +17050,7 @@ pub mod ext {
             pub unsafe fn destroy_debug_utils_messenger(
                 &self,
                 messenger: DebugUtilsMessengerEXT,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_debug_utils_messenger_ext)(
@@ -17370,7 +17382,7 @@ pub mod ext {
             pub unsafe fn write_sampler_descriptors(
                 &self,
                 samplers: &[SamplerCreateInfo<'_>],
-                descriptors: &[HostAddressRangeEXT],
+                descriptors: &[HostAddressRangeEXT<'_>],
             ) -> crate::VkResult<()> {
                 unsafe {
                     (self.fp.write_sampler_descriptors_ext)(
@@ -17403,7 +17415,7 @@ pub mod ext {
             pub unsafe fn write_resource_descriptors(
                 &self,
                 resources: &[ResourceDescriptorInfoEXT<'_>],
-                descriptors: &[HostAddressRangeEXT],
+                descriptors: &[HostAddressRangeEXT<'_>],
             ) -> crate::VkResult<()> {
                 unsafe {
                     (self.fp.write_resource_descriptors_ext)(
@@ -17472,7 +17484,7 @@ pub mod ext {
             pub unsafe fn get_image_opaque_capture_data(
                 &self,
                 images: &[Image],
-                datas: &mut [HostAddressRangeEXT],
+                datas: &mut [HostAddressRangeEXT<'_>],
             ) -> crate::VkResult<()> {
                 unsafe {
                     (self.fp.get_image_opaque_capture_data_ext)(
@@ -17558,7 +17570,7 @@ pub mod ext {
             pub unsafe fn get_tensor_opaque_capture_data_arm(
                 &self,
                 tensors: &[TensorARM],
-                datas: &mut [HostAddressRangeEXT],
+                datas: &mut [HostAddressRangeEXT<'_>],
             ) -> crate::VkResult<()> {
                 unsafe {
                     (self.fp.get_tensor_opaque_capture_data_arm)(
@@ -18035,7 +18047,7 @@ pub mod ext {
             pub unsafe fn create_validation_cache(
                 &self,
                 create_info: &ValidationCacheCreateInfoEXT<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<ValidationCacheEXT> {
                 unsafe {
                     let mut validation_cache = ::core::mem::MaybeUninit::uninit();
@@ -18056,7 +18068,7 @@ pub mod ext {
             pub unsafe fn destroy_validation_cache(
                 &self,
                 validation_cache: ValidationCacheEXT,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_validation_cache_ext)(
@@ -18879,7 +18891,7 @@ pub mod ext {
             pub unsafe fn create_metal_surface(
                 &self,
                 create_info: &MetalSurfaceCreateInfoEXT<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -19587,7 +19599,7 @@ pub mod ext {
             pub unsafe fn create_headless_surface(
                 &self,
                 create_info: &HeadlessSurfaceCreateInfoEXT<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -21163,7 +21175,7 @@ pub mod ext {
             pub unsafe fn create_private_data_slot(
                 &self,
                 create_info: &PrivateDataSlotCreateInfo<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<PrivateDataSlot> {
                 unsafe {
                     let mut private_data_slot = ::core::mem::MaybeUninit::uninit();
@@ -21184,7 +21196,7 @@ pub mod ext {
             pub unsafe fn destroy_private_data_slot(
                 &self,
                 private_data_slot: PrivateDataSlot,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_private_data_slot)(
@@ -21273,6 +21285,12 @@ pub mod ext {
         use super::*;
         pub const SPEC_VERSION: u32 = 3u32;
         pub const NAME: &ffi::CStr = c"VK_EXT_pipeline_creation_cache_control";
+    }
+    pub mod shader_split_barrier {
+        //! VK_EXT_shader_split_barrier device extension.
+        use super::*;
+        pub const SPEC_VERSION: u32 = 1u32;
+        pub const NAME: &ffi::CStr = c"VK_EXT_shader_split_barrier";
     }
     pub mod metal_objects {
         //! VK_EXT_metal_objects device extension.
@@ -22547,7 +22565,7 @@ pub mod ext {
             pub unsafe fn create_direct_fbsurface(
                 &self,
                 create_info: &DirectFBSurfaceCreateInfoEXT<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -23790,7 +23808,7 @@ pub mod ext {
             pub unsafe fn create_micromap(
                 &self,
                 create_info: &MicromapCreateInfoEXT<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<MicromapEXT> {
                 unsafe {
                     let mut micromap = ::core::mem::MaybeUninit::uninit();
@@ -23811,7 +23829,7 @@ pub mod ext {
             pub unsafe fn destroy_micromap(
                 &self,
                 micromap: MicromapEXT,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe { (self.fp.destroy_micromap_ext)(self.handle, micromap, allocator.as_ptr()) }
             }
@@ -26972,7 +26990,7 @@ pub mod ext {
             pub unsafe fn create_shaders(
                 &self,
                 create_infos: &[ShaderCreateInfoEXT<'_>],
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
                 shaders: &mut [ShaderEXT],
             ) -> crate::VkResult<()> {
                 unsafe {
@@ -27001,7 +27019,7 @@ pub mod ext {
             pub unsafe fn destroy_shader(
                 &self,
                 shader: ShaderEXT,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe { (self.fp.destroy_shader_ext)(self.handle, shader, allocator.as_ptr()) }
             }
@@ -28680,7 +28698,7 @@ pub mod ext {
             pub unsafe fn create_indirect_commands_layout(
                 &self,
                 create_info: &IndirectCommandsLayoutCreateInfoEXT<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<IndirectCommandsLayoutEXT> {
                 unsafe {
                     let mut indirect_commands_layout = ::core::mem::MaybeUninit::uninit();
@@ -28704,7 +28722,7 @@ pub mod ext {
             pub unsafe fn destroy_indirect_commands_layout(
                 &self,
                 indirect_commands_layout: IndirectCommandsLayoutEXT,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_indirect_commands_layout_ext)(
@@ -28727,7 +28745,7 @@ pub mod ext {
             pub unsafe fn create_indirect_execution_set(
                 &self,
                 create_info: &IndirectExecutionSetCreateInfoEXT<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<IndirectExecutionSetEXT> {
                 unsafe {
                     let mut indirect_execution_set = ::core::mem::MaybeUninit::uninit();
@@ -28748,7 +28766,7 @@ pub mod ext {
             pub unsafe fn destroy_indirect_execution_set(
                 &self,
                 indirect_execution_set: IndirectExecutionSetEXT,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_indirect_execution_set_ext)(
@@ -28833,7 +28851,7 @@ pub mod ext {
     pub mod ray_tracing_invocation_reorder {
         //! VK_EXT_ray_tracing_invocation_reorder device extension.
         use super::*;
-        pub const SPEC_VERSION: u32 = 1u32;
+        pub const SPEC_VERSION: u32 = 2u32;
         pub const NAME: &ffi::CStr = c"VK_EXT_ray_tracing_invocation_reorder";
     }
     pub mod depth_clamp_control {
@@ -30056,7 +30074,7 @@ pub mod nv {
                 &self,
                 command_buffer: CommandBuffer,
                 first_viewport: u32,
-                shading_rate_palettes: &[ShadingRatePaletteNV],
+                shading_rate_palettes: &[ShadingRatePaletteNV<'_>],
             ) {
                 unsafe {
                     (self.fp.cmd_set_viewport_shading_rate_palette_nv)(
@@ -30080,7 +30098,7 @@ pub mod nv {
                 &self,
                 command_buffer: CommandBuffer,
                 sample_order_type: CoarseSampleOrderTypeNV,
-                custom_sample_orders: &[CoarseSampleOrderCustomNV],
+                custom_sample_orders: &[CoarseSampleOrderCustomNV<'_>],
             ) {
                 unsafe {
                     (self.fp.cmd_set_coarse_sample_order_nv)(
@@ -30461,7 +30479,7 @@ pub mod nv {
             pub unsafe fn create_acceleration_structure(
                 &self,
                 create_info: &AccelerationStructureCreateInfoNV<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<AccelerationStructureNV> {
                 unsafe {
                     let mut acceleration_structure = ::core::mem::MaybeUninit::uninit();
@@ -30482,7 +30500,7 @@ pub mod nv {
             pub unsafe fn destroy_acceleration_structure(
                 &self,
                 acceleration_structure: AccelerationStructureNV,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_acceleration_structure_nv)(
@@ -30646,7 +30664,7 @@ pub mod nv {
                 &self,
                 pipeline_cache: PipelineCache,
                 create_infos: &[RayTracingPipelineCreateInfoNV<'_>],
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
                 pipelines: &mut [Pipeline],
             ) -> crate::VkResult<()> {
                 unsafe {
@@ -31978,7 +31996,7 @@ pub mod nv {
             pub unsafe fn create_indirect_commands_layout(
                 &self,
                 create_info: &IndirectCommandsLayoutCreateInfoNV<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<IndirectCommandsLayoutNV> {
                 unsafe {
                     let mut indirect_commands_layout = ::core::mem::MaybeUninit::uninit();
@@ -32002,7 +32020,7 @@ pub mod nv {
             pub unsafe fn destroy_indirect_commands_layout(
                 &self,
                 indirect_commands_layout: IndirectCommandsLayoutNV,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_indirect_commands_layout_nv)(
@@ -32240,7 +32258,7 @@ pub mod nv {
             pub unsafe fn create_cuda_module(
                 &self,
                 create_info: &CudaModuleCreateInfoNV<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<CudaModuleNV> {
                 unsafe {
                     let mut module = ::core::mem::MaybeUninit::uninit();
@@ -32326,7 +32344,7 @@ pub mod nv {
             pub unsafe fn create_cuda_function(
                 &self,
                 create_info: &CudaFunctionCreateInfoNV<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<CudaFunctionNV> {
                 unsafe {
                     let mut function = ::core::mem::MaybeUninit::uninit();
@@ -32347,7 +32365,7 @@ pub mod nv {
             pub unsafe fn destroy_cuda_module(
                 &self,
                 module: CudaModuleNV,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe { (self.fp.destroy_cuda_module_nv)(self.handle, module, allocator.as_ptr()) }
             }
@@ -32359,7 +32377,7 @@ pub mod nv {
             pub unsafe fn destroy_cuda_function(
                 &self,
                 function: CudaFunctionNV,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_cuda_function_nv)(self.handle, function, allocator.as_ptr())
@@ -34138,7 +34156,7 @@ pub mod nv {
             pub unsafe fn create_optical_flow_session(
                 &self,
                 create_info: &OpticalFlowSessionCreateInfoNV<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<OpticalFlowSessionNV> {
                 unsafe {
                     let mut session = ::core::mem::MaybeUninit::uninit();
@@ -34159,7 +34177,7 @@ pub mod nv {
             pub unsafe fn destroy_optical_flow_session(
                 &self,
                 session: OpticalFlowSessionNV,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_optical_flow_session_nv)(
@@ -34446,7 +34464,7 @@ pub mod nv {
             pub unsafe fn create_semaphore_sci_sync_pool(
                 &self,
                 create_info: &SemaphoreSciSyncPoolCreateInfoNV<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SemaphoreSciSyncPoolNV> {
                 unsafe {
                     let mut semaphore_pool = ::core::mem::MaybeUninit::uninit();
@@ -34467,7 +34485,7 @@ pub mod nv {
             pub unsafe fn destroy_semaphore_sci_sync_pool(
                 &self,
                 semaphore_pool: SemaphoreSciSyncPoolNV,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_semaphore_sci_sync_pool_nv)(
@@ -35261,7 +35279,7 @@ pub mod nv {
             pub unsafe fn create_external_compute_queue(
                 &self,
                 create_info: &ExternalComputeQueueCreateInfoNV<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<ExternalComputeQueueNV> {
                 unsafe {
                     let mut external_queue = ::core::mem::MaybeUninit::uninit();
@@ -35282,7 +35300,7 @@ pub mod nv {
             pub unsafe fn destroy_external_compute_queue(
                 &self,
                 external_queue: ExternalComputeQueueNV,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_external_compute_queue_nv)(
@@ -35922,6 +35940,12 @@ pub mod nv {
             }
         }
     }
+    pub mod cooperative_matrix_decode_vector {
+        //! VK_NV_cooperative_matrix_decode_vector device extension.
+        use super::*;
+        pub const SPEC_VERSION: u32 = 1u32;
+        pub const NAME: &ffi::CStr = c"VK_NV_cooperative_matrix_decode_vector";
+    }
 }
 pub mod img {
     use super::*;
@@ -36337,6 +36361,591 @@ pub mod amd {
         use super::*;
         pub const SPEC_VERSION: u32 = 2u32;
         pub const NAME: &ffi::CStr = c"VK_AMD_gpu_shader_int16";
+    }
+    pub mod gpa_interface {
+        //! VK_AMD_gpa_interface device extension.
+        use super::*;
+        pub const SPEC_VERSION: u32 = 1u32;
+        pub const NAME: &ffi::CStr = c"VK_AMD_gpa_interface";
+        #[derive(Clone, Copy)]
+        pub struct DeviceFp {
+            pub create_gpa_session_amd: PFN_vkCreateGpaSessionAMD,
+            pub destroy_gpa_session_amd: PFN_vkDestroyGpaSessionAMD,
+            pub set_gpa_device_clock_mode_amd: PFN_vkSetGpaDeviceClockModeAMD,
+            pub get_gpa_device_clock_info_amd: PFN_vkGetGpaDeviceClockInfoAMD,
+            pub cmd_begin_gpa_session_amd: PFN_vkCmdBeginGpaSessionAMD,
+            pub cmd_end_gpa_session_amd: PFN_vkCmdEndGpaSessionAMD,
+            pub cmd_begin_gpa_sample_amd: PFN_vkCmdBeginGpaSampleAMD,
+            pub cmd_end_gpa_sample_amd: PFN_vkCmdEndGpaSampleAMD,
+            pub get_gpa_session_status_amd: PFN_vkGetGpaSessionStatusAMD,
+            pub get_gpa_session_results_amd: PFN_vkGetGpaSessionResultsAMD,
+            pub reset_gpa_session_amd: PFN_vkResetGpaSessionAMD,
+            pub cmd_copy_gpa_session_results_amd: PFN_vkCmdCopyGpaSessionResultsAMD,
+        }
+        unsafe impl Send for DeviceFp {}
+        unsafe impl Sync for DeviceFp {}
+        impl DeviceFp {
+            pub fn load(f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void) -> Self {
+                Self {
+                    create_gpa_session_amd: unsafe {
+                        unsafe extern "system" fn create_gpa_session_amd(
+                            _device: crate::vk::Device,
+                            _create_info: *const GpaSessionCreateInfoAMD,
+                            _allocator: *const AllocationCallbacks,
+                            _gpa_session: *mut GpaSessionAMD,
+                        ) -> Result {
+                            panic!(concat!(
+                                "failed to load ",
+                                stringify!(create_gpa_session_amd),
+                            ))
+                        }
+                        let f = f(c"vkCreateGpaSessionAMD");
+                        if f.is_null() {
+                            create_gpa_session_amd
+                        } else {
+                            ::core::mem::transmute::<*const ffi::c_void, PFN_vkCreateGpaSessionAMD>(
+                                f,
+                            )
+                        }
+                    },
+                    destroy_gpa_session_amd: unsafe {
+                        unsafe extern "system" fn destroy_gpa_session_amd(
+                            _device: crate::vk::Device,
+                            _gpa_session: GpaSessionAMD,
+                            _allocator: *const AllocationCallbacks,
+                        ) {
+                            panic!(concat!(
+                                "failed to load ",
+                                stringify!(destroy_gpa_session_amd),
+                            ))
+                        }
+                        let f = f(c"vkDestroyGpaSessionAMD");
+                        if f.is_null() {
+                            destroy_gpa_session_amd
+                        } else {
+                            ::core::mem::transmute::<*const ffi::c_void, PFN_vkDestroyGpaSessionAMD>(
+                                f,
+                            )
+                        }
+                    },
+                    set_gpa_device_clock_mode_amd: unsafe {
+                        unsafe extern "system" fn set_gpa_device_clock_mode_amd(
+                            _device: crate::vk::Device,
+                            _info: *mut GpaDeviceClockModeInfoAMD,
+                        ) -> Result {
+                            panic!(concat!(
+                                "failed to load ",
+                                stringify!(set_gpa_device_clock_mode_amd),
+                            ))
+                        }
+                        let f = f(c"vkSetGpaDeviceClockModeAMD");
+                        if f.is_null() {
+                            set_gpa_device_clock_mode_amd
+                        } else {
+                            ::core::mem::transmute::<
+                                *const ffi::c_void,
+                                PFN_vkSetGpaDeviceClockModeAMD,
+                            >(f)
+                        }
+                    },
+                    get_gpa_device_clock_info_amd: unsafe {
+                        unsafe extern "system" fn get_gpa_device_clock_info_amd(
+                            _device: crate::vk::Device,
+                            _info: *mut GpaDeviceGetClockInfoAMD,
+                        ) -> Result {
+                            panic!(concat!(
+                                "failed to load ",
+                                stringify!(get_gpa_device_clock_info_amd),
+                            ))
+                        }
+                        let f = f(c"vkGetGpaDeviceClockInfoAMD");
+                        if f.is_null() {
+                            get_gpa_device_clock_info_amd
+                        } else {
+                            ::core::mem::transmute::<
+                                *const ffi::c_void,
+                                PFN_vkGetGpaDeviceClockInfoAMD,
+                            >(f)
+                        }
+                    },
+                    cmd_begin_gpa_session_amd: unsafe {
+                        unsafe extern "system" fn cmd_begin_gpa_session_amd(
+                            _command_buffer: CommandBuffer,
+                            _gpa_session: GpaSessionAMD,
+                        ) -> Result {
+                            panic!(concat!(
+                                "failed to load ",
+                                stringify!(cmd_begin_gpa_session_amd),
+                            ))
+                        }
+                        let f = f(c"vkCmdBeginGpaSessionAMD");
+                        if f.is_null() {
+                            cmd_begin_gpa_session_amd
+                        } else {
+                            ::core::mem::transmute::<*const ffi::c_void, PFN_vkCmdBeginGpaSessionAMD>(
+                                f,
+                            )
+                        }
+                    },
+                    cmd_end_gpa_session_amd: unsafe {
+                        unsafe extern "system" fn cmd_end_gpa_session_amd(
+                            _command_buffer: CommandBuffer,
+                            _gpa_session: GpaSessionAMD,
+                        ) -> Result {
+                            panic!(concat!(
+                                "failed to load ",
+                                stringify!(cmd_end_gpa_session_amd),
+                            ))
+                        }
+                        let f = f(c"vkCmdEndGpaSessionAMD");
+                        if f.is_null() {
+                            cmd_end_gpa_session_amd
+                        } else {
+                            ::core::mem::transmute::<*const ffi::c_void, PFN_vkCmdEndGpaSessionAMD>(
+                                f,
+                            )
+                        }
+                    },
+                    cmd_begin_gpa_sample_amd: unsafe {
+                        unsafe extern "system" fn cmd_begin_gpa_sample_amd(
+                            _command_buffer: CommandBuffer,
+                            _gpa_session: GpaSessionAMD,
+                            _gpa_sample_begin_info: *const GpaSampleBeginInfoAMD,
+                            _sample_id: *mut u32,
+                        ) -> Result {
+                            panic!(concat!(
+                                "failed to load ",
+                                stringify!(cmd_begin_gpa_sample_amd),
+                            ))
+                        }
+                        let f = f(c"vkCmdBeginGpaSampleAMD");
+                        if f.is_null() {
+                            cmd_begin_gpa_sample_amd
+                        } else {
+                            ::core::mem::transmute::<*const ffi::c_void, PFN_vkCmdBeginGpaSampleAMD>(
+                                f,
+                            )
+                        }
+                    },
+                    cmd_end_gpa_sample_amd: unsafe {
+                        unsafe extern "system" fn cmd_end_gpa_sample_amd(
+                            _command_buffer: CommandBuffer,
+                            _gpa_session: GpaSessionAMD,
+                            _sample_id: u32,
+                        ) {
+                            panic!(concat!(
+                                "failed to load ",
+                                stringify!(cmd_end_gpa_sample_amd),
+                            ))
+                        }
+                        let f = f(c"vkCmdEndGpaSampleAMD");
+                        if f.is_null() {
+                            cmd_end_gpa_sample_amd
+                        } else {
+                            ::core::mem::transmute::<*const ffi::c_void, PFN_vkCmdEndGpaSampleAMD>(
+                                f,
+                            )
+                        }
+                    },
+                    get_gpa_session_status_amd: unsafe {
+                        unsafe extern "system" fn get_gpa_session_status_amd(
+                            _device: crate::vk::Device,
+                            _gpa_session: GpaSessionAMD,
+                        ) -> Result {
+                            panic!(concat!(
+                                "failed to load ",
+                                stringify!(get_gpa_session_status_amd),
+                            ))
+                        }
+                        let f = f(c"vkGetGpaSessionStatusAMD");
+                        if f.is_null() {
+                            get_gpa_session_status_amd
+                        } else {
+                            ::core::mem::transmute::<*const ffi::c_void, PFN_vkGetGpaSessionStatusAMD>(
+                                f,
+                            )
+                        }
+                    },
+                    get_gpa_session_results_amd: unsafe {
+                        unsafe extern "system" fn get_gpa_session_results_amd(
+                            _device: crate::vk::Device,
+                            _gpa_session: GpaSessionAMD,
+                            _sample_id: u32,
+                            _size_in_bytes: *mut usize,
+                            _data: *mut ffi::c_void,
+                        ) -> Result {
+                            panic!(concat!(
+                                "failed to load ",
+                                stringify!(get_gpa_session_results_amd),
+                            ))
+                        }
+                        let f = f(c"vkGetGpaSessionResultsAMD");
+                        if f.is_null() {
+                            get_gpa_session_results_amd
+                        } else {
+                            ::core::mem::transmute::<
+                                *const ffi::c_void,
+                                PFN_vkGetGpaSessionResultsAMD,
+                            >(f)
+                        }
+                    },
+                    reset_gpa_session_amd: unsafe {
+                        unsafe extern "system" fn reset_gpa_session_amd(
+                            _device: crate::vk::Device,
+                            _gpa_session: GpaSessionAMD,
+                        ) -> Result {
+                            panic!(concat!(
+                                "failed to load ",
+                                stringify!(reset_gpa_session_amd),
+                            ))
+                        }
+                        let f = f(c"vkResetGpaSessionAMD");
+                        if f.is_null() {
+                            reset_gpa_session_amd
+                        } else {
+                            ::core::mem::transmute::<*const ffi::c_void, PFN_vkResetGpaSessionAMD>(
+                                f,
+                            )
+                        }
+                    },
+                    cmd_copy_gpa_session_results_amd: unsafe {
+                        unsafe extern "system" fn cmd_copy_gpa_session_results_amd(
+                            _command_buffer: CommandBuffer,
+                            _gpa_session: GpaSessionAMD,
+                        ) {
+                            panic!(concat!(
+                                "failed to load ",
+                                stringify!(cmd_copy_gpa_session_results_amd),
+                            ))
+                        }
+                        let f = f(c"vkCmdCopyGpaSessionResultsAMD");
+                        if f.is_null() {
+                            cmd_copy_gpa_session_results_amd
+                        } else {
+                            ::core::mem::transmute::<
+                                *const ffi::c_void,
+                                PFN_vkCmdCopyGpaSessionResultsAMD,
+                            >(f)
+                        }
+                    },
+                }
+            }
+        }
+        #[derive(Clone)]
+        pub struct Device<Ext = nop::Device> {
+            handle: crate::vk::Device,
+            fp: DeviceFp,
+            _ext: Ext,
+        }
+        impl Device {
+            #[inline]
+            pub fn new<Ext>(device: &crate::Device<Ext>) -> Self {
+                Self {
+                    handle: device.handle(),
+                    fp: DeviceFp::load(&mut |cname| unsafe {
+                        device.get_device_proc_addr(cname) as *const ffi::c_void
+                    }),
+                    _ext: nop::Device,
+                }
+            }
+        }
+        impl<Ext> Device<Ext> {
+            #[inline]
+            pub fn handle(&self) -> crate::vk::Device {
+                self.handle
+            }
+            #[inline]
+            pub fn fp(&self) -> &DeviceFp {
+                &self.fp
+            }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateGpaSessionAMD.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            pub unsafe fn create_gpa_session(
+                &self,
+                create_info: &GpaSessionCreateInfoAMD<'_>,
+                allocator: Option<&AllocationCallbacks<'_>>,
+            ) -> crate::VkResult<GpaSessionAMD> {
+                unsafe {
+                    let mut gpa_session = ::core::mem::MaybeUninit::uninit();
+                    (self.fp.create_gpa_session_amd)(
+                        self.handle,
+                        create_info,
+                        allocator.as_ptr(),
+                        gpa_session.as_mut_ptr(),
+                    )
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], gpa_session)
+                }
+            }
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyGpaSessionAMD.html>"]
+            #[doc = r""]
+            pub unsafe fn destroy_gpa_session(
+                &self,
+                gpa_session: GpaSessionAMD,
+                allocator: Option<&AllocationCallbacks<'_>>,
+            ) {
+                unsafe {
+                    (self.fp.destroy_gpa_session_amd)(self.handle, gpa_session, allocator.as_ptr())
+                }
+            }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkSetGpaDeviceClockModeAMD.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            pub unsafe fn set_gpa_device_clock_mode(
+                &self,
+                info: &mut GpaDeviceClockModeInfoAMD<'_>,
+            ) -> crate::VkResult<()> {
+                unsafe {
+                    (self.fp.set_gpa_device_clock_mode_amd)(self.handle, info)
+                        .result(&[crate::vk::Result::SUCCESS])
+                }
+            }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetGpaDeviceClockInfoAMD.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            pub unsafe fn get_gpa_device_clock_info(
+                &self,
+                info: &mut GpaDeviceGetClockInfoAMD<'_>,
+            ) -> crate::VkResult<()> {
+                unsafe {
+                    (self.fp.get_gpa_device_clock_info_amd)(self.handle, info)
+                        .result(&[crate::vk::Result::SUCCESS])
+                }
+            }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginGpaSessionAMD.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            pub unsafe fn cmd_begin_gpa_session(
+                &self,
+                command_buffer: CommandBuffer,
+                gpa_session: GpaSessionAMD,
+            ) -> crate::VkResult<()> {
+                unsafe {
+                    (self.fp.cmd_begin_gpa_session_amd)(command_buffer, gpa_session)
+                        .result(&[crate::vk::Result::SUCCESS])
+                }
+            }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEndGpaSessionAMD.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            pub unsafe fn cmd_end_gpa_session(
+                &self,
+                command_buffer: CommandBuffer,
+                gpa_session: GpaSessionAMD,
+            ) -> crate::VkResult<()> {
+                unsafe {
+                    (self.fp.cmd_end_gpa_session_amd)(command_buffer, gpa_session)
+                        .result(&[crate::vk::Result::SUCCESS])
+                }
+            }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginGpaSampleAMD.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            pub unsafe fn cmd_begin_gpa_sample(
+                &self,
+                command_buffer: CommandBuffer,
+                gpa_session: GpaSessionAMD,
+                gpa_sample_begin_info: &GpaSampleBeginInfoAMD<'_>,
+            ) -> crate::VkResult<u32> {
+                unsafe {
+                    let mut sample_id = ::core::mem::MaybeUninit::uninit();
+                    (self.fp.cmd_begin_gpa_sample_amd)(
+                        command_buffer,
+                        gpa_session,
+                        gpa_sample_begin_info,
+                        sample_id.as_mut_ptr(),
+                    )
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], sample_id)
+                }
+            }
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdEndGpaSampleAMD.html>"]
+            #[doc = r""]
+            pub unsafe fn cmd_end_gpa_sample(
+                &self,
+                command_buffer: CommandBuffer,
+                gpa_session: GpaSessionAMD,
+                sample_id: u32,
+            ) {
+                unsafe { (self.fp.cmd_end_gpa_sample_amd)(command_buffer, gpa_session, sample_id) }
+            }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetGpaSessionStatusAMD.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            pub unsafe fn get_gpa_session_status(
+                &self,
+                gpa_session: GpaSessionAMD,
+            ) -> crate::VkResult<()> {
+                unsafe {
+                    (self.fp.get_gpa_session_status_amd)(self.handle, gpa_session)
+                        .result(&[crate::vk::Result::SUCCESS])
+                }
+            }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetGpaSessionResultsAMD.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            pub unsafe fn get_gpa_session_results_len(
+                &self,
+                gpa_session: GpaSessionAMD,
+                sample_id: u32,
+            ) -> crate::VkResult<usize> {
+                unsafe {
+                    let mut size_in_bytes = ::core::mem::MaybeUninit::uninit();
+                    (self.fp.get_gpa_session_results_amd)(
+                        self.handle,
+                        gpa_session,
+                        sample_id,
+                        size_in_bytes.as_mut_ptr(),
+                        core::ptr::null_mut(),
+                    )
+                    .result_with_assume_init(&[crate::vk::Result::SUCCESS], size_in_bytes)
+                }
+            }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkGetGpaSessionResultsAMD.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            pub unsafe fn get_gpa_session_results(
+                &self,
+                gpa_session: GpaSessionAMD,
+                sample_id: u32,
+                out: &mut [u8],
+            ) -> crate::VkResult<()> {
+                unsafe {
+                    let mut len = out.len() as _;
+                    (self.fp.get_gpa_session_results_amd)(
+                        self.handle,
+                        gpa_session,
+                        sample_id,
+                        &mut len,
+                        out.as_mut_ptr().cast(),
+                    )
+                    .result(&[crate::vk::Result::SUCCESS])
+                }
+            }
+            #[doc = "# Success codes"]
+            #[doc = "* [`SUCCESS`][0]"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkResetGpaSessionAMD.html>"]
+            #[doc = r""]
+            #[doc = "[0]: Result::SUCCESS"]
+            pub unsafe fn reset_gpa_session(
+                &self,
+                gpa_session: GpaSessionAMD,
+            ) -> crate::VkResult<()> {
+                unsafe {
+                    (self.fp.reset_gpa_session_amd)(self.handle, gpa_session)
+                        .result(&[crate::vk::Result::SUCCESS])
+                }
+            }
+            #[doc = r" # Safety"]
+            #[doc = r" All raw Vulkan calls are unsafe as there is no validation of input or usage."]
+            #[doc = r" # Vulkan docs"]
+            #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyGpaSessionResultsAMD.html>"]
+            #[doc = r""]
+            pub unsafe fn cmd_copy_gpa_session_results(
+                &self,
+                command_buffer: CommandBuffer,
+                gpa_session: GpaSessionAMD,
+            ) {
+                unsafe { (self.fp.cmd_copy_gpa_session_results_amd)(command_buffer, gpa_session) }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> LoadWith for Device<Ext>
+        where
+            Ext: LoadWith<Handle = crate::vk::Device>,
+        {
+            type Handle = crate::vk::Device;
+            unsafe fn load_with(
+                f: &mut dyn FnMut(&ffi::CStr) -> *const ffi::c_void,
+                handle: Self::Handle,
+            ) -> Self {
+                Self {
+                    handle,
+                    fp: DeviceFp::load(f),
+                    _ext: unsafe { Ext::load_with(f, handle) },
+                }
+            }
+        }
+        #[cfg(feature = "ext-load-with")]
+        impl<Ext> Deref for Device<Ext> {
+            type Target = Ext;
+            fn deref(&self) -> &Ext {
+                &self._ext
+            }
+        }
     }
     pub mod mixed_attachment_samples {
         //! VK_AMD_mixed_attachment_samples device extension.
@@ -36912,7 +37521,7 @@ pub mod nvx {
             pub unsafe fn create_cu_module(
                 &self,
                 create_info: &CuModuleCreateInfoNVX<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<CuModuleNVX> {
                 unsafe {
                     let mut module = ::core::mem::MaybeUninit::uninit();
@@ -36938,7 +37547,7 @@ pub mod nvx {
             pub unsafe fn create_cu_function(
                 &self,
                 create_info: &CuFunctionCreateInfoNVX<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<CuFunctionNVX> {
                 unsafe {
                     let mut function = ::core::mem::MaybeUninit::uninit();
@@ -36959,7 +37568,7 @@ pub mod nvx {
             pub unsafe fn destroy_cu_module(
                 &self,
                 module: CuModuleNVX,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe { (self.fp.destroy_cu_module_nvx)(self.handle, module, allocator.as_ptr()) }
             }
@@ -36971,7 +37580,7 @@ pub mod nvx {
             pub unsafe fn destroy_cu_function(
                 &self,
                 function: CuFunctionNVX,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_cu_function_nvx)(self.handle, function, allocator.as_ptr())
@@ -37309,7 +37918,7 @@ pub mod ggp {
             pub unsafe fn create_stream_descriptor_surface(
                 &self,
                 create_info: &StreamDescriptorSurfaceCreateInfoGGP<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -37428,7 +38037,7 @@ pub mod nn {
             pub unsafe fn create_vi_surface(
                 &self,
                 create_info: &ViSurfaceCreateInfoNN<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -37774,7 +38383,7 @@ pub mod mvk {
             pub unsafe fn create_iossurface(
                 &self,
                 create_info: &IOSSurfaceCreateInfoMVK<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -37889,7 +38498,7 @@ pub mod mvk {
             pub unsafe fn create_mac_ossurface(
                 &self,
                 create_info: &MacOSSurfaceCreateInfoMVK<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -38326,7 +38935,7 @@ pub mod amdx {
                 &self,
                 pipeline_cache: PipelineCache,
                 create_infos: &[ExecutionGraphPipelineCreateInfoAMDX<'_>],
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
                 pipelines: &mut [Pipeline],
             ) -> crate::VkResult<()> {
                 unsafe {
@@ -38529,6 +39138,12 @@ pub mod qcom {
         pub const SPEC_VERSION: u32 = 1u32;
         pub const NAME: &ffi::CStr = c"VK_QCOM_cooperative_matrix_conversion";
     }
+    pub mod elapsed_timer_query {
+        //! VK_QCOM_elapsed_timer_query device extension.
+        use super::*;
+        pub const SPEC_VERSION: u32 = 1u32;
+        pub const NAME: &ffi::CStr = c"VK_QCOM_elapsed_timer_query";
+    }
     pub mod render_pass_transform {
         //! VK_QCOM_render_pass_transform device extension.
         use super::*;
@@ -38649,6 +39264,18 @@ pub mod qcom {
                 &self._ext
             }
         }
+    }
+    pub mod image_processing3 {
+        //! VK_QCOM_image_processing3 device extension.
+        use super::*;
+        pub const SPEC_VERSION: u32 = 1u32;
+        pub const NAME: &ffi::CStr = c"VK_QCOM_image_processing3";
+    }
+    pub mod shader_multiple_wait_queues {
+        //! VK_QCOM_shader_multiple_wait_queues device extension.
+        use super::*;
+        pub const SPEC_VERSION: u32 = 1u32;
+        pub const NAME: &ffi::CStr = c"VK_QCOM_shader_multiple_wait_queues";
     }
     pub mod tile_shading {
         //! VK_QCOM_tile_shading device extension.
@@ -39709,7 +40336,7 @@ pub mod fuchsia {
             pub unsafe fn create_image_pipe_surface(
                 &self,
                 create_info: &ImagePipeSurfaceCreateInfoFUCHSIA<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -40241,7 +40868,7 @@ pub mod fuchsia {
             pub unsafe fn create_buffer_collection(
                 &self,
                 create_info: &BufferCollectionCreateInfoFUCHSIA<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<BufferCollectionFUCHSIA> {
                 unsafe {
                     let mut collection = ::core::mem::MaybeUninit::uninit();
@@ -40310,7 +40937,7 @@ pub mod fuchsia {
             pub unsafe fn destroy_buffer_collection(
                 &self,
                 collection: BufferCollectionFUCHSIA,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_buffer_collection_fuchsia)(
@@ -40777,7 +41404,7 @@ pub mod arm {
             pub unsafe fn create_tensor(
                 &self,
                 create_info: &TensorCreateInfoARM<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<TensorARM> {
                 unsafe {
                     let mut tensor = ::core::mem::MaybeUninit::uninit();
@@ -40798,7 +41425,7 @@ pub mod arm {
             pub unsafe fn destroy_tensor(
                 &self,
                 tensor: TensorARM,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe { (self.fp.destroy_tensor_arm)(self.handle, tensor, allocator.as_ptr()) }
             }
@@ -40815,7 +41442,7 @@ pub mod arm {
             pub unsafe fn create_tensor_view(
                 &self,
                 create_info: &TensorViewCreateInfoARM<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<TensorViewARM> {
                 unsafe {
                     let mut view = ::core::mem::MaybeUninit::uninit();
@@ -40836,7 +41463,7 @@ pub mod arm {
             pub unsafe fn destroy_tensor_view(
                 &self,
                 tensor_view: TensorViewARM,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_tensor_view_arm)(self.handle, tensor_view, allocator.as_ptr())
@@ -41338,7 +41965,7 @@ pub mod arm {
                 deferred_operation: DeferredOperationKHR,
                 pipeline_cache: PipelineCache,
                 create_infos: &[DataGraphPipelineCreateInfoARM<'_>],
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
                 pipelines: &mut [Pipeline],
             ) -> crate::VkResult<()> {
                 unsafe {
@@ -41374,7 +42001,7 @@ pub mod arm {
             pub unsafe fn create_data_graph_pipeline_session(
                 &self,
                 create_info: &DataGraphPipelineSessionCreateInfoARM<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<DataGraphPipelineSessionARM> {
                 unsafe {
                     let mut session = ::core::mem::MaybeUninit::uninit();
@@ -41506,7 +42133,7 @@ pub mod arm {
             pub unsafe fn destroy_data_graph_pipeline_session(
                 &self,
                 session: DataGraphPipelineSessionARM,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_data_graph_pipeline_session_arm)(
@@ -42278,7 +42905,7 @@ pub mod arm {
             pub unsafe fn create_shader_instrumentation(
                 &self,
                 create_info: &ShaderInstrumentationCreateInfoARM<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<ShaderInstrumentationARM> {
                 unsafe {
                     let mut instrumentation = ::core::mem::MaybeUninit::uninit();
@@ -42299,7 +42926,7 @@ pub mod arm {
             pub unsafe fn destroy_shader_instrumentation(
                 &self,
                 instrumentation: ShaderInstrumentationARM,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) {
                 unsafe {
                     (self.fp.destroy_shader_instrumentation_arm)(
@@ -42591,6 +43218,12 @@ pub mod arm {
                 &self._ext
             }
         }
+    }
+    pub mod data_graph_neural_accelerator_statistics {
+        //! VK_ARM_data_graph_neural_accelerator_statistics device extension.
+        use super::*;
+        pub const SPEC_VERSION: u32 = 1u32;
+        pub const NAME: &ffi::CStr = c"VK_ARM_data_graph_neural_accelerator_statistics";
     }
 }
 pub mod valve {
@@ -43284,7 +43917,7 @@ pub mod qnx {
             pub unsafe fn create_screen_surface(
                 &self,
                 create_info: &ScreenSurfaceCreateInfoQNX<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -43680,7 +44313,7 @@ pub mod ohos {
             pub unsafe fn create_surface(
                 &self,
                 create_info: &SurfaceCreateInfoOHOS<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -43842,7 +44475,7 @@ pub mod sec {
             pub unsafe fn create_ubm_surface(
                 &self,
                 create_info: &UbmSurfaceCreateInfoSEC<'_>,
-                allocator: Option<&AllocationCallbacks>,
+                allocator: Option<&AllocationCallbacks<'_>>,
             ) -> crate::VkResult<SurfaceKHR> {
                 unsafe {
                     let mut surface = ::core::mem::MaybeUninit::uninit();
@@ -43899,6 +44532,12 @@ pub mod sec {
                 &self._ext
             }
         }
+    }
+    pub mod throttle_hint {
+        //! VK_SEC_throttle_hint device extension.
+        use super::*;
+        pub const SPEC_VERSION: u32 = 1u32;
+        pub const NAME: &ffi::CStr = c"VK_SEC_throttle_hint";
     }
 }
 pub mod msft {

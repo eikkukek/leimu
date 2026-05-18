@@ -2045,6 +2045,7 @@ impl QueryType {
     pub const ACCELERATION_STRUCTURE_COMPACTED_SIZE_KHR: Self = Self(1000150000);
     pub const ACCELERATION_STRUCTURE_SERIALIZATION_SIZE_KHR: Self = Self(1000150001);
     pub const ACCELERATION_STRUCTURE_COMPACTED_SIZE_NV: Self = Self(1000165000);
+    pub const TIME_ELAPSED_QCOM: Self = Self(1000173000);
     pub const PERFORMANCE_QUERY_INTEL: Self = Self(1000210000);
     pub const VIDEO_ENCODE_FEEDBACK_KHR: Self = Self(1000299000);
     pub const MESH_PRIMITIVES_GENERATED_EXT: Self = Self(1000328000);
@@ -2073,6 +2074,7 @@ impl fmt::Display for QueryType {
             Self::ACCELERATION_STRUCTURE_COMPACTED_SIZE_NV => {
                 write!(f, "ACCELERATION_STRUCTURE_COMPACTED_SIZE_NV")
             }
+            Self::TIME_ELAPSED_QCOM => write!(f, "TIME_ELAPSED_QCOM"),
             Self::PERFORMANCE_QUERY_INTEL => write!(f, "PERFORMANCE_QUERY_INTEL"),
             Self::VIDEO_ENCODE_FEEDBACK_KHR => write!(f, "VIDEO_ENCODE_FEEDBACK_KHR"),
             Self::MESH_PRIMITIVES_GENERATED_EXT => write!(f, "MESH_PRIMITIVES_GENERATED_EXT"),
@@ -2877,6 +2879,13 @@ impl StructureType {
         Self::PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES;
     pub const SAMPLER_REDUCTION_MODE_CREATE_INFO_EXT: Self =
         Self::SAMPLER_REDUCTION_MODE_CREATE_INFO;
+    pub const PHYSICAL_DEVICE_GPA_FEATURES_AMD: Self = Self(1000133000);
+    pub const PHYSICAL_DEVICE_GPA_PROPERTIES_AMD: Self = Self(1000133001);
+    pub const GPA_SAMPLE_BEGIN_INFO_AMD: Self = Self(1000133002);
+    pub const GPA_SESSION_CREATE_INFO_AMD: Self = Self(1000133003);
+    pub const GPA_DEVICE_CLOCK_MODE_INFO_AMD: Self = Self(1000133004);
+    pub const PHYSICAL_DEVICE_GPA_PROPERTIES_2_AMD: Self = Self(1000133005);
+    pub const GPA_DEVICE_GET_CLOCK_INFO_AMD: Self = Self(1000133006);
     pub const PHYSICAL_DEVICE_SHADER_ENQUEUE_FEATURES_AMDX: Self = Self(1000134000);
     pub const PHYSICAL_DEVICE_SHADER_ENQUEUE_PROPERTIES_AMDX: Self = Self(1000134001);
     pub const EXECUTION_GRAPH_PIPELINE_SCRATCH_SIZE_AMDX: Self = Self(1000134002);
@@ -3004,6 +3013,7 @@ impl StructureType {
     pub const PHYSICAL_DEVICE_IMAGE_VIEW_IMAGE_FORMAT_INFO_EXT: Self = Self(1000170000);
     pub const FILTER_CUBIC_IMAGE_VIEW_IMAGE_FORMAT_PROPERTIES_EXT: Self = Self(1000170001);
     pub const PHYSICAL_DEVICE_COOPERATIVE_MATRIX_CONVERSION_FEATURES_QCOM: Self = Self(1000172000);
+    pub const PHYSICAL_DEVICE_ELAPSED_TIMER_QUERY_FEATURES_QCOM: Self = Self(1000173000);
     pub const DEVICE_QUEUE_GLOBAL_PRIORITY_CREATE_INFO_EXT: Self =
         Self::DEVICE_QUEUE_GLOBAL_PRIORITY_CREATE_INFO;
     pub const PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES_KHR: Self =
@@ -3291,6 +3301,11 @@ impl StructureType {
     pub const PERF_HINT_INFO_QCOM: Self = Self(1000302000);
     pub const PHYSICAL_DEVICE_QUEUE_PERF_HINT_FEATURES_QCOM: Self = Self(1000302001);
     pub const PHYSICAL_DEVICE_QUEUE_PERF_HINT_PROPERTIES_QCOM: Self = Self(1000302002);
+    pub const PHYSICAL_DEVICE_IMAGE_PROCESSING_3_FEATURES_QCOM: Self = Self(1000303000);
+    pub const PHYSICAL_DEVICE_SHADER_MULTIPLE_WAIT_QUEUES_FEATURES_QCOM: Self = Self(1000304000);
+    pub const PHYSICAL_DEVICE_SHADER_MULTIPLE_WAIT_QUEUES_PROPERTIES_QCOM: Self = Self(1000304001);
+    pub const PHYSICAL_DEVICE_SHADER_SPLIT_BARRIER_FEATURES_EXT: Self = Self(1000305000);
+    pub const PHYSICAL_DEVICE_SHADER_SPLIT_BARRIER_PROPERTIES_EXT: Self = Self(1000305001);
     pub const CUDA_MODULE_CREATE_INFO_NV: Self = Self(1000307000);
     pub const CUDA_FUNCTION_CREATE_INFO_NV: Self = Self(1000307001);
     pub const CUDA_LAUNCH_INFO_NV: Self = Self(1000307002);
@@ -3954,6 +3969,10 @@ impl StructureType {
     pub const RENDERING_END_INFO_EXT: Self = Self::RENDERING_END_INFO_KHR;
     pub const PHYSICAL_DEVICE_ZERO_INITIALIZE_DEVICE_MEMORY_FEATURES_EXT: Self = Self(1000620000);
     pub const PHYSICAL_DEVICE_PRESENT_MODE_FIFO_LATEST_READY_FEATURES_KHR: Self = Self(1000361000);
+    pub const PHYSICAL_DEVICE_OPACITY_MICROMAP_FEATURES_KHR: Self = Self(1000623000);
+    pub const PHYSICAL_DEVICE_OPACITY_MICROMAP_PROPERTIES_KHR: Self = Self(1000623001);
+    pub const ACCELERATION_STRUCTURE_GEOMETRY_MICROMAP_DATA_KHR: Self = Self(1000623002);
+    pub const ACCELERATION_STRUCTURE_TRIANGLES_OPACITY_MICROMAP_KHR: Self = Self(1000623003);
     pub const PHYSICAL_DEVICE_SHADER_64_BIT_INDEXING_FEATURES_EXT: Self = Self(1000627000);
     pub const PHYSICAL_DEVICE_CUSTOM_RESOLVE_FEATURES_EXT: Self = Self(1000628000);
     pub const BEGIN_CUSTOM_RESOLVE_INFO_EXT: Self = Self(1000628001);
@@ -3981,11 +4000,22 @@ impl StructureType {
         Self(1000642000);
     pub const COMPUTE_OCCUPANCY_PRIORITY_PARAMETERS_NV: Self = Self(1000645000);
     pub const PHYSICAL_DEVICE_COMPUTE_OCCUPANCY_PRIORITY_FEATURES_NV: Self = Self(1000645001);
+    pub const PHYSICAL_DEVICE_MAINTENANCE_11_FEATURES_KHR: Self = Self(1000657000);
+    pub const QUEUE_FAMILY_OPTIMAL_IMAGE_TRANSFER_GRANULARITY_PROPERTIES_KHR: Self =
+        Self(1000657001);
     pub const PHYSICAL_DEVICE_SHADER_SUBGROUP_PARTITIONED_FEATURES_EXT: Self = Self(1000662000);
     pub const UBM_SURFACE_CREATE_INFO_SEC: Self = Self(1000664000);
     pub const PHYSICAL_DEVICE_SHADER_MIXED_FLOAT_DOT_PRODUCT_FEATURES_VALVE: Self =
         Self(1000673000);
+    pub const PHYSICAL_DEVICE_THROTTLE_HINT_FEATURES_SEC: Self = Self(1000674000);
+    pub const THROTTLE_HINT_SUBMIT_INFO_SEC: Self = Self(1000674001);
+    pub const DATA_GRAPH_PIPELINE_NEURAL_STATISTICS_CREATE_INFO_ARM: Self = Self(1000676000);
+    pub const DATA_GRAPH_PIPELINE_SESSION_NEURAL_STATISTICS_CREATE_INFO_ARM: Self =
+        Self(1000676001);
+    pub const PHYSICAL_DEVICE_DATA_GRAPH_NEURAL_ACCELERATOR_STATISTICS_FEATURES_ARM: Self =
+        Self(1000676002);
     pub const PHYSICAL_DEVICE_PRIMITIVE_RESTART_INDEX_FEATURES_EXT: Self = Self(1000678000);
+    pub const PHYSICAL_DEVICE_COOPERATIVE_MATRIX_DECODE_VECTOR_FEATURES_NV: Self = Self(1000689000);
 }
 impl fmt::Display for StructureType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -4919,6 +4949,17 @@ impl fmt::Display for StructureType {
             Self::ANDROID_HARDWARE_BUFFER_FORMAT_PROPERTIES_2_ANDROID => {
                 write!(f, "ANDROID_HARDWARE_BUFFER_FORMAT_PROPERTIES_2_ANDROID")
             }
+            Self::PHYSICAL_DEVICE_GPA_FEATURES_AMD => write!(f, "PHYSICAL_DEVICE_GPA_FEATURES_AMD"),
+            Self::PHYSICAL_DEVICE_GPA_PROPERTIES_AMD => {
+                write!(f, "PHYSICAL_DEVICE_GPA_PROPERTIES_AMD")
+            }
+            Self::GPA_SAMPLE_BEGIN_INFO_AMD => write!(f, "GPA_SAMPLE_BEGIN_INFO_AMD"),
+            Self::GPA_SESSION_CREATE_INFO_AMD => write!(f, "GPA_SESSION_CREATE_INFO_AMD"),
+            Self::GPA_DEVICE_CLOCK_MODE_INFO_AMD => write!(f, "GPA_DEVICE_CLOCK_MODE_INFO_AMD"),
+            Self::PHYSICAL_DEVICE_GPA_PROPERTIES_2_AMD => {
+                write!(f, "PHYSICAL_DEVICE_GPA_PROPERTIES_2_AMD")
+            }
+            Self::GPA_DEVICE_GET_CLOCK_INFO_AMD => write!(f, "GPA_DEVICE_GET_CLOCK_INFO_AMD"),
             Self::PHYSICAL_DEVICE_SHADER_ENQUEUE_FEATURES_AMDX => {
                 write!(f, "PHYSICAL_DEVICE_SHADER_ENQUEUE_FEATURES_AMDX")
             }
@@ -5153,6 +5194,9 @@ impl fmt::Display for StructureType {
                 f,
                 "PHYSICAL_DEVICE_COOPERATIVE_MATRIX_CONVERSION_FEATURES_QCOM"
             ),
+            Self::PHYSICAL_DEVICE_ELAPSED_TIMER_QUERY_FEATURES_QCOM => {
+                write!(f, "PHYSICAL_DEVICE_ELAPSED_TIMER_QUERY_FEATURES_QCOM")
+            }
             Self::IMPORT_MEMORY_HOST_POINTER_INFO_EXT => {
                 write!(f, "IMPORT_MEMORY_HOST_POINTER_INFO_EXT")
             }
@@ -5546,6 +5590,23 @@ impl fmt::Display for StructureType {
             }
             Self::PHYSICAL_DEVICE_QUEUE_PERF_HINT_PROPERTIES_QCOM => {
                 write!(f, "PHYSICAL_DEVICE_QUEUE_PERF_HINT_PROPERTIES_QCOM")
+            }
+            Self::PHYSICAL_DEVICE_IMAGE_PROCESSING_3_FEATURES_QCOM => {
+                write!(f, "PHYSICAL_DEVICE_IMAGE_PROCESSING_3_FEATURES_QCOM")
+            }
+            Self::PHYSICAL_DEVICE_SHADER_MULTIPLE_WAIT_QUEUES_FEATURES_QCOM => write!(
+                f,
+                "PHYSICAL_DEVICE_SHADER_MULTIPLE_WAIT_QUEUES_FEATURES_QCOM"
+            ),
+            Self::PHYSICAL_DEVICE_SHADER_MULTIPLE_WAIT_QUEUES_PROPERTIES_QCOM => write!(
+                f,
+                "PHYSICAL_DEVICE_SHADER_MULTIPLE_WAIT_QUEUES_PROPERTIES_QCOM"
+            ),
+            Self::PHYSICAL_DEVICE_SHADER_SPLIT_BARRIER_FEATURES_EXT => {
+                write!(f, "PHYSICAL_DEVICE_SHADER_SPLIT_BARRIER_FEATURES_EXT")
+            }
+            Self::PHYSICAL_DEVICE_SHADER_SPLIT_BARRIER_PROPERTIES_EXT => {
+                write!(f, "PHYSICAL_DEVICE_SHADER_SPLIT_BARRIER_PROPERTIES_EXT")
             }
             Self::CUDA_MODULE_CREATE_INFO_NV => write!(f, "CUDA_MODULE_CREATE_INFO_NV"),
             Self::CUDA_FUNCTION_CREATE_INFO_NV => write!(f, "CUDA_FUNCTION_CREATE_INFO_NV"),
@@ -6967,6 +7028,18 @@ impl fmt::Display for StructureType {
                 f,
                 "PHYSICAL_DEVICE_PRESENT_MODE_FIFO_LATEST_READY_FEATURES_KHR"
             ),
+            Self::PHYSICAL_DEVICE_OPACITY_MICROMAP_FEATURES_KHR => {
+                write!(f, "PHYSICAL_DEVICE_OPACITY_MICROMAP_FEATURES_KHR")
+            }
+            Self::PHYSICAL_DEVICE_OPACITY_MICROMAP_PROPERTIES_KHR => {
+                write!(f, "PHYSICAL_DEVICE_OPACITY_MICROMAP_PROPERTIES_KHR")
+            }
+            Self::ACCELERATION_STRUCTURE_GEOMETRY_MICROMAP_DATA_KHR => {
+                write!(f, "ACCELERATION_STRUCTURE_GEOMETRY_MICROMAP_DATA_KHR")
+            }
+            Self::ACCELERATION_STRUCTURE_TRIANGLES_OPACITY_MICROMAP_KHR => {
+                write!(f, "ACCELERATION_STRUCTURE_TRIANGLES_OPACITY_MICROMAP_KHR")
+            }
             Self::PHYSICAL_DEVICE_SHADER_64_BIT_INDEXING_FEATURES_EXT => {
                 write!(f, "PHYSICAL_DEVICE_SHADER_64_BIT_INDEXING_FEATURES_EXT")
             }
@@ -7039,6 +7112,13 @@ impl fmt::Display for StructureType {
             Self::PHYSICAL_DEVICE_COMPUTE_OCCUPANCY_PRIORITY_FEATURES_NV => {
                 write!(f, "PHYSICAL_DEVICE_COMPUTE_OCCUPANCY_PRIORITY_FEATURES_NV")
             }
+            Self::PHYSICAL_DEVICE_MAINTENANCE_11_FEATURES_KHR => {
+                write!(f, "PHYSICAL_DEVICE_MAINTENANCE_11_FEATURES_KHR")
+            }
+            Self::QUEUE_FAMILY_OPTIMAL_IMAGE_TRANSFER_GRANULARITY_PROPERTIES_KHR => write!(
+                f,
+                "QUEUE_FAMILY_OPTIMAL_IMAGE_TRANSFER_GRANULARITY_PROPERTIES_KHR"
+            ),
             Self::PHYSICAL_DEVICE_SHADER_SUBGROUP_PARTITIONED_FEATURES_EXT => write!(
                 f,
                 "PHYSICAL_DEVICE_SHADER_SUBGROUP_PARTITIONED_FEATURES_EXT"
@@ -7048,9 +7128,28 @@ impl fmt::Display for StructureType {
                 f,
                 "PHYSICAL_DEVICE_SHADER_MIXED_FLOAT_DOT_PRODUCT_FEATURES_VALVE"
             ),
+            Self::PHYSICAL_DEVICE_THROTTLE_HINT_FEATURES_SEC => {
+                write!(f, "PHYSICAL_DEVICE_THROTTLE_HINT_FEATURES_SEC")
+            }
+            Self::THROTTLE_HINT_SUBMIT_INFO_SEC => write!(f, "THROTTLE_HINT_SUBMIT_INFO_SEC"),
+            Self::DATA_GRAPH_PIPELINE_NEURAL_STATISTICS_CREATE_INFO_ARM => {
+                write!(f, "DATA_GRAPH_PIPELINE_NEURAL_STATISTICS_CREATE_INFO_ARM")
+            }
+            Self::DATA_GRAPH_PIPELINE_SESSION_NEURAL_STATISTICS_CREATE_INFO_ARM => write!(
+                f,
+                "DATA_GRAPH_PIPELINE_SESSION_NEURAL_STATISTICS_CREATE_INFO_ARM"
+            ),
+            Self::PHYSICAL_DEVICE_DATA_GRAPH_NEURAL_ACCELERATOR_STATISTICS_FEATURES_ARM => write!(
+                f,
+                "PHYSICAL_DEVICE_DATA_GRAPH_NEURAL_ACCELERATOR_STATISTICS_FEATURES_ARM"
+            ),
             Self::PHYSICAL_DEVICE_PRIMITIVE_RESTART_INDEX_FEATURES_EXT => {
                 write!(f, "PHYSICAL_DEVICE_PRIMITIVE_RESTART_INDEX_FEATURES_EXT")
             }
+            Self::PHYSICAL_DEVICE_COOPERATIVE_MATRIX_DECODE_VECTOR_FEATURES_NV => write!(
+                f,
+                "PHYSICAL_DEVICE_COOPERATIVE_MATRIX_DECODE_VECTOR_FEATURES_NV"
+            ),
             x => write!(f, "{x}"),
         }
     }
@@ -7383,6 +7482,7 @@ impl ObjectType {
     pub const CU_FUNCTION_NVX: Self = Self(1000029001);
     pub const DESCRIPTOR_UPDATE_TEMPLATE_KHR: Self = Self::DESCRIPTOR_UPDATE_TEMPLATE;
     pub const DEBUG_UTILS_MESSENGER_EXT: Self = Self(1000128000);
+    pub const GPA_SESSION_AMD: Self = Self(1000133000);
     pub const ACCELERATION_STRUCTURE_KHR: Self = Self(1000150000);
     pub const SAMPLER_YCBCR_CONVERSION_KHR: Self = Self::SAMPLER_YCBCR_CONVERSION;
     pub const VALIDATION_CACHE_EXT: Self = Self(1000160000);
@@ -7449,6 +7549,7 @@ impl fmt::Display for ObjectType {
             Self::CU_MODULE_NVX => write!(f, "CU_MODULE_NVX"),
             Self::CU_FUNCTION_NVX => write!(f, "CU_FUNCTION_NVX"),
             Self::DEBUG_UTILS_MESSENGER_EXT => write!(f, "DEBUG_UTILS_MESSENGER_EXT"),
+            Self::GPA_SESSION_AMD => write!(f, "GPA_SESSION_AMD"),
             Self::ACCELERATION_STRUCTURE_KHR => write!(f, "ACCELERATION_STRUCTURE_KHR"),
             Self::VALIDATION_CACHE_EXT => write!(f, "VALIDATION_CACHE_EXT"),
             Self::ACCELERATION_STRUCTURE_NV => write!(f, "ACCELERATION_STRUCTURE_NV"),
@@ -8003,6 +8104,7 @@ impl AccelerationStructureTypeKHR {
     pub const GENERIC_KHR: Self = Self(2);
     pub const TOP_LEVEL_NV: Self = Self::TOP_LEVEL_KHR;
     pub const BOTTOM_LEVEL_NV: Self = Self::BOTTOM_LEVEL_KHR;
+    pub const OPACITY_MICROMAP_KHR: Self = Self(1000623000);
 }
 impl fmt::Display for AccelerationStructureTypeKHR {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -8010,6 +8112,7 @@ impl fmt::Display for AccelerationStructureTypeKHR {
             Self::TOP_LEVEL_KHR => write!(f, "TOP_LEVEL_KHR"),
             Self::BOTTOM_LEVEL_KHR => write!(f, "BOTTOM_LEVEL_KHR"),
             Self::GENERIC_KHR => write!(f, "GENERIC_KHR"),
+            Self::OPACITY_MICROMAP_KHR => write!(f, "OPACITY_MICROMAP_KHR"),
             x => write!(f, "{x}"),
         }
     }
@@ -8037,6 +8140,7 @@ impl GeometryTypeKHR {
     pub const SPHERES_NV: Self = Self(1000429004);
     pub const LINEAR_SWEPT_SPHERES_NV: Self = Self(1000429005);
     pub const DENSE_GEOMETRY_FORMAT_TRIANGLES_AMDX: Self = Self(1000478000);
+    pub const MICROMAP_KHR: Self = Self(1000623000);
 }
 impl fmt::Display for GeometryTypeKHR {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -8049,6 +8153,7 @@ impl fmt::Display for GeometryTypeKHR {
             Self::DENSE_GEOMETRY_FORMAT_TRIANGLES_AMDX => {
                 write!(f, "DENSE_GEOMETRY_FORMAT_TRIANGLES_AMDX")
             }
+            Self::MICROMAP_KHR => write!(f, "MICROMAP_KHR"),
             x => write!(f, "{x}"),
         }
     }
@@ -9134,11 +9239,11 @@ impl fmt::Display for CopyMicromapModeEXT {
         }
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkOpacityMicromapFormatEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkOpacityMicromapFormatKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub struct OpacityMicromapFormatEXT(i32);
-impl OpacityMicromapFormatEXT {
+pub struct OpacityMicromapFormatKHR(i32);
+impl OpacityMicromapFormatKHR {
     #[inline]
     pub const fn from_raw(x: i32) -> Self {
         Self(x)
@@ -9148,24 +9253,26 @@ impl OpacityMicromapFormatEXT {
         self.0
     }
 }
-impl OpacityMicromapFormatEXT {
-    pub const TYPE_2_STATE_EXT: Self = Self(1);
-    pub const TYPE_4_STATE_EXT: Self = Self(2);
+impl OpacityMicromapFormatKHR {
+    pub const TYPE_2_STATE_KHR: Self = Self(1);
+    pub const TYPE_4_STATE_KHR: Self = Self(2);
+    pub const TYPE_2_STATE_EXT: Self = Self::TYPE_2_STATE_KHR;
+    pub const TYPE_4_STATE_EXT: Self = Self::TYPE_4_STATE_KHR;
 }
-impl fmt::Display for OpacityMicromapFormatEXT {
+impl fmt::Display for OpacityMicromapFormatKHR {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            Self::TYPE_2_STATE_EXT => write!(f, "TYPE_2_STATE_EXT"),
-            Self::TYPE_4_STATE_EXT => write!(f, "TYPE_4_STATE_EXT"),
+            Self::TYPE_2_STATE_KHR => write!(f, "TYPE_2_STATE_KHR"),
+            Self::TYPE_4_STATE_KHR => write!(f, "TYPE_4_STATE_KHR"),
             x => write!(f, "{x}"),
         }
     }
 }
-#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkOpacityMicromapSpecialIndexEXT.html>"]
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkOpacityMicromapSpecialIndexKHR.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub struct OpacityMicromapSpecialIndexEXT(i32);
-impl OpacityMicromapSpecialIndexEXT {
+pub struct OpacityMicromapSpecialIndexKHR(i32);
+impl OpacityMicromapSpecialIndexKHR {
     #[inline]
     pub const fn from_raw(x: i32) -> Self {
         Self(x)
@@ -9175,24 +9282,54 @@ impl OpacityMicromapSpecialIndexEXT {
         self.0
     }
 }
-impl OpacityMicromapSpecialIndexEXT {
-    pub const FULLY_TRANSPARENT_EXT: Self = Self(-1);
-    pub const FULLY_OPAQUE_EXT: Self = Self(-2);
-    pub const FULLY_UNKNOWN_TRANSPARENT_EXT: Self = Self(-3);
-    pub const FULLY_UNKNOWN_OPAQUE_EXT: Self = Self(-4);
+impl OpacityMicromapSpecialIndexKHR {
+    pub const FULLY_TRANSPARENT_KHR: Self = Self(-1);
+    pub const FULLY_OPAQUE_KHR: Self = Self(-2);
+    pub const FULLY_UNKNOWN_TRANSPARENT_KHR: Self = Self(-3);
+    pub const FULLY_UNKNOWN_OPAQUE_KHR: Self = Self(-4);
+    pub const FULLY_TRANSPARENT_EXT: Self = Self::FULLY_TRANSPARENT_KHR;
+    pub const FULLY_OPAQUE_EXT: Self = Self::FULLY_OPAQUE_KHR;
+    pub const FULLY_UNKNOWN_TRANSPARENT_EXT: Self = Self::FULLY_UNKNOWN_TRANSPARENT_KHR;
+    pub const FULLY_UNKNOWN_OPAQUE_EXT: Self = Self::FULLY_UNKNOWN_OPAQUE_KHR;
     pub const CLUSTER_GEOMETRY_DISABLE_OPACITY_MICROMAP_NV: Self = Self(-5);
 }
-impl fmt::Display for OpacityMicromapSpecialIndexEXT {
+impl fmt::Display for OpacityMicromapSpecialIndexKHR {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            Self::FULLY_TRANSPARENT_EXT => write!(f, "FULLY_TRANSPARENT_EXT"),
-            Self::FULLY_OPAQUE_EXT => write!(f, "FULLY_OPAQUE_EXT"),
-            Self::FULLY_UNKNOWN_TRANSPARENT_EXT => write!(f, "FULLY_UNKNOWN_TRANSPARENT_EXT"),
-            Self::FULLY_UNKNOWN_OPAQUE_EXT => write!(f, "FULLY_UNKNOWN_OPAQUE_EXT"),
+            Self::FULLY_TRANSPARENT_KHR => write!(f, "FULLY_TRANSPARENT_KHR"),
+            Self::FULLY_OPAQUE_KHR => write!(f, "FULLY_OPAQUE_KHR"),
+            Self::FULLY_UNKNOWN_TRANSPARENT_KHR => write!(f, "FULLY_UNKNOWN_TRANSPARENT_KHR"),
+            Self::FULLY_UNKNOWN_OPAQUE_KHR => write!(f, "FULLY_UNKNOWN_OPAQUE_KHR"),
             Self::CLUSTER_GEOMETRY_DISABLE_OPACITY_MICROMAP_NV => {
                 write!(f, "CLUSTER_GEOMETRY_DISABLE_OPACITY_MICROMAP_NV")
             }
             x => write!(f, "{x}"),
+        }
+    }
+}
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkAccelerationStructureSerializedBlockTypeKHR.html>"]
+#[repr(transparent)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct AccelerationStructureSerializedBlockTypeKHR(i32);
+impl AccelerationStructureSerializedBlockTypeKHR {
+    #[inline]
+    pub const fn from_raw(x: i32) -> Self {
+        Self(x)
+    }
+    #[inline]
+    pub const fn as_raw(self) -> i32 {
+        self.0
+    }
+}
+impl AccelerationStructureSerializedBlockTypeKHR {
+    pub const OPACITY_MICROMAP_KHR: Self = Self(0);
+}
+impl fmt::Display for AccelerationStructureSerializedBlockTypeKHR {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if *self == Self::OPACITY_MICROMAP_KHR {
+            write!(f, "OPACITY_MICROMAP_KHR")
+        } else {
+            write!(f, "{}", self.0)
         }
     }
 }
@@ -9799,12 +9936,20 @@ impl DataGraphPipelinePropertyARM {
 impl DataGraphPipelinePropertyARM {
     pub const CREATION_LOG_ARM: Self = Self(0);
     pub const IDENTIFIER_ARM: Self = Self(1);
+    pub const NEURAL_ACCELERATOR_DEBUG_DATABASE_ARM: Self = Self(1000676000);
+    pub const NEURAL_ACCELERATOR_STATISTICS_INFO_ARM: Self = Self(1000676001);
 }
 impl fmt::Display for DataGraphPipelinePropertyARM {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Self::CREATION_LOG_ARM => write!(f, "CREATION_LOG_ARM"),
             Self::IDENTIFIER_ARM => write!(f, "IDENTIFIER_ARM"),
+            Self::NEURAL_ACCELERATOR_DEBUG_DATABASE_ARM => {
+                write!(f, "NEURAL_ACCELERATOR_DEBUG_DATABASE_ARM")
+            }
+            Self::NEURAL_ACCELERATOR_STATISTICS_INFO_ARM => {
+                write!(f, "NEURAL_ACCELERATOR_STATISTICS_INFO_ARM")
+            }
             x => write!(f, "{x}"),
         }
     }
@@ -9826,12 +9971,16 @@ impl DataGraphPipelineSessionBindPointARM {
 impl DataGraphPipelineSessionBindPointARM {
     pub const TRANSIENT_ARM: Self = Self(0);
     pub const OPTICAL_FLOW_CACHE_ARM: Self = Self(1000631001);
+    pub const NEURAL_ACCELERATOR_STATISTICS_ARM: Self = Self(1000676000);
 }
 impl fmt::Display for DataGraphPipelineSessionBindPointARM {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Self::TRANSIENT_ARM => write!(f, "TRANSIENT_ARM"),
             Self::OPTICAL_FLOW_CACHE_ARM => write!(f, "OPTICAL_FLOW_CACHE_ARM"),
+            Self::NEURAL_ACCELERATOR_STATISTICS_ARM => {
+                write!(f, "NEURAL_ACCELERATOR_STATISTICS_ARM")
+            }
             x => write!(f, "{x}"),
         }
     }
@@ -10030,6 +10179,209 @@ impl fmt::Display for DescriptorMappingSourceEXT {
         }
     }
 }
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkGpaPerfBlockAMD.html>"]
+#[repr(transparent)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct GpaPerfBlockAMD(i32);
+impl GpaPerfBlockAMD {
+    #[inline]
+    pub const fn from_raw(x: i32) -> Self {
+        Self(x)
+    }
+    #[inline]
+    pub const fn as_raw(self) -> i32 {
+        self.0
+    }
+}
+impl GpaPerfBlockAMD {
+    pub const CPF_AMD: Self = Self(0);
+    pub const IA_AMD: Self = Self(1);
+    pub const VGT_AMD: Self = Self(2);
+    pub const PA_AMD: Self = Self(3);
+    pub const SC_AMD: Self = Self(4);
+    pub const SPI_AMD: Self = Self(5);
+    pub const SQ_AMD: Self = Self(6);
+    pub const SX_AMD: Self = Self(7);
+    pub const TA_AMD: Self = Self(8);
+    pub const TD_AMD: Self = Self(9);
+    pub const TCP_AMD: Self = Self(10);
+    pub const TCC_AMD: Self = Self(11);
+    pub const TCA_AMD: Self = Self(12);
+    pub const DB_AMD: Self = Self(13);
+    pub const CB_AMD: Self = Self(14);
+    pub const GDS_AMD: Self = Self(15);
+    pub const SRBM_AMD: Self = Self(16);
+    pub const GRBM_AMD: Self = Self(17);
+    pub const GRBM_SE_AMD: Self = Self(18);
+    pub const RLC_AMD: Self = Self(19);
+    pub const DMA_AMD: Self = Self(20);
+    pub const MC_AMD: Self = Self(21);
+    pub const CPG_AMD: Self = Self(22);
+    pub const CPC_AMD: Self = Self(23);
+    pub const WD_AMD: Self = Self(24);
+    pub const TCS_AMD: Self = Self(25);
+    pub const ATC_AMD: Self = Self(26);
+    pub const ATC_L2_AMD: Self = Self(27);
+    pub const MC_VM_L2_AMD: Self = Self(28);
+    pub const EA_AMD: Self = Self(29);
+    pub const RPB_AMD: Self = Self(30);
+    pub const RMI_AMD: Self = Self(31);
+    pub const UMCCH_AMD: Self = Self(32);
+    pub const GE_AMD: Self = Self(33);
+    pub const GL1A_AMD: Self = Self(34);
+    pub const GL1C_AMD: Self = Self(35);
+    pub const GL1CG_AMD: Self = Self(36);
+    pub const GL2A_AMD: Self = Self(37);
+    pub const GL2C_AMD: Self = Self(38);
+    pub const CHA_AMD: Self = Self(39);
+    pub const CHC_AMD: Self = Self(40);
+    pub const CHCG_AMD: Self = Self(41);
+    pub const GUS_AMD: Self = Self(42);
+    pub const GCR_AMD: Self = Self(43);
+    pub const PH_AMD: Self = Self(44);
+    pub const UTCL1_AMD: Self = Self(45);
+    pub const GE1_AMD: Self = Self::GE_AMD;
+    pub const GE_DIST_AMD: Self = Self(46);
+    pub const GE_SE_AMD: Self = Self(47);
+    pub const DF_MALL_AMD: Self = Self(48);
+    pub const SQ_WGP_AMD: Self = Self(49);
+    pub const PC_AMD: Self = Self(50);
+    pub const GL1XA_AMD: Self = Self(51);
+    pub const GL1XC_AMD: Self = Self(52);
+    pub const WGS_AMD: Self = Self(53);
+    pub const EACPWD_AMD: Self = Self(54);
+    pub const EASE_AMD: Self = Self(55);
+    pub const RLCUSER_AMD: Self = Self(56);
+    pub const RLCLOCAL_AMD: Self = Self::RLCUSER_AMD;
+}
+impl fmt::Display for GpaPerfBlockAMD {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Self::CPF_AMD => write!(f, "CPF_AMD"),
+            Self::IA_AMD => write!(f, "IA_AMD"),
+            Self::VGT_AMD => write!(f, "VGT_AMD"),
+            Self::PA_AMD => write!(f, "PA_AMD"),
+            Self::SC_AMD => write!(f, "SC_AMD"),
+            Self::SPI_AMD => write!(f, "SPI_AMD"),
+            Self::SQ_AMD => write!(f, "SQ_AMD"),
+            Self::SX_AMD => write!(f, "SX_AMD"),
+            Self::TA_AMD => write!(f, "TA_AMD"),
+            Self::TD_AMD => write!(f, "TD_AMD"),
+            Self::TCP_AMD => write!(f, "TCP_AMD"),
+            Self::TCC_AMD => write!(f, "TCC_AMD"),
+            Self::TCA_AMD => write!(f, "TCA_AMD"),
+            Self::DB_AMD => write!(f, "DB_AMD"),
+            Self::CB_AMD => write!(f, "CB_AMD"),
+            Self::GDS_AMD => write!(f, "GDS_AMD"),
+            Self::SRBM_AMD => write!(f, "SRBM_AMD"),
+            Self::GRBM_AMD => write!(f, "GRBM_AMD"),
+            Self::GRBM_SE_AMD => write!(f, "GRBM_SE_AMD"),
+            Self::RLC_AMD => write!(f, "RLC_AMD"),
+            Self::DMA_AMD => write!(f, "DMA_AMD"),
+            Self::MC_AMD => write!(f, "MC_AMD"),
+            Self::CPG_AMD => write!(f, "CPG_AMD"),
+            Self::CPC_AMD => write!(f, "CPC_AMD"),
+            Self::WD_AMD => write!(f, "WD_AMD"),
+            Self::TCS_AMD => write!(f, "TCS_AMD"),
+            Self::ATC_AMD => write!(f, "ATC_AMD"),
+            Self::ATC_L2_AMD => write!(f, "ATC_L2_AMD"),
+            Self::MC_VM_L2_AMD => write!(f, "MC_VM_L2_AMD"),
+            Self::EA_AMD => write!(f, "EA_AMD"),
+            Self::RPB_AMD => write!(f, "RPB_AMD"),
+            Self::RMI_AMD => write!(f, "RMI_AMD"),
+            Self::UMCCH_AMD => write!(f, "UMCCH_AMD"),
+            Self::GE_AMD => write!(f, "GE_AMD"),
+            Self::GL1A_AMD => write!(f, "GL1A_AMD"),
+            Self::GL1C_AMD => write!(f, "GL1C_AMD"),
+            Self::GL1CG_AMD => write!(f, "GL1CG_AMD"),
+            Self::GL2A_AMD => write!(f, "GL2A_AMD"),
+            Self::GL2C_AMD => write!(f, "GL2C_AMD"),
+            Self::CHA_AMD => write!(f, "CHA_AMD"),
+            Self::CHC_AMD => write!(f, "CHC_AMD"),
+            Self::CHCG_AMD => write!(f, "CHCG_AMD"),
+            Self::GUS_AMD => write!(f, "GUS_AMD"),
+            Self::GCR_AMD => write!(f, "GCR_AMD"),
+            Self::PH_AMD => write!(f, "PH_AMD"),
+            Self::UTCL1_AMD => write!(f, "UTCL1_AMD"),
+            Self::GE_DIST_AMD => write!(f, "GE_DIST_AMD"),
+            Self::GE_SE_AMD => write!(f, "GE_SE_AMD"),
+            Self::DF_MALL_AMD => write!(f, "DF_MALL_AMD"),
+            Self::SQ_WGP_AMD => write!(f, "SQ_WGP_AMD"),
+            Self::PC_AMD => write!(f, "PC_AMD"),
+            Self::GL1XA_AMD => write!(f, "GL1XA_AMD"),
+            Self::GL1XC_AMD => write!(f, "GL1XC_AMD"),
+            Self::WGS_AMD => write!(f, "WGS_AMD"),
+            Self::EACPWD_AMD => write!(f, "EACPWD_AMD"),
+            Self::EASE_AMD => write!(f, "EASE_AMD"),
+            Self::RLCUSER_AMD => write!(f, "RLCUSER_AMD"),
+            x => write!(f, "{x}"),
+        }
+    }
+}
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkGpaSampleTypeAMD.html>"]
+#[repr(transparent)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct GpaSampleTypeAMD(i32);
+impl GpaSampleTypeAMD {
+    #[inline]
+    pub const fn from_raw(x: i32) -> Self {
+        Self(x)
+    }
+    #[inline]
+    pub const fn as_raw(self) -> i32 {
+        self.0
+    }
+}
+impl GpaSampleTypeAMD {
+    pub const CUMULATIVE_AMD: Self = Self(0);
+    pub const TRACE_AMD: Self = Self(1);
+    pub const TIMING_AMD: Self = Self(2);
+}
+impl fmt::Display for GpaSampleTypeAMD {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Self::CUMULATIVE_AMD => write!(f, "CUMULATIVE_AMD"),
+            Self::TRACE_AMD => write!(f, "TRACE_AMD"),
+            Self::TIMING_AMD => write!(f, "TIMING_AMD"),
+            x => write!(f, "{x}"),
+        }
+    }
+}
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkGpaDeviceClockModeAMD.html>"]
+#[repr(transparent)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct GpaDeviceClockModeAMD(i32);
+impl GpaDeviceClockModeAMD {
+    #[inline]
+    pub const fn from_raw(x: i32) -> Self {
+        Self(x)
+    }
+    #[inline]
+    pub const fn as_raw(self) -> i32 {
+        self.0
+    }
+}
+impl GpaDeviceClockModeAMD {
+    pub const DEFAULT_AMD: Self = Self(0);
+    pub const QUERY_AMD: Self = Self(1);
+    pub const PROFILING_AMD: Self = Self(2);
+    pub const MIN_MEMORY_AMD: Self = Self(3);
+    pub const MIN_ENGINE_AMD: Self = Self(4);
+    pub const PEAK_AMD: Self = Self(5);
+}
+impl fmt::Display for GpaDeviceClockModeAMD {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Self::DEFAULT_AMD => write!(f, "DEFAULT_AMD"),
+            Self::QUERY_AMD => write!(f, "QUERY_AMD"),
+            Self::PROFILING_AMD => write!(f, "PROFILING_AMD"),
+            Self::MIN_MEMORY_AMD => write!(f, "MIN_MEMORY_AMD"),
+            Self::MIN_ENGINE_AMD => write!(f, "MIN_ENGINE_AMD"),
+            Self::PEAK_AMD => write!(f, "PEAK_AMD"),
+            x => write!(f, "{x}"),
+        }
+    }
+}
 #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDataGraphTOSALevelARM.html>"]
 #[repr(transparent)]
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
@@ -10144,6 +10496,64 @@ impl fmt::Display for DataGraphPipelineNodeTypeARM {
             write!(f, "OPTICAL_FLOW_ARM")
         } else {
             write!(f, "{}", self.0)
+        }
+    }
+}
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkNeuralAcceleratorStatisticsModeARM.html>"]
+#[repr(transparent)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct NeuralAcceleratorStatisticsModeARM(i32);
+impl NeuralAcceleratorStatisticsModeARM {
+    #[inline]
+    pub const fn from_raw(x: i32) -> Self {
+        Self(x)
+    }
+    #[inline]
+    pub const fn as_raw(self) -> i32 {
+        self.0
+    }
+}
+impl NeuralAcceleratorStatisticsModeARM {
+    pub const DISABLED_ARM: Self = Self(0);
+    pub const STATISTICS0_ARM: Self = Self(1);
+    pub const STATISTICS1_ARM: Self = Self(2);
+}
+impl fmt::Display for NeuralAcceleratorStatisticsModeARM {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Self::DISABLED_ARM => write!(f, "DISABLED_ARM"),
+            Self::STATISTICS0_ARM => write!(f, "STATISTICS0_ARM"),
+            Self::STATISTICS1_ARM => write!(f, "STATISTICS1_ARM"),
+            x => write!(f, "{x}"),
+        }
+    }
+}
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkThrottleHintTypeSEC.html>"]
+#[repr(transparent)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct ThrottleHintTypeSEC(i32);
+impl ThrottleHintTypeSEC {
+    #[inline]
+    pub const fn from_raw(x: i32) -> Self {
+        Self(x)
+    }
+    #[inline]
+    pub const fn as_raw(self) -> i32 {
+        self.0
+    }
+}
+impl ThrottleHintTypeSEC {
+    pub const DEFAULT_SEC: Self = Self(0);
+    pub const LOW_SEC: Self = Self(1);
+    pub const HIGH_SEC: Self = Self(2);
+}
+impl fmt::Display for ThrottleHintTypeSEC {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Self::DEFAULT_SEC => write!(f, "DEFAULT_SEC"),
+            Self::LOW_SEC => write!(f, "LOW_SEC"),
+            Self::HIGH_SEC => write!(f, "HIGH_SEC"),
+            x => write!(f, "{x}"),
         }
     }
 }
@@ -11225,6 +11635,7 @@ impl DriverId {
     pub const MESA_HONEYKRISP: Self = Self(26);
     pub const VULKAN_SC_EMULATION_ON_VULKAN: Self = Self(27);
     pub const MESA_KOSMICKRISP: Self = Self(28);
+    pub const MESA_GFXSTREAM: Self = Self(29);
     pub const AMD_PROPRIETARY_KHR: Self = Self::AMD_PROPRIETARY;
     pub const AMD_OPEN_SOURCE_KHR: Self = Self::AMD_OPEN_SOURCE;
     pub const MESA_RADV_KHR: Self = Self::MESA_RADV;
@@ -11269,6 +11680,7 @@ impl fmt::Display for DriverId {
             Self::MESA_HONEYKRISP => write!(f, "MESA_HONEYKRISP"),
             Self::VULKAN_SC_EMULATION_ON_VULKAN => write!(f, "VULKAN_SC_EMULATION_ON_VULKAN"),
             Self::MESA_KOSMICKRISP => write!(f, "MESA_KOSMICKRISP"),
+            Self::MESA_GFXSTREAM => write!(f, "MESA_GFXSTREAM"),
             x => write!(f, "{x}"),
         }
     }
@@ -11677,13 +12089,15 @@ pub struct PipelineLayoutCreateFlags(Flags);
 bitflags!(PipelineLayoutCreateFlags, Flags);
 impl PipelineLayoutCreateFlags {
     pub const INDEPENDENT_SETS_EXT: Self = Self(0x2);
+    pub const NO_TASK_SHADER_KHR: Self = Self(0x4);
 }
 impl fmt::Display for PipelineLayoutCreateFlags {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.is_empty() {
             write!(f, "NONE")?;
         }
-        const BITS: &[(u64, &str)] = &[(2u64, "INDEPENDENT_SETS_EXT")];
+        const BITS: &[(u64, &str)] =
+            &[(2u64, "INDEPENDENT_SETS_EXT"), (4u64, "NO_TASK_SHADER_KHR")];
         flag_display(self.0 as u64, BITS, f)
     }
 }
@@ -12451,6 +12865,7 @@ impl ImageCreateFlags {
     pub const TYPE_2D_VIEW_COMPATIBLE_EXT: Self = Self(0x20000);
     pub const VIDEO_PROFILE_INDEPENDENT_KHR: Self = Self(0x100000);
     pub const FRAGMENT_DENSITY_MAP_OFFSET_EXT: Self = Self(0x8000);
+    pub const ALIAS_SINGLE_LAYER_DESCRIPTOR_KHR: Self = Self(0x400000);
 }
 impl fmt::Display for ImageCreateFlags {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -12478,6 +12893,7 @@ impl fmt::Display for ImageCreateFlags {
             (131072u64, "TYPE_2D_VIEW_COMPATIBLE_EXT"),
             (1048576u64, "VIDEO_PROFILE_INDEPENDENT_KHR"),
             (32768u64, "FRAGMENT_DENSITY_MAP_OFFSET_EXT"),
+            (4194304u64, "ALIAS_SINGLE_LAYER_DESCRIPTOR_KHR"),
         ];
         flag_display(self.0 as u64, BITS, f)
     }
@@ -12540,8 +12956,8 @@ impl PipelineCreateFlags {
     pub const RAY_TRACING_ALLOW_MOTION_NV: Self = Self(0x100000);
     pub const COLOR_ATTACHMENT_FEEDBACK_LOOP_EXT: Self = Self(0x2000000);
     pub const DEPTH_STENCIL_ATTACHMENT_FEEDBACK_LOOP_EXT: Self = Self(0x4000000);
-    pub const RAY_TRACING_OPACITY_MICROMAP_EXT: Self = Self(0x1000000);
     pub const RAY_TRACING_DISPLACEMENT_MICROMAP_NV: Self = Self(0x10000000);
+    pub const RAY_TRACING_OPACITY_MICROMAP_KHR: Self = Self(0x1000000);
 }
 impl fmt::Display for PipelineCreateFlags {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -12581,8 +12997,8 @@ impl fmt::Display for PipelineCreateFlags {
             (1048576u64, "RAY_TRACING_ALLOW_MOTION_NV"),
             (33554432u64, "COLOR_ATTACHMENT_FEEDBACK_LOOP_EXT"),
             (67108864u64, "DEPTH_STENCIL_ATTACHMENT_FEEDBACK_LOOP_EXT"),
-            (16777216u64, "RAY_TRACING_OPACITY_MICROMAP_EXT"),
             (268435456u64, "RAY_TRACING_DISPLACEMENT_MICROMAP_NV"),
+            (16777216u64, "RAY_TRACING_OPACITY_MICROMAP_KHR"),
         ];
         flag_display(self.0 as u64, BITS, f)
     }
@@ -13513,8 +13929,8 @@ impl GeometryInstanceFlagsKHR {
     pub const FORCE_OPAQUE_KHR: Self = Self(0x4);
     pub const FORCE_NO_OPAQUE_KHR: Self = Self(0x8);
     pub const TRIANGLE_FRONT_COUNTERCLOCKWISE_KHR: Self = Self::TRIANGLE_FLIP_FACING_KHR;
-    pub const FORCE_OPACITY_MICROMAP_2_STATE_EXT: Self = Self(0x10);
-    pub const DISABLE_OPACITY_MICROMAPS_EXT: Self = Self(0x20);
+    pub const FORCE_OPACITY_MICROMAP_2_STATE_KHR: Self = Self(0x10);
+    pub const DISABLE_OPACITY_MICROMAPS_KHR: Self = Self(0x20);
 }
 impl fmt::Display for GeometryInstanceFlagsKHR {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -13526,8 +13942,8 @@ impl fmt::Display for GeometryInstanceFlagsKHR {
             (2u64, "TRIANGLE_FLIP_FACING_KHR"),
             (4u64, "FORCE_OPAQUE_KHR"),
             (8u64, "FORCE_NO_OPAQUE_KHR"),
-            (16u64, "FORCE_OPACITY_MICROMAP_2_STATE_EXT"),
-            (32u64, "DISABLE_OPACITY_MICROMAPS_EXT"),
+            (16u64, "FORCE_OPACITY_MICROMAP_2_STATE_KHR"),
+            (32u64, "DISABLE_OPACITY_MICROMAPS_KHR"),
         ];
         flag_display(self.0 as u64, BITS, f)
     }
@@ -13614,12 +14030,13 @@ impl BuildAccelerationStructureFlagsKHR {
     pub const PREFER_FAST_BUILD_KHR: Self = Self(0x8);
     pub const LOW_MEMORY_KHR: Self = Self(0x10);
     pub const MOTION_NV: Self = Self(0x20);
-    pub const ALLOW_OPACITY_MICROMAP_UPDATE_EXT: Self = Self(0x40);
-    pub const ALLOW_DISABLE_OPACITY_MICROMAPS_EXT: Self = Self(0x80);
     pub const ALLOW_OPACITY_MICROMAP_DATA_UPDATE_EXT: Self = Self(0x100);
     pub const ALLOW_DISPLACEMENT_MICROMAP_UPDATE_NV: Self = Self(0x200);
     pub const ALLOW_DATA_ACCESS_KHR: Self = Self(0x800);
     pub const ALLOW_CLUSTER_OPACITY_MICROMAPS_NV: Self = Self(0x1000);
+    pub const ALLOW_OPACITY_MICROMAP_UPDATE_KHR: Self = Self(0x40);
+    pub const ALLOW_DISABLE_OPACITY_MICROMAPS_KHR: Self = Self(0x80);
+    pub const MICROMAP_LOSSY_KHR: Self = Self(0x400);
 }
 impl fmt::Display for BuildAccelerationStructureFlagsKHR {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -13633,12 +14050,13 @@ impl fmt::Display for BuildAccelerationStructureFlagsKHR {
             (8u64, "PREFER_FAST_BUILD_KHR"),
             (16u64, "LOW_MEMORY_KHR"),
             (32u64, "MOTION_NV"),
-            (64u64, "ALLOW_OPACITY_MICROMAP_UPDATE_EXT"),
-            (128u64, "ALLOW_DISABLE_OPACITY_MICROMAPS_EXT"),
             (256u64, "ALLOW_OPACITY_MICROMAP_DATA_UPDATE_EXT"),
             (512u64, "ALLOW_DISPLACEMENT_MICROMAP_UPDATE_NV"),
             (2048u64, "ALLOW_DATA_ACCESS_KHR"),
             (4096u64, "ALLOW_CLUSTER_OPACITY_MICROMAPS_NV"),
+            (64u64, "ALLOW_OPACITY_MICROMAP_UPDATE_KHR"),
+            (128u64, "ALLOW_DISABLE_OPACITY_MICROMAPS_KHR"),
+            (1024u64, "MICROMAP_LOSSY_KHR"),
         ];
         flag_display(self.0 as u64, BITS, f)
     }
@@ -14144,6 +14562,7 @@ impl FormatFeatureFlags2 {
     pub const FRAGMENT_SHADING_RATE_ATTACHMENT_KHR: Self = Self(0x40000000);
     pub const VIDEO_ENCODE_INPUT_KHR: Self = Self(0x8000000);
     pub const VIDEO_ENCODE_DPB_KHR: Self = Self(0x10000000);
+    pub const BLOCK_MATCHING_SXD_QCOM: Self = Self(0x100000000000);
     pub const ACCELERATION_STRUCTURE_RADIUS_BUFFER_NV: Self = Self(0x8000000000000);
     #[doc = "Format support linear image as render target, it cannot be mixed with non linear attachment"]
     pub const LINEAR_COLOR_ATTACHMENT_NV: Self = Self(0x4000000000);
@@ -14218,6 +14637,7 @@ impl fmt::Display for FormatFeatureFlags2 {
             (1073741824u64, "FRAGMENT_SHADING_RATE_ATTACHMENT_KHR"),
             (134217728u64, "VIDEO_ENCODE_INPUT_KHR"),
             (268435456u64, "VIDEO_ENCODE_DPB_KHR"),
+            (17592186044416u64, "BLOCK_MATCHING_SXD_QCOM"),
             (
                 2251799813685248u64,
                 "ACCELERATION_STRUCTURE_RADIUS_BUFFER_NV",
@@ -14466,7 +14886,6 @@ impl PipelineCreateFlags2 {
     pub const RAY_TRACING_ALLOW_MOTION_NV: Self = Self(0x100000);
     pub const RENDERING_FRAGMENT_SHADING_RATE_ATTACHMENT_KHR: Self = Self(0x200000);
     pub const RENDERING_FRAGMENT_DENSITY_MAP_ATTACHMENT_EXT: Self = Self(0x400000);
-    pub const RAY_TRACING_OPACITY_MICROMAP_EXT: Self = Self(0x1000000);
     pub const COLOR_ATTACHMENT_FEEDBACK_LOOP_EXT: Self = Self(0x2000000);
     pub const DEPTH_STENCIL_ATTACHMENT_FEEDBACK_LOOP_EXT: Self = Self(0x4000000);
     pub const RAY_TRACING_DISPLACEMENT_MICROMAP_NV: Self = Self(0x10000000);
@@ -14476,6 +14895,8 @@ impl PipelineCreateFlags2 {
     pub const CAPTURE_DATA_KHR: Self = Self(0x80000000);
     pub const INDIRECT_BINDABLE_EXT: Self = Self(0x4000000000);
     pub const PER_LAYER_FRAGMENT_DENSITY_VALVE: Self = Self(0x10000000000);
+    pub const RAY_TRACING_OPACITY_MICROMAP_KHR: Self = Self(0x1000000);
+    pub const OPACITY_MICROMAP_DISALLOW_MIXED_SPECIAL_INDEX_KHR: Self = Self(0x20000000000);
     pub const TYPE_64_INDEXING_EXT: Self = Self(0x80000000000);
 }
 impl fmt::Display for PipelineCreateFlags2 {
@@ -14520,7 +14941,6 @@ impl fmt::Display for PipelineCreateFlags2 {
             (1048576u64, "RAY_TRACING_ALLOW_MOTION_NV"),
             (2097152u64, "RENDERING_FRAGMENT_SHADING_RATE_ATTACHMENT_KHR"),
             (4194304u64, "RENDERING_FRAGMENT_DENSITY_MAP_ATTACHMENT_EXT"),
-            (16777216u64, "RAY_TRACING_OPACITY_MICROMAP_EXT"),
             (33554432u64, "COLOR_ATTACHMENT_FEEDBACK_LOOP_EXT"),
             (67108864u64, "DEPTH_STENCIL_ATTACHMENT_FEEDBACK_LOOP_EXT"),
             (268435456u64, "RAY_TRACING_DISPLACEMENT_MICROMAP_NV"),
@@ -14530,6 +14950,11 @@ impl fmt::Display for PipelineCreateFlags2 {
             (2147483648u64, "CAPTURE_DATA_KHR"),
             (274877906944u64, "INDIRECT_BINDABLE_EXT"),
             (1099511627776u64, "PER_LAYER_FRAGMENT_DENSITY_VALVE"),
+            (16777216u64, "RAY_TRACING_OPACITY_MICROMAP_KHR"),
+            (
+                2199023255552u64,
+                "OPACITY_MICROMAP_DISALLOW_MIXED_SPECIAL_INDEX_KHR",
+            ),
             (8796093022208u64, "TYPE_64_INDEXING_EXT"),
         ];
         flag_display(self.0, BITS, f)
@@ -14553,6 +14978,8 @@ impl BufferUsageFlags2 {
     pub const SHADER_DEVICE_ADDRESS: Self = Self(0x20000);
     pub const EXECUTION_GRAPH_SCRATCH_AMDX: Self = Self(0x2000000);
     pub const DESCRIPTOR_HEAP_EXT: Self = Self(0x10000000);
+    pub const MICROMAP_BUILD_INPUT_READ_ONLY_EXT: Self = Self(0x800000);
+    pub const MICROMAP_STORAGE_EXT: Self = Self(0x1000000);
     pub const CONDITIONAL_RENDERING_EXT: Self = Self(0x200);
     pub const SHADER_BINDING_TABLE_KHR: Self = Self(0x400);
     pub const TRANSFORM_FEEDBACK_BUFFER_EXT: Self = Self(0x800);
@@ -14566,8 +14993,6 @@ impl BufferUsageFlags2 {
     pub const SAMPLER_DESCRIPTOR_BUFFER_EXT: Self = Self(0x200000);
     pub const RESOURCE_DESCRIPTOR_BUFFER_EXT: Self = Self(0x400000);
     pub const PUSH_DESCRIPTORS_DESCRIPTOR_BUFFER_EXT: Self = Self(0x4000000);
-    pub const MICROMAP_BUILD_INPUT_READ_ONLY_EXT: Self = Self(0x800000);
-    pub const MICROMAP_STORAGE_EXT: Self = Self(0x1000000);
     pub const COMPRESSED_DATA_DGF1_AMDX: Self = Self(0x200000000);
     pub const DATA_GRAPH_FOREIGN_DESCRIPTOR_ARM: Self = Self(0x20000000);
     pub const TILE_MEMORY_QCOM: Self = Self(0x8000000);
@@ -14592,6 +15017,8 @@ impl fmt::Display for BufferUsageFlags2 {
             (131072u64, "SHADER_DEVICE_ADDRESS"),
             (33554432u64, "EXECUTION_GRAPH_SCRATCH_AMDX"),
             (268435456u64, "DESCRIPTOR_HEAP_EXT"),
+            (8388608u64, "MICROMAP_BUILD_INPUT_READ_ONLY_EXT"),
+            (16777216u64, "MICROMAP_STORAGE_EXT"),
             (512u64, "CONDITIONAL_RENDERING_EXT"),
             (1024u64, "SHADER_BINDING_TABLE_KHR"),
             (2048u64, "TRANSFORM_FEEDBACK_BUFFER_EXT"),
@@ -14608,8 +15035,6 @@ impl fmt::Display for BufferUsageFlags2 {
             (2097152u64, "SAMPLER_DESCRIPTOR_BUFFER_EXT"),
             (4194304u64, "RESOURCE_DESCRIPTOR_BUFFER_EXT"),
             (67108864u64, "PUSH_DESCRIPTORS_DESCRIPTOR_BUFFER_EXT"),
-            (8388608u64, "MICROMAP_BUILD_INPUT_READ_ONLY_EXT"),
-            (16777216u64, "MICROMAP_STORAGE_EXT"),
             (8589934592u64, "COMPRESSED_DATA_DGF1_AMDX"),
             (536870912u64, "DATA_GRAPH_FOREIGN_DESCRIPTOR_ARM"),
             (134217728u64, "TILE_MEMORY_QCOM"),
@@ -14847,6 +15272,67 @@ impl fmt::Display for SpirvResourceTypeFlagsEXT {
             (256u64, "ACCELERATION_STRUCTURE_EXT"),
             (512u64, "TENSOR_ARM"),
         ];
+        flag_display(self.0 as u64, BITS, f)
+    }
+}
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkGpaSqShaderStageFlagsAMD.html>"]
+#[repr(transparent)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct GpaSqShaderStageFlagsAMD(Flags);
+bitflags!(GpaSqShaderStageFlagsAMD, Flags);
+impl GpaSqShaderStageFlagsAMD {
+    pub const PS_AMD: Self = Self(0x1);
+    pub const VS_AMD: Self = Self(0x2);
+    pub const GS_AMD: Self = Self(0x4);
+    pub const ES_AMD: Self = Self(0x8);
+    pub const HS_AMD: Self = Self(0x10);
+    pub const LS_AMD: Self = Self(0x20);
+    pub const CS_AMD: Self = Self(0x40);
+}
+impl fmt::Display for GpaSqShaderStageFlagsAMD {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.is_empty() {
+            write!(f, "NONE")?;
+        }
+        const BITS: &[(u64, &str)] = &[
+            (1u64, "PS_AMD"),
+            (2u64, "VS_AMD"),
+            (4u64, "GS_AMD"),
+            (8u64, "ES_AMD"),
+            (16u64, "HS_AMD"),
+            (32u64, "LS_AMD"),
+            (64u64, "CS_AMD"),
+        ];
+        flag_display(self.0 as u64, BITS, f)
+    }
+}
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkGpaPerfBlockPropertiesFlagsAMD.html>"]
+#[repr(transparent)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct GpaPerfBlockPropertiesFlagsAMD(Flags);
+bitflags!(GpaPerfBlockPropertiesFlagsAMD, Flags);
+impl GpaPerfBlockPropertiesFlagsAMD {}
+impl fmt::Display for GpaPerfBlockPropertiesFlagsAMD {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.is_empty() {
+            write!(f, "NONE")?;
+        }
+        const BITS: &[(u64, &str)] = &[];
+        flag_display(self.0 as u64, BITS, f)
+    }
+}
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPhysicalDeviceGpaPropertiesFlagsAMD.html>"]
+#[repr(transparent)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct PhysicalDeviceGpaPropertiesFlagsAMD(Flags);
+bitflags!(PhysicalDeviceGpaPropertiesFlagsAMD, Flags);
+impl PhysicalDeviceGpaPropertiesFlagsAMD {}
+impl fmt::Display for PhysicalDeviceGpaPropertiesFlagsAMD {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.is_empty() {
+            write!(f, "NONE")?;
+        }
+        const BITS: &[(u64, &str)] = &[];
         flag_display(self.0 as u64, BITS, f)
     }
 }
@@ -16515,7 +17001,9 @@ impl ShaderCreateFlagsEXT {
     pub const FRAGMENT_SHADING_RATE_ATTACHMENT_EXT: Self = Self(0x20);
     pub const FRAGMENT_DENSITY_MAP_ATTACHMENT_EXT: Self = Self(0x40);
     pub const INDIRECT_BINDABLE_EXT: Self = Self(0x80);
+    pub const OPACITY_MICROMAP_DISALLOW_MIXED_SPECIAL_INDEX_EXT: Self = Self(0x1000);
     pub const TYPE_64_INDEXING_EXT: Self = Self(0x8000);
+    pub const INDEPENDENT_SETS_KHR: Self = Self(0x40000);
 }
 impl fmt::Display for ShaderCreateFlagsEXT {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -16533,7 +17021,9 @@ impl fmt::Display for ShaderCreateFlagsEXT {
             (32u64, "FRAGMENT_SHADING_RATE_ATTACHMENT_EXT"),
             (64u64, "FRAGMENT_DENSITY_MAP_ATTACHMENT_EXT"),
             (128u64, "INDIRECT_BINDABLE_EXT"),
+            (4096u64, "OPACITY_MICROMAP_DISALLOW_MIXED_SPECIAL_INDEX_EXT"),
             (32768u64, "TYPE_64_INDEXING_EXT"),
+            (262144u64, "INDEPENDENT_SETS_KHR"),
         ];
         flag_display(self.0 as u64, BITS, f)
     }

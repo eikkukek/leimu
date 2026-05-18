@@ -4759,6 +4759,77 @@ pub type PFN_vkCmdDispatchGraphIndirectCountAMDX = unsafe extern "system" fn(
     scratch_size: DeviceSize,
     count_info: DeviceAddress,
 );
+#[doc = "Provided by VK_AMD_gpa_interface."]
+#[allow(non_camel_case_types)]
+pub type PFN_vkCreateGpaSessionAMD = unsafe extern "system" fn(
+    device: crate::vk::Device,
+    create_info: *const GpaSessionCreateInfoAMD,
+    allocator: *const AllocationCallbacks,
+    gpa_session: *mut GpaSessionAMD,
+) -> Result;
+#[doc = "Provided by VK_AMD_gpa_interface."]
+#[allow(non_camel_case_types)]
+pub type PFN_vkDestroyGpaSessionAMD = unsafe extern "system" fn(
+    device: crate::vk::Device,
+    gpa_session: GpaSessionAMD,
+    allocator: *const AllocationCallbacks,
+);
+#[doc = "Provided by VK_AMD_gpa_interface."]
+#[allow(non_camel_case_types)]
+pub type PFN_vkSetGpaDeviceClockModeAMD = unsafe extern "system" fn(
+    device: crate::vk::Device,
+    info: *mut GpaDeviceClockModeInfoAMD,
+) -> Result;
+#[doc = "Provided by VK_AMD_gpa_interface."]
+#[allow(non_camel_case_types)]
+pub type PFN_vkGetGpaDeviceClockInfoAMD = unsafe extern "system" fn(
+    device: crate::vk::Device,
+    info: *mut GpaDeviceGetClockInfoAMD,
+) -> Result;
+#[doc = "Provided by VK_AMD_gpa_interface."]
+#[allow(non_camel_case_types)]
+pub type PFN_vkCmdBeginGpaSessionAMD =
+    unsafe extern "system" fn(command_buffer: CommandBuffer, gpa_session: GpaSessionAMD) -> Result;
+#[doc = "Provided by VK_AMD_gpa_interface."]
+#[allow(non_camel_case_types)]
+pub type PFN_vkCmdEndGpaSessionAMD =
+    unsafe extern "system" fn(command_buffer: CommandBuffer, gpa_session: GpaSessionAMD) -> Result;
+#[doc = "Provided by VK_AMD_gpa_interface."]
+#[allow(non_camel_case_types)]
+pub type PFN_vkCmdBeginGpaSampleAMD = unsafe extern "system" fn(
+    command_buffer: CommandBuffer,
+    gpa_session: GpaSessionAMD,
+    gpa_sample_begin_info: *const GpaSampleBeginInfoAMD,
+    sample_id: *mut u32,
+) -> Result;
+#[doc = "Provided by VK_AMD_gpa_interface."]
+#[allow(non_camel_case_types)]
+pub type PFN_vkCmdEndGpaSampleAMD = unsafe extern "system" fn(
+    command_buffer: CommandBuffer,
+    gpa_session: GpaSessionAMD,
+    sample_id: u32,
+);
+#[doc = "Provided by VK_AMD_gpa_interface."]
+#[allow(non_camel_case_types)]
+pub type PFN_vkGetGpaSessionStatusAMD =
+    unsafe extern "system" fn(device: crate::vk::Device, gpa_session: GpaSessionAMD) -> Result;
+#[doc = "Provided by VK_AMD_gpa_interface."]
+#[allow(non_camel_case_types)]
+pub type PFN_vkGetGpaSessionResultsAMD = unsafe extern "system" fn(
+    device: crate::vk::Device,
+    gpa_session: GpaSessionAMD,
+    sample_id: u32,
+    size_in_bytes: *mut usize,
+    data: *mut ffi::c_void,
+) -> Result;
+#[doc = "Provided by VK_AMD_gpa_interface."]
+#[allow(non_camel_case_types)]
+pub type PFN_vkResetGpaSessionAMD =
+    unsafe extern "system" fn(device: crate::vk::Device, gpa_session: GpaSessionAMD) -> Result;
+#[doc = "Provided by VK_AMD_gpa_interface."]
+#[allow(non_camel_case_types)]
+pub type PFN_vkCmdCopyGpaSessionResultsAMD =
+    unsafe extern "system" fn(command_buffer: CommandBuffer, gpa_session: GpaSessionAMD);
 #[doc = "Provided by Vulkan version 1.4."]
 #[allow(non_camel_case_types)]
 pub type PFN_vkCmdBindDescriptorSets2 = unsafe extern "system" fn(
@@ -5528,6 +5599,10 @@ pub type LineRasterizationModeEXT = LineRasterizationMode;
 pub type PipelineRobustnessBufferBehaviorEXT = PipelineRobustnessBufferBehavior;
 #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineRobustnessImageBehaviorEXT.html>"]
 pub type PipelineRobustnessImageBehaviorEXT = PipelineRobustnessImageBehavior;
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkOpacityMicromapFormatEXT.html>"]
+pub type OpacityMicromapFormatEXT = OpacityMicromapFormatKHR;
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkOpacityMicromapSpecialIndexEXT.html>"]
+pub type OpacityMicromapSpecialIndexEXT = OpacityMicromapSpecialIndexKHR;
 #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkDeviceFaultVendorBinaryHeaderVersionEXT.html>"]
 pub type DeviceFaultVendorBinaryHeaderVersionEXT = DeviceFaultVendorBinaryHeaderVersionKHR;
 #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkScopeNV.html>"]
@@ -6011,7 +6086,7 @@ pub type PhysicalDeviceShaderTerminateInvocationFeaturesKHR<'a> =
 pub type PhysicalDeviceMutableDescriptorTypeFeaturesVALVE<'a> =
     PhysicalDeviceMutableDescriptorTypeFeaturesEXT<'a>;
 #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkMutableDescriptorTypeListVALVE.html>"]
-pub type MutableDescriptorTypeListVALVE = MutableDescriptorTypeListEXT;
+pub type MutableDescriptorTypeListVALVE<'a> = MutableDescriptorTypeListEXT<'a>;
 #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkMutableDescriptorTypeCreateInfoVALVE.html>"]
 pub type MutableDescriptorTypeCreateInfoVALVE<'a> = MutableDescriptorTypeCreateInfoEXT<'a>;
 #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkMemoryBarrier2KHR.html>"]
@@ -6086,6 +6161,8 @@ pub type ImageSubresource2EXT<'a> = ImageSubresource2<'a>;
 pub type SubresourceLayout2KHR<'a> = SubresourceLayout2<'a>;
 #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkSubresourceLayout2EXT.html>"]
 pub type SubresourceLayout2EXT<'a> = SubresourceLayout2<'a>;
+#[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkMicromapTriangleEXT.html>"]
+pub type MicromapTriangleEXT = MicromapTriangleKHR;
 #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/VkPhysicalDevicePipelineRobustnessFeaturesEXT.html>"]
 pub type PhysicalDevicePipelineRobustnessFeaturesEXT<'a> =
     PhysicalDevicePipelineRobustnessFeatures<'a>;

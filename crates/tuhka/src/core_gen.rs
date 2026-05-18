@@ -4072,7 +4072,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn allocate_memory(
         &self,
         allocate_info: &MemoryAllocateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<DeviceMemory> {
         unsafe {
             let mut memory = ::core::mem::MaybeUninit::uninit();
@@ -4093,7 +4093,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn free_memory(
         &self,
         memory: DeviceMemory,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe { (self.fp_v10.free_memory)(self.handle, memory, allocator.as_ptr()) }
     }
@@ -4345,7 +4345,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_fence(
         &self,
         create_info: &FenceCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<Fence> {
         unsafe {
             let mut fence = ::core::mem::MaybeUninit::uninit();
@@ -4363,7 +4363,7 @@ impl<Ext> crate::Device<Ext> {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyFence.html>"]
     #[doc = r""]
-    pub unsafe fn destroy_fence(&self, fence: Fence, allocator: Option<&AllocationCallbacks>) {
+    pub unsafe fn destroy_fence(&self, fence: Fence, allocator: Option<&AllocationCallbacks<'_>>) {
         unsafe { (self.fp_v10.destroy_fence)(self.handle, fence, allocator.as_ptr()) }
     }
     #[doc = "# Success codes"]
@@ -4446,7 +4446,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_semaphore(
         &self,
         create_info: &SemaphoreCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<Semaphore> {
         unsafe {
             let mut semaphore = ::core::mem::MaybeUninit::uninit();
@@ -4467,7 +4467,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_semaphore(
         &self,
         semaphore: Semaphore,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe { (self.fp_v10.destroy_semaphore)(self.handle, semaphore, allocator.as_ptr()) }
     }
@@ -4482,7 +4482,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_event(
         &self,
         create_info: &EventCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<Event> {
         unsafe {
             let mut event = ::core::mem::MaybeUninit::uninit();
@@ -4500,7 +4500,7 @@ impl<Ext> crate::Device<Ext> {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyEvent.html>"]
     #[doc = r""]
-    pub unsafe fn destroy_event(&self, event: Event, allocator: Option<&AllocationCallbacks>) {
+    pub unsafe fn destroy_event(&self, event: Event, allocator: Option<&AllocationCallbacks<'_>>) {
         unsafe { (self.fp_v10.destroy_event)(self.handle, event, allocator.as_ptr()) }
     }
     #[doc = "# Success codes"]
@@ -4554,7 +4554,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_query_pool(
         &self,
         create_info: &QueryPoolCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<QueryPool> {
         unsafe {
             let mut query_pool = ::core::mem::MaybeUninit::uninit();
@@ -4575,7 +4575,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_query_pool(
         &self,
         query_pool: QueryPool,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe { (self.fp_v10.destroy_query_pool)(self.handle, query_pool, allocator.as_ptr()) }
     }
@@ -4625,7 +4625,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_buffer(
         &self,
         create_info: &BufferCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<Buffer> {
         unsafe {
             let mut buffer = ::core::mem::MaybeUninit::uninit();
@@ -4643,7 +4643,11 @@ impl<Ext> crate::Device<Ext> {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyBuffer.html>"]
     #[doc = r""]
-    pub unsafe fn destroy_buffer(&self, buffer: Buffer, allocator: Option<&AllocationCallbacks>) {
+    pub unsafe fn destroy_buffer(
+        &self,
+        buffer: Buffer,
+        allocator: Option<&AllocationCallbacks<'_>>,
+    ) {
         unsafe { (self.fp_v10.destroy_buffer)(self.handle, buffer, allocator.as_ptr()) }
     }
     #[doc = "# Success codes"]
@@ -4657,7 +4661,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_buffer_view(
         &self,
         create_info: &BufferViewCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<BufferView> {
         unsafe {
             let mut view = ::core::mem::MaybeUninit::uninit();
@@ -4678,7 +4682,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_buffer_view(
         &self,
         buffer_view: BufferView,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe { (self.fp_v10.destroy_buffer_view)(self.handle, buffer_view, allocator.as_ptr()) }
     }
@@ -4693,7 +4697,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_image(
         &self,
         create_info: &ImageCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<Image> {
         unsafe {
             let mut image = ::core::mem::MaybeUninit::uninit();
@@ -4711,7 +4715,7 @@ impl<Ext> crate::Device<Ext> {
     #[doc = r" # Vulkan docs"]
     #[doc = "<https://docs.vulkan.org/refpages/latest/refpages/source/vkDestroyImage.html>"]
     #[doc = r""]
-    pub unsafe fn destroy_image(&self, image: Image, allocator: Option<&AllocationCallbacks>) {
+    pub unsafe fn destroy_image(&self, image: Image, allocator: Option<&AllocationCallbacks<'_>>) {
         unsafe { (self.fp_v10.destroy_image)(self.handle, image, allocator.as_ptr()) }
     }
     #[doc = r" # Safety"]
@@ -4746,7 +4750,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_image_view(
         &self,
         create_info: &ImageViewCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<ImageView> {
         unsafe {
             let mut view = ::core::mem::MaybeUninit::uninit();
@@ -4767,7 +4771,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_image_view(
         &self,
         image_view: ImageView,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe { (self.fp_v10.destroy_image_view)(self.handle, image_view, allocator.as_ptr()) }
     }
@@ -4782,7 +4786,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_shader_module(
         &self,
         create_info: &ShaderModuleCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<ShaderModule> {
         unsafe {
             let mut shader_module = ::core::mem::MaybeUninit::uninit();
@@ -4803,7 +4807,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_shader_module(
         &self,
         shader_module: ShaderModule,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe {
             (self.fp_v10.destroy_shader_module)(self.handle, shader_module, allocator.as_ptr())
@@ -4820,7 +4824,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_pipeline_cache(
         &self,
         create_info: &PipelineCacheCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<PipelineCache> {
         unsafe {
             let mut pipeline_cache = ::core::mem::MaybeUninit::uninit();
@@ -4841,7 +4845,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_pipeline_cache(
         &self,
         pipeline_cache: PipelineCache,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe {
             (self.fp_v10.destroy_pipeline_cache)(self.handle, pipeline_cache, allocator.as_ptr())
@@ -4942,7 +4946,7 @@ impl<Ext> crate::Device<Ext> {
         &self,
         pipeline_cache: PipelineCache,
         create_infos: &[GraphicsPipelineCreateInfo<'_>],
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
         pipelines: &mut [Pipeline],
     ) -> crate::VkResult<()> {
         unsafe {
@@ -4978,7 +4982,7 @@ impl<Ext> crate::Device<Ext> {
         &self,
         pipeline_cache: PipelineCache,
         create_infos: &[ComputePipelineCreateInfo<'_>],
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
         pipelines: &mut [Pipeline],
     ) -> crate::VkResult<()> {
         unsafe {
@@ -5008,7 +5012,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_pipeline(
         &self,
         pipeline: Pipeline,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe { (self.fp_v10.destroy_pipeline)(self.handle, pipeline, allocator.as_ptr()) }
     }
@@ -5023,7 +5027,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_pipeline_layout(
         &self,
         create_info: &PipelineLayoutCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<PipelineLayout> {
         unsafe {
             let mut pipeline_layout = ::core::mem::MaybeUninit::uninit();
@@ -5044,7 +5048,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_pipeline_layout(
         &self,
         pipeline_layout: PipelineLayout,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe {
             (self.fp_v10.destroy_pipeline_layout)(self.handle, pipeline_layout, allocator.as_ptr())
@@ -5061,7 +5065,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_sampler(
         &self,
         create_info: &SamplerCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<Sampler> {
         unsafe {
             let mut sampler = ::core::mem::MaybeUninit::uninit();
@@ -5082,7 +5086,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_sampler(
         &self,
         sampler: Sampler,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe { (self.fp_v10.destroy_sampler)(self.handle, sampler, allocator.as_ptr()) }
     }
@@ -5097,7 +5101,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_descriptor_set_layout(
         &self,
         create_info: &DescriptorSetLayoutCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<DescriptorSetLayout> {
         unsafe {
             let mut set_layout = ::core::mem::MaybeUninit::uninit();
@@ -5118,7 +5122,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_descriptor_set_layout(
         &self,
         descriptor_set_layout: DescriptorSetLayout,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe {
             (self.fp_v10.destroy_descriptor_set_layout)(
@@ -5139,7 +5143,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_descriptor_pool(
         &self,
         create_info: &DescriptorPoolCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<DescriptorPool> {
         unsafe {
             let mut descriptor_pool = ::core::mem::MaybeUninit::uninit();
@@ -5160,7 +5164,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_descriptor_pool(
         &self,
         descriptor_pool: DescriptorPool,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe {
             (self.fp_v10.destroy_descriptor_pool)(self.handle, descriptor_pool, allocator.as_ptr())
@@ -5273,7 +5277,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_framebuffer(
         &self,
         create_info: &FramebufferCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<Framebuffer> {
         unsafe {
             let mut framebuffer = ::core::mem::MaybeUninit::uninit();
@@ -5295,7 +5299,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_framebuffer(
         &self,
         framebuffer: Framebuffer,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe { (self.fp_v10.destroy_framebuffer)(self.handle, framebuffer, allocator.as_ptr()) }
     }
@@ -5311,7 +5315,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_render_pass(
         &self,
         create_info: &RenderPassCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<RenderPass> {
         unsafe {
             let mut render_pass = ::core::mem::MaybeUninit::uninit();
@@ -5333,7 +5337,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_render_pass(
         &self,
         render_pass: RenderPass,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe { (self.fp_v10.destroy_render_pass)(self.handle, render_pass, allocator.as_ptr()) }
     }
@@ -5365,7 +5369,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_command_pool(
         &self,
         create_info: &CommandPoolCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<CommandPool> {
         unsafe {
             let mut command_pool = ::core::mem::MaybeUninit::uninit();
@@ -5386,7 +5390,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_command_pool(
         &self,
         command_pool: CommandPool,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe { (self.fp_v10.destroy_command_pool)(self.handle, command_pool, allocator.as_ptr()) }
     }
@@ -7253,7 +7257,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_descriptor_update_template(
         &self,
         create_info: &DescriptorUpdateTemplateCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<DescriptorUpdateTemplate> {
         unsafe {
             let mut descriptor_update_template = ::core::mem::MaybeUninit::uninit();
@@ -7276,7 +7280,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_descriptor_update_template(
         &self,
         descriptor_update_template: DescriptorUpdateTemplate,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe {
             (self.fp_v11.destroy_descriptor_update_template)(
@@ -7397,7 +7401,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_sampler_ycbcr_conversion(
         &self,
         create_info: &SamplerYcbcrConversionCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<SamplerYcbcrConversion> {
         unsafe {
             let mut ycbcr_conversion = ::core::mem::MaybeUninit::uninit();
@@ -7420,7 +7424,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_sampler_ycbcr_conversion(
         &self,
         ycbcr_conversion: SamplerYcbcrConversion,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe {
             (self.fp_v11.destroy_sampler_ycbcr_conversion)(
@@ -7994,7 +7998,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_render_pass2(
         &self,
         create_info: &RenderPassCreateInfo2<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<RenderPass> {
         unsafe {
             let mut render_pass = ::core::mem::MaybeUninit::uninit();
@@ -9923,7 +9927,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn create_private_data_slot(
         &self,
         create_info: &PrivateDataSlotCreateInfo<'_>,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) -> crate::VkResult<PrivateDataSlot> {
         unsafe {
             let mut private_data_slot = ::core::mem::MaybeUninit::uninit();
@@ -9946,7 +9950,7 @@ impl<Ext> crate::Device<Ext> {
     pub unsafe fn destroy_private_data_slot(
         &self,
         private_data_slot: PrivateDataSlot,
-        allocator: Option<&AllocationCallbacks>,
+        allocator: Option<&AllocationCallbacks<'_>>,
     ) {
         unsafe {
             (self.fp_v13.destroy_private_data_slot)(

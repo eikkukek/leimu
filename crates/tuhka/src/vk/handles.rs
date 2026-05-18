@@ -237,6 +237,11 @@ define_non_dispatchable_handle!(
     "<https://docs.vulkan.org/refpages/latest/refpages/source/ShaderInstrumentationARM.html>",
 );
 define_non_dispatchable_handle!(
+    GpaSessionAMD,
+    GPA_SESSION_AMD,
+    "<https://docs.vulkan.org/refpages/latest/refpages/source/GpaSessionAMD.html>",
+);
+define_non_dispatchable_handle!(
     DisplayKHR,
     DISPLAY_KHR,
     "<https://docs.vulkan.org/refpages/latest/refpages/source/DisplayKHR.html>",

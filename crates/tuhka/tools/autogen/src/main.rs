@@ -207,6 +207,7 @@ struct StructMember {
     name: String,
     comment: Option<String>,
     deprecated: Option<String>,
+    len: Option<usize>,
 }
 
 #[allow(non_camel_case_types)]
@@ -733,6 +734,20 @@ fn main() -> std::io::Result<()> {
                                                 .map(|attr| attr.value.clone()),
                                             deprecated: find_attribute("deprecated")
                                                 .map(|attr| attr.value.clone()),
+                                            len: find_attribute("len")
+                                                .and_then(|attr| {
+                                                    for str in parse_punctuated(&attr.value) {
+                                                        let name = lower_snake_case(&str);
+                                                        if let Some(member) = structure.members
+                                                            .iter()
+                                                            .enumerate()
+                                                            .find_map(|(i, m)| (m.name == name).then_some(i))
+                                                        {
+                                                            return Some(member)
+                                                        }
+                                                    }
+                                                    None
+                                                }),
                                             ..Default::default()
                                         };
                                         structure.parsing_member = Some(member);
@@ -2014,7 +2029,9 @@ fn main() -> std::io::Result<()> {
                     return false
                 }
                 for member in &def.members {
-                    if type_needs_lifetime.contains(member.ty.as_ref().unwrap()) {
+                    if (!def.is_union && member.ptr_type != PtrType::None) ||
+                        type_needs_lifetime.contains(member.ty.as_ref().unwrap())
+                    {
                         return true;
                     }
                 }
@@ -2154,14 +2171,16 @@ fn main() -> std::io::Result<()> {
         if type_exclude_list.contains(name) {
             continue
         }
+        let mut needs_lifetime = type_needs_lifetime
+            .contains(name);
         let mut field_defs = vec![];
         let mut field_defaults = vec![];
         let mut field_setters = vec![];
+        let mut field_mappings = vec![];
         let mut field_getters = vec![];
         let mut prev_field = None;
         let mut has_pointer = false;
         let mut p_next_mutability = None;
-        let mut needs_lifetime = def.needs_lifetime;
         let mut s_type = None;
         let mut derive_default = true;
         let (derive_eq, derive_partial_eq) =
@@ -2239,10 +2258,10 @@ fn main() -> std::io::Result<()> {
                 .map(|reason| {
                     quote! {#[deprecated = #reason]}
                 });
-            let name = if member.name == "type" {
+            let name_str = if member.name == "type" {
                 "ty"
             } else { &member.name };
-            let name = Ident::new(name, Span::call_site());
+            let name = Ident::new(name_str, Span::call_site());
             field_defs.push(
                 quote! {
                     #doc
@@ -2251,15 +2270,16 @@ fn main() -> std::io::Result<()> {
                 }
             );
             if !def.is_union {
+                field_mappings.push(field_setters.len());
                 if deprecated.is_none() {
-                    field_setters.push(
+                    let setter =
                         if member_ty == "Bool32" &&
                             member.ptr_type == PtrType::None
                         {
                             quote! {
                                 #[inline]
-                                pub const fn #name(mut self, value: bool) -> Self {
-                                    self.#name = value as Bool32;
+                                pub const fn #name(mut self, #name: bool) -> Self {
+                                    self.#name = #name as Bool32;
                                     self
                                 }
                             }
@@ -2283,25 +2303,97 @@ fn main() -> std::io::Result<()> {
                                 #[inline]
                                 pub fn #name(
                                     mut self,
-                                    value: &ffi::CStr
+                                    #name: &ffi::CStr
                                 ) -> ::core::result::Result<Self, WriteCStrToArrayError> {
                                     write_c_str_to_c_char_slice(
-                                        value,
+                                        #name,
                                         &mut self.#name,
                                     )?;
                                     Ok(self)
                                 }
                             }
                         } else {
-                            quote! {
-                                #[inline]
-                                pub const fn #name(mut self, value: #ty) -> Self {
-                                    self.#name = value;
-                                    self
+                            if let Some(len) = member.len &&
+                                member.array_len.is_none()
+                            {
+                                field_setters[field_mappings[len]] = None;
+                                let len_member = Ident::new(
+                                    &def.members[len].name,
+                                    Span::call_site(),
+                                );
+                                let mut setter_name = name_str
+                                    .trim_start_matches("p_")
+                                    .to_string();
+                                if setter_name.starts_with("pp_") {
+                                    setter_name = setter_name
+                                        .trim_start_matches("pp_")
+                                        .to_string();
+                                    setter_name.insert_str(0, "p_");
                                 }
+                                let setter_name = Ident::new(
+                                    &setter_name,
+                                    Span::call_site(),
+                                );
+                                let (ty, as_ptr) =
+                                    if matches!(
+                                            member.ptr_type,
+                                            PtrType::MutPtr |
+                                            PtrType::MutPtrMutPtr
+                                        )
+                                    {
+                                        (
+                                            quote! { &'a mut [#resolved_ty #lifetime] },
+                                            quote! { as_mut_ptr() }
+                                        )
+                                    } else {
+                                        let const_ptr = matches!(member.ptr_type, PtrType::ConstPtrConstPtr)
+                                            .then(|| quote! { *const });
+                                        (
+
+                                            quote! { &'a [#const_ptr #resolved_ty #lifetime] },
+                                            quote! { as_ptr() }
+                                        )
+                                    };
+                                quote! {
+                                    #[inline]
+                                    pub const fn #setter_name(mut self, #setter_name: #ty) -> Self {
+                                        self.#len_member = #setter_name.len() as _;
+                                        self.#name = #setter_name.#as_ptr;
+                                        self
+                                    }
+                                }
+                            } else {
+                                if member.ptr_type != PtrType::None {
+                                    assert!(!matches!(member.ptr_type, PtrType::MutPtrMutPtr | PtrType::ConstPtrConstPtr));
+                                    let ty =
+                                        if member.ptr_type == PtrType::MutPtr {
+                                            quote! { &'a mut #resolved_ty #lifetime }
+                                        } else {
+                                            quote! { &'a #resolved_ty #lifetime }
+                                        };
+                                    let setter_name = Ident::new(name_str
+                                        .trim_start_matches("p_"),
+                                        Span::call_site(),
+                                    );
+                                    quote! {
+                                        #[inline]
+                                        pub const fn #setter_name(mut self, #setter_name: #ty) -> Self {
+                                            self.#name = #setter_name;
+                                            self
+                                        }
+                                    }
+                                } else {
+                                    quote! {
+                                        #[inline]
+                                        pub const fn #name(mut self, #name: #ty) -> Self {
+                                            self.#name = #name;
+                                            self
+                                        }
+                                    }
+                                } 
                             }
-                        }
-                    );
+                        };
+                    field_setters.push(Some(setter));
                 }
                 field_defaults.push(
                     if has_s_type {
