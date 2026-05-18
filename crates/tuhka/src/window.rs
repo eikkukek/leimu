@@ -103,10 +103,10 @@ pub unsafe fn create_surface<Ext>(
                 .map_err(CreateSurfaceError::VkErr)
             }
         },
-        (RawDisplayHandle::Wayland(display), RawWindowHandle::Wayland(window)) => {
+        (RawDisplayHandle::Wayland(mut display), RawWindowHandle::Wayland(mut window)) => {
             let create_info = vk::WaylandSurfaceCreateInfoKHR::default()
-                .display(display.display.as_ptr())
-                .surface(window.surface.as_ptr());
+                .display(unsafe { display.display.as_mut() })
+                .surface(unsafe { window.surface.as_mut() });
             let instance = khr::wayland_surface::Instance
                 ::new(instance);
             unsafe {
@@ -119,10 +119,10 @@ pub unsafe fn create_surface<Ext>(
         },
         (RawDisplayHandle::Xlib(display), RawWindowHandle::Xlib(window)) => {
             let create_info = vk::XlibSurfaceCreateInfoKHR::default()
-                .dpy(display.display
+                .dpy(unsafe { display.display
                     .ok_or(CreateSurfaceError::MissingHandle("xlib Display"))?
-                    .as_ptr()
-                ).window(window.window);
+                    .as_mut()
+                }).window(window.window);
             let instance = khr::xlib_surface::Instance
                 ::new(instance);
             unsafe {
@@ -135,11 +135,11 @@ pub unsafe fn create_surface<Ext>(
         },
         (RawDisplayHandle::Xcb(display), RawWindowHandle::Xcb(window)) => {
             let create_info = vk::XcbSurfaceCreateInfoKHR::default()
-                .connection(
+                .connection(unsafe {
                     display.connection
                         .ok_or(CreateSurfaceError::MissingHandle("xcb_connection_t"))?
-                        .as_ptr()
-                ).window(window.window.get());
+                        .as_mut()
+                }).window(window.window.get());
             let instance = khr::xcb_surface::Instance
                 ::new(instance);
             unsafe {
@@ -150,9 +150,9 @@ pub unsafe fn create_surface<Ext>(
                 .map_err(CreateSurfaceError::VkErr)
             }
         },
-        (RawDisplayHandle::Android(_), RawWindowHandle::AndroidNdk(window)) => {
+        (RawDisplayHandle::Android(_), RawWindowHandle::AndroidNdk(mut window)) => {
             let create_info = vk::AndroidSurfaceCreateInfoKHR::default()
-                .window(window.a_native_window.as_ptr());
+                .window(unsafe { window.a_native_window.as_mut() });
             let instance = khr::android_surface::Instance::new(instance);
             unsafe {
                 instance.create_android_surface(
@@ -168,8 +168,10 @@ pub unsafe fn create_surface<Ext>(
             let layer = unsafe {
                 Layer::from_ns_view(window.ns_view).into_raw()
             };
-            let create_info = vk::MetalSurfaceCreateInfoEXT::default()
-                .p_layer(layer.as_ptr());
+            let create_info = vk::MetalSurfaceCreateInfoEXT {
+                p_layer: layer.as_ptr(),
+                ..Default::default()
+            };
             let instance = ext::metal_surface::Instance::new(instance);
             unsafe {
                 instance.create_metal_surface(
@@ -185,8 +187,10 @@ pub unsafe fn create_surface<Ext>(
             let layer = unsafe {
                 Layer::from_ui_view(window.ui_view).into_raw()
             };
-            let create_info = vk::MetalSurfaceCreateInfoEXT::default()
-                .p_layer(layer.as_ptr());
+            let create_info = vk::MetalSurfaceCreateInfoEXT {
+                p_layer: layer.as_ptr(),
+                ..Default::default()
+            };
             let instance = ext::metal_surface::Instance::new(instance);
             unsafe {
                 instance.create_metal_surface(
@@ -196,9 +200,9 @@ pub unsafe fn create_surface<Ext>(
                 .map_err(CreateSurfaceError::VkErr)
             }
         },
-        (RawDisplayHandle::Ohos(_), RawWindowHandle::OhosNdk(window)) => {
+        (RawDisplayHandle::Ohos(_), RawWindowHandle::OhosNdk(mut window)) => {
             let create_info = vk::SurfaceCreateInfoOHOS::default()
-                .window(window.native_window.as_ptr());
+                .window(unsafe { window.native_window.as_mut() });
             let instance = ohos::surface::Instance::new(instance);
             unsafe {
                 instance.create_surface(

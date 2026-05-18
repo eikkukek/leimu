@@ -1,6 +1,10 @@
 # Changelog
 
 All changes to this project will be documented in this file.
+## [0.1.5] - 2026-05-18
+
+### Fixed
+- Fixed the "window" feature.
 
 ## [0.1.4] - 2026-05-18
 
@@ -26,6 +30,7 @@ All changes to this project will be documented in this file.
 ### Added
 - Initial crate release
 
+[0.1.5]: https://crates.io/crates/tuhka/0.1.5
 [0.1.4]: https://crates.io/crates/tuhka/0.1.4
 [0.1.3]: https://crates.io/crates/tuhka/0.1.3
 [0.1.2]: https://crates.io/crates/tuhka/0.1.2
